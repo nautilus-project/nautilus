@@ -1,0 +1,12 @@
+[package]
+name = "program-native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+borsh = "0.9.3"
+borsh-derive = "0.9.3"
+solana-program = "1.14.5"

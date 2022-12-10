@@ -1,0 +1,25 @@
+{
+  "name": "nautilus-js",
+  "version": "0.0.1",
+  "description": "SQL server for Solana",
+  "main": "index.js",
+  "repository": "https://github.com/realbuffalojoe/nautilus",
+  "author": "Joe Caulfield",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@solana/web3.js": "^1.70.0",
+    "borsh": "^0.7.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "fs": "^0.0.1-security",
+    "mocha": "^10.1.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^4.9.3"
+  },
+  "scripts": {
+    "test": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/main.test.ts"
+  }
+}
