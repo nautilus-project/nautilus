@@ -64,11 +64,11 @@ export class NautilusUtils {
         const tx = new VersionedTransaction(
             new TransactionMessage({
                 payerKey: signer.publicKey,
-                recentBlockhash: 
-                (await connection
-                    .getLatestBlockhash()
-                    .then((res) => res.blockhash))
-                ,
+                recentBlockhash: (
+                    await connection
+                        .getLatestBlockhash()
+                        .then((res) => res.blockhash)
+                ),
                 instructions: instructionsList,
             }).compileToV0Message()
         );
