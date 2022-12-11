@@ -5,6 +5,8 @@ extern crate syn;
 
 extern crate proc_macro;
 
+// TODO: Migrate all parsing operations into `syn` crate.
+//
 #[proc_macro_derive(Nautilus, attributes(nautilus))]
 pub fn derive_nautilus_crud(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     
@@ -64,19 +66,19 @@ pub fn derive_nautilus_crud(input: proc_macro::TokenStream) -> proc_macro::Token
     // Here's where we want to place the parsing of the args/attributes
     if true {
         create = quote! { 
-            use nautilus_solana::crud::NautilusCreate;
+            use nautilus_solana::NautilusCreate;
             impl NautilusCreate for #struct_name {} 
         };
     }
     if true {
         update = quote! { 
-            use nautilus_solana::crud::NautilusUpdate;
+            use nautilus_solana::NautilusUpdate;
             impl NautilusUpdate for #struct_name {} 
         };
     }
     if true {
         delete = quote! { 
-            use nautilus_solana::crud::NautilusDelete;
+            use nautilus_solana::NautilusDelete;
             impl NautilusDelete for #struct_name {} 
         };
     }
@@ -102,7 +104,7 @@ pub fn derive_nautilus_crud(input: proc_macro::TokenStream) -> proc_macro::Token
             }
         }
 
-        use nautilus_solana::crud::NautilusAccount;
+        use nautilus_solana::NautilusAccount;
 
         impl NautilusAccount for #struct_name {
 
