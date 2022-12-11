@@ -1,4 +1,25 @@
 use std::process::{ Command, Stdio };
+use crate::build::execute_nautilus_build;
+
+pub fn build() {
+    println!();
+    println!();
+    execute_nautilus_build();
+}
+
+pub fn clean() {
+    println!();
+    println!();
+    execute_command("cargo clean");
+}
+
+// TODO: Re-write this so that it knows where to find the program.so file
+//
+pub fn deploy() {
+    println!();
+    println!();
+    execute_command("solana program deploy ./target/deploy/program_native.so");
+}
 
 pub fn get_cli_configs() -> (&'static str, &'static str) {
     let (mut cmd_shell, mut cmd_prefix) = ("sh", "-c");

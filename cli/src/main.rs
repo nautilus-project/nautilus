@@ -1,4 +1,4 @@
-
+mod build;
 mod core;
 
 use clap::{ Parser, Subcommand };
