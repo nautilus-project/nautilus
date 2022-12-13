@@ -1,7 +1,8 @@
-mod build;
 mod core;
+mod source;
 
 use clap::{ Parser, Subcommand };
+
 use crate::core::{
     build,
     clean,
@@ -26,15 +27,14 @@ pub struct Cli {
     pub command: NautilusCommand,
 }
 
-pub fn processor(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+pub fn processor(cli: Cli) -> std::io::Result<()> {
     match &cli.command {
         NautilusCommand::Build => build(),
         NautilusCommand::Clean => clean(),
         NautilusCommand::Deploy => deploy(),
-    };
-    Ok(())
+    }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> std::io::Result<()> {
    processor(Cli::parse())
 }

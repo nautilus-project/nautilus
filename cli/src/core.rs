@@ -1,25 +1,9 @@
 use std::process::{ Command, Stdio };
-use crate::build::execute_nautilus_build;
-
-pub fn build() {
-    println!();
-    println!();
-    execute_nautilus_build();
-}
-
-pub fn clean() {
-    println!();
-    println!();
-    execute_command("cargo clean");
-}
-
-// TODO: Re-write this so that it knows where to find the program.so file
-//
-pub fn deploy() {
-    println!();
-    println!();
-    execute_command("solana program deploy ./target/deploy/program_native.so");
-}
+use crate::source::{
+    build_program_entrypoint,
+    strip_program_entrypoint,
+    try_read_program_name,
+};
 
 pub fn get_cli_configs() -> (&'static str, &'static str) {
     let (mut cmd_shell, mut cmd_prefix) = ("sh", "-c");
@@ -29,7 +13,7 @@ pub fn get_cli_configs() -> (&'static str, &'static str) {
     return (cmd_shell, cmd_prefix)
 }
 
-pub fn execute_command(args: &str) {
+pub fn execute_command(args: &str) -> std::io::Result<()> {
     let (cmd_shell, cmd_prefix) = get_cli_configs();
     let mut cmd = Command::new(cmd_shell)
         .args([cmd_prefix, args])
@@ -37,4 +21,31 @@ pub fn execute_command(args: &str) {
         .spawn()
         .expect("Failed to execute command.");
     cmd.wait().unwrap();
+    Ok(())
+}
+
+pub fn build() -> std::io::Result<()> {
+    println!();
+    println!();
+    build_program_entrypoint()?;
+    // execute_command("cargo build-bpf")?;
+    strip_program_entrypoint()?;
+    Ok(())
+}
+
+pub fn clean() -> std::io::Result<()> {
+    println!();
+    println!();
+    execute_command("cargo clean")
+}
+
+pub fn deploy() -> std::io::Result<()> {
+    println!();
+    println!();
+    execute_command(
+        format!(
+            "solana program deploy {}",
+            try_read_program_name().unwrap().as_str(), 
+        ).as_str()
+    )
 }
