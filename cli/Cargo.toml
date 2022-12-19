@@ -10,4 +10,5 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.0.29", features = ["derive"] }
-spinners = "4.1.0"
+convert_case = "0.6.0"
+regex = "1.7.0"

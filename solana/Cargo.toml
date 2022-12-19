@@ -12,4 +12,4 @@ edition = "2021"
 borsh = "0.9.3"
 borsh-derive = "0.9.3"
 solana-program = "1.14.10"
-nautilus-derive-crud = { path = "./derive/crud", version = "0.0.1" }
+nautilus-derive = { path = "./derive", version = "0.0.1" }

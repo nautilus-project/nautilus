@@ -2,7 +2,7 @@ use std::process::{ Command, Stdio };
 use crate::source::{
     build_program_entrypoint,
     strip_program_entrypoint,
-    try_read_program_name,
+    try_read_program_so,
 };
 
 pub fn get_cli_configs() -> (&'static str, &'static str) {
@@ -28,8 +28,8 @@ pub fn build() -> std::io::Result<()> {
     println!();
     println!();
     build_program_entrypoint()?;
-    // execute_command("cargo build-bpf")?;
-    strip_program_entrypoint()?;
+    execute_command("cargo build-bpf")?;
+    // strip_program_entrypoint()?;
     Ok(())
 }
 
@@ -45,7 +45,7 @@ pub fn deploy() -> std::io::Result<()> {
     execute_command(
         format!(
             "solana program deploy {}",
-            try_read_program_name().unwrap().as_str(), 
+            try_read_program_so().unwrap().as_str(), 
         ).as_str()
     )
 }

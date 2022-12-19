@@ -1,10 +1,10 @@
 [package]
-name = "nautilus-derive-crud"
+name = "nautilus-derive"
 version = "0.0.1"
 authors = ["Joe Caulfield <jcaulfield135@gmail.com>"]
 repository = "https://github.com/realbuffalojoe/nautilus"
 license = "Apache-2.0"
-description = "Nautilus derive macro for adding CRUD operations to data type"
+description = "Nautilus derive macro for adding CRUD operations to data types"
 rust-version = "1.59"
 edition = "2021"
 
@@ -14,7 +14,7 @@ proc-macro = true
 [dependencies]
 borsh = "0.9.3"
 borsh-derive = "0.9.3"
-nautilus-syn = { path = "../../syn", version = "0.0.1" }
+nautilus-syn = { path = "../syn", version = "0.0.1" }
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "1.0", features = ["extra-traits"] }

@@ -1,3 +1,4 @@
+use borsh::{ BorshDeserialize, BorshSerialize };
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult, 
@@ -12,10 +13,15 @@ use solana_program::{
 };
 use std::io::Result;
 
+pub trait NautilusProgram {
+    fn entrypoint(
+        program_id: &Pubkey,
+        accounts: &[AccountInfo],
+        input: &[u8],
+    ) -> ProgramResult;
+}
 
 pub trait NautilusAccount: borsh::ser::BorshSerialize {
-
-    type NautilusCrudObject;
 
     const TABLE_NAME: &'static str;
     const PRIMARY_KEY: &'static str;
@@ -33,37 +39,31 @@ pub trait NautilusAccount: borsh::ser::BorshSerialize {
         Ok(self.span()?.try_into().unwrap())
     }
 
-    fn address(&self, program_id: &Pubkey) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[ Self::TABLE_NAME.as_bytes().as_ref() ],
-            program_id
-        )
-    }
-
-    // fn new_inner() -> Self;
-    // fn update_inner(&mut self) -> Self;
+    fn accounts(&self) -> &[AccountInfo];
+    fn address(&self) -> (Pubkey, u8);
+    fn seeds(&self) -> &[&[&[u8]]];
 }
 
 pub trait NautilusAllocate: borsh::ser::BorshSerialize + NautilusAccount {
 
     fn allocate<'a>(
         &self, 
-        new_account: AccountInfo<'a>,
+        self_account: AccountInfo<'a>,
+        payer: AccountInfo<'a>,
         system_program: AccountInfo<'a>,
     ) -> ProgramResult {
+        
         invoke_signed(
             &system_instruction::allocate(
-                &new_account.key,
+                &self_account.key,
                 self.size()?,
             ),
-            &[ 
-                new_account.clone(), 
-                system_program.clone()
+            &[
+                self_account.clone(),
+                payer.clone(),
+                system_program.clone(),
             ],
-            &[&[
-                Self::TABLE_NAME.as_bytes().as_ref(),
-                // self.id.to_le_bytes().as_ref(),
-            ]]
+            self.seeds(),
         )
     }
 }
@@ -72,31 +72,29 @@ pub trait NautilusCreate: borsh::ser::BorshSerialize + NautilusAccount {
 
     fn create<'a>(
         &self, 
-        program_id: &Pubkey,
-        new_account: AccountInfo<'a>,
-        payer_account: AccountInfo<'a>,
+        program_id: &'a Pubkey,
+        self_account: AccountInfo<'a>,
+        payer: AccountInfo<'a>,
         system_program: AccountInfo<'a>,
     ) -> ProgramResult {
+
         invoke_signed(
             &system_instruction::create_account(
-                &payer_account.key,
-                &new_account.key,
+                &payer.key,
+                &self_account.key,
                 self.lamports_required()?,
                 self.size()?,
                 program_id,
             ),
             &[
-                payer_account.clone(), 
-                new_account.clone(), 
-                system_program.clone()
+                self_account.clone(),
+                payer.clone(),
+                system_program.clone(),
             ],
-            &[&[
-                Self::TABLE_NAME.as_bytes().as_ref(),
-                // self.id.to_le_bytes().as_ref(),
-            ]]
+            self.seeds(),
         )?;
         self.serialize(
-            &mut &mut new_account.data.borrow_mut()[..]
+            &mut &mut self_account.data.borrow_mut()[..]
         )?;
         Ok(())
     }
@@ -104,9 +102,15 @@ pub trait NautilusCreate: borsh::ser::BorshSerialize + NautilusAccount {
 
 pub trait NautilusUpdate: borsh::ser::BorshSerialize + NautilusAccount {
 
-    fn update(&self, account: &AccountInfo) -> ProgramResult {
+    fn update<'a>(
+        &self, 
+        self_account: AccountInfo<'a>,
+        payer: AccountInfo<'a>,
+        system_program: AccountInfo<'a>,
+    ) -> ProgramResult {
+
         self.serialize(
-            &mut &mut account.data.borrow_mut()[..]
+            &mut &mut self_account.data.borrow_mut()[..]
         )?;
         Ok(())
     }
@@ -114,12 +118,18 @@ pub trait NautilusUpdate: borsh::ser::BorshSerialize + NautilusAccount {
 
 pub trait NautilusDelete: borsh::ser::BorshSerialize + NautilusAccount {
 
-    fn close(&self, account: &AccountInfo, recipient: &AccountInfo) -> ProgramResult {
-        let dest_starting_lamports = recipient.lamports();
-        **recipient.lamports.borrow_mut() =
-            dest_starting_lamports.checked_add(account.lamports()).unwrap();
-        **account.lamports.borrow_mut() = 0;
-        account.assign(&system_program::ID);
-        account.realloc(0, false).map_err(Into::into)
+    fn delete<'a>(
+        &self, 
+        self_account: AccountInfo<'a>,
+        payer: AccountInfo<'a>,
+        system_program: AccountInfo<'a>,
+    ) -> ProgramResult {
+        
+        let dest_starting_lamports = payer.lamports();
+        **payer.lamports.borrow_mut() =
+            dest_starting_lamports.checked_add(self_account.lamports()).unwrap();
+        **self_account.lamports.borrow_mut() = 0;
+        self_account.assign(&system_program::ID);
+        self_account.realloc(0, false).map_err(Into::into)
     }
 }
