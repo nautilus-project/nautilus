@@ -10,10 +10,28 @@ SOL server for Solana
 
 ## Nautilus
 
-Nautilus has 3 main components:
-* `/cli` : Responsible for handling CLI commands like `cargo build-bpf` and one crucial setup step defined below under [CLI](#CLI).
-* `/solana` : The Rust crate that provides the `#[derive(Nautilus)]` and `#[nautilus]` macros.
-* `/js` : The client-side SDK for executing CRUD operations on your on-chain data from your dApp.
+### :mag: Writing a Nautilus Program
+
+```rust
+#[derive(NautilusEntrypoint)]
+enum MyInstructions {
+    CreatePerson,
+    UpdatePerson,
+    DeletePerson,
+}
+
+#[derive(Nautilus)]
+#[nautilus(
+    authority = authority,
+    autoincrement = true,
+    primary_key = id,
+)]
+pub struct Person {
+    id: u32,
+    name: String,
+    authority: Pubkey,
+}
+```
 
 ### :scroll: Nautilus Data Mapping
 
@@ -62,7 +80,6 @@ As you can probably predict, every time we create new "records" in the table, we
 
 ### :blue_book: Repository Layout
 ```text
-/cli        -- Nautilus CLI
 /js         -- Client-side SDK
 /solana     -- Solana program crate
     /derive     -- derive(Nautilus) macro
@@ -90,9 +107,6 @@ The following **optional** arguments can be passed to the attribute macro:
 ```rust
 #[derive(Nautilus)]
 #[nautilus(
-    create,
-    update,
-    delete,
     primary_key = id,
     auto_increment = true,
     authority = authority,
@@ -104,9 +118,6 @@ pub struct Person {
 }
 ```
 Let's break these down:
-* `create` : Implement the `NautilusCreate` trait for the struct, which will write the **CreatePersonInstruction** for the program.
-* `update` : Implement the `NautilusUpdate` trait for the struct, which will write the **UpdatePersonInstruction** for the program.
-* `delete` : Implement the `NautilusDelete` trait for the struct, which will write the **DeletePersonInstruction** for the program.
 * `primary_key` : Which field we're going to be using as the object's ID, and therefore also it's **PDA derivation seeds**.
 * `auto_increment` : Enables or disables autoincrementing of the primary key by adding the logic to check the [Counter account](#how-autoincrement-works) to auto-increment the ID field. **Primary Key must be a number to use autoincrement**.
 * `authority` : Add signer checks to verify that a specific record's `authority` has signed the instruction.
@@ -114,21 +125,23 @@ Let's break these down:
 > As you can see, the derive(Nautilus) macro will add all of these functions to each struct, but what about the program's **entrypoint** & **processor**?  
 > See [CLI](#nautilus-cli)
 
+### :gear: The `#[derive(NautilusEntrypoint)]` Macro
+
+
+
 ### :computer: Nautilus CLI
-The CLI is a straightforward wrapper around the following command relationships:
-```shell
-nautilus build  = cargo build-bpf
-nautilus clean  = cargo clean
-nautilus deploy = solana program deploy
-```
-However, the `nautilus build` step is where we introduce extra functionality to perform the creation of the Solana program's **entrypoint** & **processor**.
-1. Read all of the developer's Rust code and parse out every struct name and it's specified keywords (`create`, `update`, `delete`).
-2. Use this list to write a new Rust file called `nautilus_mod.rs` containing an enum and processor as defined below.
-3. Add this line: `mod nautilus_mod` to the developer's `lib.rs`.
-4. Run `cargo build-bpf` on the modified codebase.
-5. Remove `nautilus_mod.rs` and the extra line in the developer's `lib.rs`.
+This macro turns your entrypoint enum into the actual processor itself.   
    
-**Enum**
+For example, consider the enum provided above:
+```rust
+#[derive(NautilusEntrypoint)]
+NautilusProgramInstruction {
+    CreatePerson,
+    UpdatePerson,
+    DeletePerson,
+}
+```
+The macro will turn your enum into this enum:
 ```rust
 NautilusProgramInstruction {
     CreatePerson(CreatePersonArgs),
@@ -136,6 +149,7 @@ NautilusProgramInstruction {
     DeletePerson(DeletePersonArgs),
 }
 ```
+It will also build the program's processor like so:
 **Processor**
 ```rust
 use solana_program::{
@@ -172,7 +186,41 @@ fn process_instruction(
     }
 }
 ```
-> This method for adding unseen code to a developer's codebase is less than preferable and is a temporary solution for now.
+Note the naming conventions of the enum variants dictate the methods called within the processor.   
+For example, consider this variant:
+```rust
+    CreatePerson,
+```
+The name `CreatePerson` tells Nautilus to use the `create` method from the `Person` struct. This method is automatically implemented for the struct `Person` when the `#[derive(Nautilus)]` annotation is added to the Person struct.  
+   
+If someone wanted to define their own instruction, or override one of the defaults, they just need to provide custom args, like so:
+```rust
+#[derive(NautilusEntrypoint)]
+NautilusProgramInstruction {
+    CreatePerson,
+    UpdatePerson(MyCustomUpdatePersonArgs),
+    DeletePerson,
+}
+```
+Then when they define their actual operation for that instruction variant, it looks like this:
+```rust
+struct MyCustomUpdatePersonArgs {
+    arg1: String,
+    arg2: String,
+}
+
+fn update_person(program_id: &Pubkey, accounts: &[AccountInfo], args: MyCustomUpdatePersonArgs) {
+    
+    // The developer's custom logic can still make use of methods and associated functions for the struct
+    //      that implements the Nautilus traits
+    let accounts_iter = accounts.iter();
+    let person = Person::from_account_info(accounts_iter.next_account_info());
+    
+    person.update(None, Some("Paul"), None); // Updates only the `name` field
+
+    Ok(())
+}
+```
 
 ### :satellite: Client-Side SDK
 The client-side SDK is still in development, but generally, the IDL generated by Nautilus will also generate for you TypeScript types that the client-side SDK will rely on to provide functionality.
