@@ -1,5 +1,5 @@
 
-mod impl_test;
+mod entrypoint;
 
 #[cfg(test)]
 mod tests {
@@ -7,6 +7,6 @@ mod tests {
 
     #[test]
     fn unit_tests() {
-        impl_test::impl_test();
+        entrypoint::impl_test();
     }
 }

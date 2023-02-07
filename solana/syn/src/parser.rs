@@ -1,4 +1,4 @@
-use proc_macro2::Span;
+// use proc_macro2::Span;
 use std::io::Result;
 use syn::{
     Fields,

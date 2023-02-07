@@ -1,4 +1,3 @@
-use borsh::{ BorshDeserialize, BorshSerialize };
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult, 
@@ -122,7 +121,6 @@ pub trait NautilusDelete: borsh::ser::BorshSerialize + NautilusAccount {
         &self, 
         self_account: AccountInfo<'a>,
         payer: AccountInfo<'a>,
-        system_program: AccountInfo<'a>,
     ) -> ProgramResult {
         
         let dest_starting_lamports = payer.lamports();
