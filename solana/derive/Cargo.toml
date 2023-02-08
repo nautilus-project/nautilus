@@ -11,10 +11,16 @@ edition = "2021"
 [lib]
 proc-macro = true
 
+[[test]]
+name = "tests"
+path = "tests/test.rs"
+
+[dev-dependencies]
+solana-program = "1.15.0"
+trybuild = "1.0.77"
+
 [dependencies]
-borsh = "0.9.3"
-borsh-derive = "0.9.3"
-nautilus-syn = { path = "../syn", version = "0.0.1" }
 proc-macro2 = "1.0"
 quote = "1.0"
+nautilus-syn = { path = "../syn", version = "0.0.1" }
 syn = { version = "1.0", features = ["extra-traits"] }
