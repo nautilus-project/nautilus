@@ -12,7 +12,7 @@ enum MyInstructions {
     DeletePerson,
 }
 
-#[derive(Nautilus)]
+#[derive(NautilusAccount)]
 pub struct Person {
     #[primary_key(autoincrement = true)]
     id: u32,
@@ -61,11 +61,11 @@ As you can probably predict, every time we create new "records" in the table, we
 /test       -- Test repositories
 ```
 
-### ⚙️ The `#[derive(Nautilus)]` Macro
+### ⚙️ The `#[derive(NautilusAccount)]` Macro
 
 The macro itself consists of a `proc_derive` macro and it's associated attributes.   
 ```rust
-#[derive(Nautilus)]
+#[derive(NautilusAccount)]
 pub struct Person {
     #[primary_key(autoincrement = true)]
     id: u32,
@@ -151,7 +151,7 @@ For example, consider this variant:
 ```rust
     CreatePerson,
 ```
-The name `CreatePerson` tells Nautilus to use the `create` method from the `Person` struct. This method is automatically implemented for the struct `Person` when the `#[derive(Nautilus)]` annotation is added to the Person struct.  
+The name `CreatePerson` tells Nautilus to use the `create` method from the `Person` struct. This method is automatically implemented for the struct `Person` when the `#[derive(NautilusAccount)]` annotation is added to the Person struct.  
    
 If someone wanted to define their own instruction, or override one of the defaults, they just need to provide custom args, like so:
 ```rust
