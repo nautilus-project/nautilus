@@ -1,7 +1,3 @@
-mod entrypoint_borsh;
-mod entrypoint_processor;
-mod entrypoint_shank;
-
 use quote::{
     ToTokens,
     quote,
@@ -127,14 +123,39 @@ impl From<&NautilusEntrypointEnum> for TokenStream {
         println!("  -- bName: {}", bname);
         println!("  -- bIdent: {}", bident);
 
-        let borsh_impl = entrypoint_borsh::borsh_impl(name);
-        let processor = entrypoint_processor::processor(name);
-        let shank_impl = entrypoint_shank::shank_impl(name);
-
         quote! {
-            #borsh_impl
-            #processor
-            #shank_impl
+            use borsh::{ BorshDeserialize, BorshSerialize };
+
+            impl BorshDeserialize for #name {
+                fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
+                    BorshDeserialize::deserialize(&mut &buf[..])
+                }
+            }
+
+            impl BorshSerialize for #name {
+                fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+                    BorshSerialize::serialize(self, writer)
+                }
+            }
+            
+            use solana_program::{
+                account_info::AccountInfo,
+                entrypoint,
+                entrypoint::ProgramResult,
+                pubkey::Pubkey,
+            };
+        
+            fn process_instruction(
+                program_id: &Pubkey,
+                accounts: &[AccountInfo],
+                input: &[u8],
+            ) -> ProgramResult {
+                
+                Ok(())
+    
+            }
+    
+            entrypoint!(process_instruction);
         }.into()
     }
 }

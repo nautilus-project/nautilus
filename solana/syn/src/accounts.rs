@@ -1,7 +1,3 @@
-mod accounts_borsh;
-mod accounts_crud;
-mod accounts_shank;
-
 use quote::{
     ToTokens,
     quote,
@@ -13,9 +9,12 @@ use syn::{
     Data,
     DataStruct,
     DeriveInput,
+    Field,
     Fields,
+    FieldsNamed,
     Ident,
     Generics,
+    Path,
     Result,
     Token,
     Visibility,
@@ -103,7 +102,7 @@ pub fn data_struct(
         let semi = input.parse()?;
         Ok((where_clause, Fields::Unit, Some(semi)))
     } else {
-        Err(lookahead.error())
+        Err(lookahead.error()) // TODO: Can only be for structs
     }
 }
 
@@ -139,19 +138,75 @@ impl From<&NautilusAccountStruct> for TokenStream {
         
         let name = &ast.ident;
         let attrs = &ast.attrs;
-        
+        let fields = if let Data::Struct(
+            DataStruct { fields: Fields::Named(FieldsNamed { ref named, .. }), .. }
+        ) = &ast.data {
+            named
+        } else {
+            unimplemented!() // TODO: Can only be for structs
+        };
+
+        fn is_primary_key(field: &Field) -> bool {
+            if field.attrs.len() == 0 { return false };
+            for attr in field.attrs.iter() {
+                for seg in attr.path.segments.iter() {
+                    if seg.ident == "primary_key" { return true }
+                };
+            }
+            false
+        }
+
+        fn is_authority(field: &Field) -> bool {
+            if field.attrs.len() == 0 { return false };
+            for attr in field.attrs.iter() {
+                for seg in attr.path.segments.iter() {
+                    if seg.ident == "authority" { return true }
+                };
+            }
+            false
+        }
+
+        // let optionized = fields.iter().map(|f| {
+        //     let original_ty = f.ty.clone();
+        //     let ty = Path
+        //     Field {
+        //         attrs: Vec::new(),
+        //         vis: Visibility::Inherited,
+        //         ident: f.ident,
+        //         colon_token: f.colon_token,
+        //         ty,
+        //     }
+        // });
+
         println!("  -- Name: {}", name);
         println!("  -- Attrs: {:?}", attrs);
         println!("  -- Attrs len: {}", attrs.len());
 
-        let borsh_impl = accounts_borsh::borsh_impl(name);
-        let crud_impl = accounts_crud::crud_impl(name);
-        let shank_impl = accounts_shank::shank_impl(name);
+        println!("  -- Fields: {:?}", fields);
+        println!("  -- Field Attrs: {:?}", fields.first().unwrap().attrs);
+        println!("  -- Is Primary Key: {}", is_primary_key(fields.first().unwrap()));
+        println!("  -- Is Authority: {}", is_authority(fields.first().unwrap()));
         
         quote! {
-            #borsh_impl
-            #crud_impl
-            #shank_impl
+            
+            impl BorshDeserialize for #name {
+                fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
+                    BorshDeserialize::deserialize(&mut &buf[..])
+                }
+            }
+    
+            impl BorshSerialize for #name {
+                fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+                    BorshSerialize::serialize(self, writer)
+                }
+            }
+    
+            impl NautilusAccountBorsh for #name {}
+
+            impl NautilusAccountCreate for #name {}
+
+            impl NautilusAccountDelete for #name {}
+
         }.into()
     }
 }
