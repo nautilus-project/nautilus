@@ -19,18 +19,3 @@ fn can_parse() {
 
     let _ = person;
 }
-
-// #[test]
-// fn can_borsh() -> Result<(), ProgramError> {}
-
-// #[test]
-// fn can_shank() {}
-
-// #[test]
-// fn can_create() {}
-
-// #[test]
-// fn can_delete() {}
-
-// #[test]
-// fn can_update() {}
