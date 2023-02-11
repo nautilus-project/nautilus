@@ -2,7 +2,9 @@ use quote::{
     ToTokens,
     quote,
 };
-use proc_macro2::TokenStream;
+use proc_macro2::{
+    TokenStream,
+};
 use std::fmt::Debug;
 use syn::{
     Attribute,
@@ -14,7 +16,8 @@ use syn::{
     FieldsNamed,
     Ident,
     Generics,
-    Path,
+    Lit,
+    Meta,
     Result,
     Token,
     Visibility,
@@ -37,6 +40,8 @@ pub struct NautilusAccountStruct {
     pub data: Data,
 }
 
+// TODO: Is there a better way to do this impl?
+//
 // Parses the struct tokens and creates the NautilusAccountStruct struct
 //
 impl Parse for NautilusAccountStruct {
@@ -135,9 +140,13 @@ impl ToTokens for NautilusAccountStruct {
 //
 impl From<&NautilusAccountStruct> for TokenStream {
     fn from(ast: &NautilusAccountStruct) -> Self {
+
+        let mut primary_key_ident_opt: Option<Ident> = None;
+        let mut autoincrement_enabled: bool = true;
+        let mut authority_idents: Vec<Ident> = vec![];
         
         let name = &ast.ident;
-        let attrs = &ast.attrs;
+
         let fields = if let Data::Struct(
             DataStruct { fields: Fields::Named(FieldsNamed { ref named, .. }), .. }
         ) = &ast.data {
@@ -146,26 +155,17 @@ impl From<&NautilusAccountStruct> for TokenStream {
             unimplemented!() // TODO: Can only be for structs
         };
 
-        fn is_primary_key(field: &Field) -> bool {
-            if field.attrs.len() == 0 { return false };
-            for attr in field.attrs.iter() {
-                for seg in attr.path.segments.iter() {
-                    if seg.ident == "primary_key" { return true }
-                };
+        for field in fields {
+            let parsed_attributes = parse_attributes(field);
+            autoincrement_enabled = parsed_attributes.autoincrement;
+            if parsed_attributes.primary_key {
+                primary_key_ident_opt = Some(field.ident.clone().unwrap());
             }
-            false
-        }
-
-        fn is_authority(field: &Field) -> bool {
-            if field.attrs.len() == 0 { return false };
-            for attr in field.attrs.iter() {
-                for seg in attr.path.segments.iter() {
-                    if seg.ident == "authority" { return true }
-                };
+            if parsed_attributes.authority {
+                authority_idents.push(field.ident.clone().unwrap());
             }
-            false
         }
-
+        
         // let optionized = fields.iter().map(|f| {
         //     let original_ty = f.ty.clone();
         //     let ty = Path
@@ -178,15 +178,51 @@ impl From<&NautilusAccountStruct> for TokenStream {
         //     }
         // });
 
-        println!("  -- Name: {}", name);
-        println!("  -- Attrs: {:?}", attrs);
-        println!("  -- Attrs len: {}", attrs.len());
+        let primary_key_ident = match primary_key_ident_opt {
+            Some(ident) => ident,
+            None => todo!("Throw an error on None value"),
+        };
 
-        println!("  -- Fields: {:?}", fields);
-        println!("  -- Field Attrs: {:?}", fields.first().unwrap().attrs);
-        println!("  -- Is Primary Key: {}", is_primary_key(fields.first().unwrap()));
-        println!("  -- Is Authority: {}", is_authority(fields.first().unwrap()));
-        
+        let seed_prefix_binding = name.to_string().to_lowercase();
+        let seed_prefix = seed_prefix_binding.as_str();
+        let primary_key_seed = build_primary_key_seed(&primary_key_ident);
+
+        let authority_idents_len = authority_idents.len();
+        let check_authorities_syntax = match authority_idents.len() == 0 {
+            true => quote! { Ok(()) },
+            false => {
+                let mut authority_checks = TokenStream::new();
+                for authority_ident in authority_idents {
+                    authority_checks.extend(quote! {
+                        if account.key.eq(&self.#authority_ident) { assert!(account.is_signer) } // TODO: Not a valid check
+                    })
+                }
+                quote! {
+                    for account in accounts {
+                        #authority_checks
+                    }
+                    Ok(())
+                }
+            }
+        };
+
+        let gather_authorities_syntax = match authority_idents_len == 0 {
+            true => quote! { vec![]; },
+            false => {
+                let mut authorities = TokenStream::new();
+                for _ in 1..authority_idents_len {
+                    authorities.extend(quote! { 
+                        next_account_info(accounts_iter)?.to_owned(), 
+                    })
+                }
+                quote! {
+                    vec![
+                        #authorities
+                    ];
+                }
+            }
+        };
+ 
         quote! {
             
             impl BorshDeserialize for #name {
@@ -194,19 +230,152 @@ impl From<&NautilusAccountStruct> for TokenStream {
                     BorshDeserialize::deserialize(&mut &buf[..])
                 }
             }
-    
             impl BorshSerialize for #name {
                 fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
                     BorshSerialize::serialize(self, writer)
                 }
             }
-    
-            impl NautilusAccountBorsh for #name {}
 
-            impl NautilusAccountCreate for #name {}
+            impl NautilusAccountBase for #name {
 
-            impl NautilusAccountDelete for #name {}
+                const AUTO_INCREMENT: bool = #autoincrement_enabled;
+
+                fn seeds<'a>(&self) -> &[&'a [u8]] {
+                    &[
+                        #seed_prefix.as_bytes().as_ref(),
+                        #primary_key_seed,
+                    ]
+                }
+
+                fn seeds_with_bump<'a>(&self, program_id: &Pubkey) -> &[&'a [u8]] {
+                    let bump = self.pda(program_id).1;
+                    &[
+                        #seed_prefix.as_bytes().as_ref(),
+                        #primary_key_seed,
+                        bump.to_le_bytes().as_ref(),
+                    ]
+                }
+
+                fn pda(&self, program_id: &Pubkey) -> (Pubkey, u8) {
+                    Pubkey::find_program_address(
+                        self.seeds(),
+                        program_id, 
+                    )
+                }
+
+                fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
+                    #check_authorities_syntax
+                }
+
+                fn parse_nautilus_create_args<'a>(
+                    program_id: &'a Pubkey, 
+                    accounts: &'a [AccountInfo<'a>], 
+                    create_instruction_args: Self,
+                ) -> Result<NautilusCreateArgs<'a, Self>, ProgramError> {
+
+                    let accounts_iter = &mut accounts.iter();
+                    let autoinc_account = match Self::AUTO_INCREMENT {
+                        true => Some(next_account_info(accounts_iter)?.to_owned()),
+                        false => None,
+                    };
+                    let new_account = next_account_info(accounts_iter)?.to_owned();
+                    let authorities = #gather_authorities_syntax
+                    let fee_payer = next_account_info(accounts_iter)?.to_owned();
+                    let system_program = next_account_info(accounts_iter)?.to_owned();
+
+                    Ok(NautilusCreateArgs { 
+                        program_id, 
+                        autoinc_account, 
+                        new_account, 
+                        authorities,
+                        fee_payer, 
+                        system_program, 
+                        data: create_instruction_args, 
+                    })
+                }
+
+                fn parse_nautilus_delete_args<'a>(
+                    program_id: &'a Pubkey, 
+                    accounts: &'a [AccountInfo<'a>], 
+                ) -> Result<NautilusDeleteArgs<'a>, ProgramError> {
+
+                    let accounts_iter = &mut accounts.iter();
+                    let target_account = next_account_info(accounts_iter)?.to_owned();
+                    let authorities = #gather_authorities_syntax
+                    let fee_payer = next_account_info(accounts_iter)?.to_owned();
+            
+                    Ok(NautilusDeleteArgs { 
+                        program_id, 
+                        target_account, 
+                        authorities, 
+                        fee_payer, 
+                    })
+                }
+
+                fn parse_nautilus_update_args<'a>(
+                    program_id: &'a Pubkey, 
+                    accounts: &'a [AccountInfo<'a>], 
+                    update_data: Self,
+                ) -> Result<NautilusUpdateArgs<'a, Self>, ProgramError> {
+
+                    let accounts_iter = &mut accounts.iter();
+                    let target_account = next_account_info(accounts_iter)?.to_owned();
+                    let authorities = #gather_authorities_syntax
+                    let fee_payer = next_account_info(accounts_iter)?.to_owned();
+            
+                    Ok(NautilusUpdateArgs { 
+                        program_id, 
+                        target_account, 
+                        authorities,
+                        fee_payer, 
+                        update_data, 
+                    })
+                }
+            }
 
         }.into()
+    }
+}
+
+struct NautilusAccountFieldAttributes {
+    primary_key: bool,
+    autoincrement: bool,
+    authority: bool,
+}
+
+fn parse_attributes(field: &Field) -> NautilusAccountFieldAttributes {
+    let mut primary_key = false;
+    let mut autoincrement = true;
+    let mut authority = false;
+    for attr in field.attrs.iter() {
+        if attr.path.is_ident("primary_key") { primary_key = true } // TODO: Add type check on Primary Key
+        if attr.path.is_ident("authority") { authority = true }
+        if primary_key {
+            match attr.parse_meta() {
+                Ok(meta) => {
+                    if let Meta::NameValue(m) = meta {
+                        if m.path.is_ident("autoincrement") {
+                            if let Lit::Bool(lit_bool) = &m.lit {
+                                autoincrement = lit_bool.value;
+                            }                    
+                        }          
+                    }
+                },
+                Err(_) => (),
+            }
+        }
+    };
+    NautilusAccountFieldAttributes {
+        primary_key,
+        autoincrement,
+        authority,
+    }
+}
+
+// TODO: Build seed derivation based on type
+//
+fn build_primary_key_seed(key: &Ident) -> TokenStream {
+    quote! {
+        self.#key.to_le_bytes().as_ref()
     }
 }

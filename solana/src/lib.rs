@@ -22,7 +22,9 @@ pub use solana_program::{
     sysvar,
 };
 
-pub trait NautilusAccountBorsh: BorshDeserialize + BorshSerialize {
+pub trait NautilusAccountBase: BorshDeserialize + BorshSerialize + Sized {
+
+    const AUTO_INCREMENT: bool;
 
     fn span(&self) -> Result<usize, ProgramError> {
         Ok((self.try_to_vec()?).len())
@@ -39,44 +41,48 @@ pub trait NautilusAccountBorsh: BorshDeserialize + BorshSerialize {
                 .minimum_balance(self.span()?)
         )
     }
-}
 
-pub struct NautilusCreateArgs<'a, T: Sized + NautilusAccountBorsh> {
-    new_account: AccountInfo<'a>,
-    fee_payer: AccountInfo<'a>,
-    system_program: AccountInfo<'a>,
-    program_id: &'a Pubkey,
-    data: T,
-}
+    fn seeds<'a>(&self) -> &[&'a [u8]];
 
-pub trait NautilusAccountCreate: Sized + NautilusAccountBorsh {
+    fn seeds_with_bump<'a>(&self, program_id: &Pubkey) -> &[&'a [u8]];
 
-    fn parse_args<'a>(
+    fn pda(&self, program_id: &Pubkey) -> (Pubkey, u8);
+
+    fn check_pda(&self, program_id: &Pubkey, key: &Pubkey) -> Result<(), ProgramError> {
+        if key != &self.pda(program_id).0 {
+            return Err(ProgramError::InvalidSeeds)
+        }
+        Ok(())
+    }
+
+    fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError>;
+
+    fn autoincrement(autoinc_account: AccountInfo) -> ProgramResult {
+        let mut counter = NautilusAutoincrementData::try_from_slice(
+            &autoinc_account.data.borrow_mut()
+        )?;
+        counter.count += 1;
+        counter.serialize(&mut &mut autoinc_account.data.borrow_mut()[..])?;
+        Ok(())
+    }
+
+    fn parse_nautilus_create_args<'a>(
         program_id: &'a Pubkey, 
         accounts: &'a [AccountInfo<'a>], 
         create_instruction_args: Self,
-    ) -> Result<NautilusCreateArgs<'a, Self>, ProgramError> {
+    ) -> Result<NautilusCreateArgs<'a, Self>, ProgramError>;
 
-        let accounts_iter = &mut accounts.iter();
-        let new_account = next_account_info(accounts_iter)?.to_owned();
-        let fee_payer = next_account_info(accounts_iter)?.to_owned();
-        let system_program = next_account_info(accounts_iter)?.to_owned();
+    fn nautilus_create(args: NautilusCreateArgs<Self>) -> ProgramResult {
 
-        Ok(NautilusCreateArgs { 
-            new_account, 
-            fee_payer, 
-            system_program, 
-            program_id, 
-            data: create_instruction_args, 
-        })
-    }
+        args.data.check_pda(args.program_id, args.fee_payer.key)?;
+        args.data.check_authorities(args.authorities)?;
 
-    fn create(args: NautilusCreateArgs<Self>) -> ProgramResult {
-
-        // TODO: Implement Shank
-        // assert!(
-        //     args.new_account == args.data.shank_pda().0
-        // );
+        if Self::AUTO_INCREMENT { 
+            match args.autoinc_account {
+                Some(autoinc_account) => Self::autoincrement(autoinc_account)?,
+                None => return Err(ProgramError::NotEnoughAccountKeys),
+            }
+         };
 
         invoke_signed(
             &system_instruction::create_account(
@@ -91,9 +97,8 @@ pub trait NautilusAccountCreate: Sized + NautilusAccountBorsh {
                 args.fee_payer, 
                 args.system_program,
             ], 
-            // TODO: Implement Shank
-            // args.data.shank_seeds_with_bump(),
-            &[&[]],
+            // &[&args.data.seeds_with_bump()],
+            &[&[]]
         )?;
 
         args.data.serialize(&mut &mut args.new_account.data.borrow_mut()[..])?;
@@ -101,35 +106,15 @@ pub trait NautilusAccountCreate: Sized + NautilusAccountBorsh {
         Ok(())
     }
 
-}
-
-pub struct NautilusDeleteArgs<'a> {
-    target_account: AccountInfo<'a>,
-    fee_payer: AccountInfo<'a>,
-}
-
-pub trait NautilusAccountDelete: Sized + NautilusAccountBorsh {
-
-    fn parse_args<'a>(
+    fn parse_nautilus_delete_args<'a>(
+        program_id: &'a Pubkey, 
         accounts: &'a [AccountInfo<'a>], 
-    ) -> Result<NautilusDeleteArgs<'a>, ProgramError> {
+    ) -> Result<NautilusDeleteArgs<'a>, ProgramError>;
 
-        let accounts_iter = &mut accounts.iter();
-        let target_account = next_account_info(accounts_iter)?.to_owned();
-        let fee_payer = next_account_info(accounts_iter)?.to_owned();
+    fn nautilus_delete(args: NautilusDeleteArgs) -> ProgramResult {
 
-        Ok(NautilusDeleteArgs { 
-            target_account, 
-            fee_payer, 
-        })
-    }
-
-    fn delete(args: NautilusDeleteArgs) -> ProgramResult {
-
-        // TODO: Implement Shank
-        // assert!(
-        //     args.new_account == args.data.shank_pda().0
-        // );
+        let data = Self::try_from_slice(&args.target_account.data.borrow())?;
+        data.check_authorities(args.authorities)?;
 
         let dest_starting_lamports = args.fee_payer.lamports();
         **args.fee_payer.lamports.borrow_mut() =
@@ -139,52 +124,57 @@ pub trait NautilusAccountDelete: Sized + NautilusAccountBorsh {
         args.target_account.realloc(0, false).map_err(Into::into)
     }
 
-}
-
-pub struct NautilusUpdateArgs<'a, T: Sized + NautilusAccountBorsh> {
-    target_account: AccountInfo<'a>,
-    // TODO: Figure out how to check authority, if it's set
-    authority: Option<AccountInfo<'a>>,
-    update_data: T,
-}
-
-pub trait NautilusAccountUpdate: Sized + NautilusAccountBorsh {
-
-    fn parse_args<'a>(
+    fn parse_nautilus_update_args<'a>(
+        program_id: &'a Pubkey, 
         accounts: &'a [AccountInfo<'a>], 
         update_data: Self,
-    ) -> Result<NautilusUpdateArgs<'a, Self>, ProgramError> {
+    ) -> Result<NautilusUpdateArgs<'a, Self>, ProgramError>;
 
-        let accounts_iter = &mut accounts.iter();
-        let target_account = next_account_info(accounts_iter)?.to_owned();
-        let authority = match next_account_info(accounts_iter) {
-            Ok(account_info) => Some(account_info.to_owned()),
-            Err(_) => None,
-        };
-
-        Ok(NautilusUpdateArgs { 
-            target_account, 
-            authority,
-            update_data, 
-        })
-    }
-
-    fn process_update_data(_data: Self, _update_data: Self) -> Self {
+    fn process_nautilus_update_data(_data: Self, _update_data: Self) -> Self {
         todo!()
     }
 
-    fn update(args: NautilusUpdateArgs<Self>) -> ProgramResult {
+    fn nautilus_update(args: NautilusUpdateArgs<Self>) -> ProgramResult {
 
-        // TODO: Implement Shank
-        // assert!(
-        //     args.new_account == args.data.shank_pda().0
-        // );
+        args.update_data.check_pda(args.program_id, args.target_account.key)?;
 
         let mut data = Self::try_from_slice(&args.target_account.data.borrow_mut())?;
-        data = Self::process_update_data(data, args.update_data);
+        data.check_authorities(args.authorities)?;
+
+        data = Self::process_nautilus_update_data(data, args.update_data);
         data.serialize(&mut &mut args.target_account.data.borrow_mut()[..])?;
 
         Ok(())
     }
 
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct NautilusAutoincrementData {
+    pub count: u64,
+}
+
+pub struct NautilusCreateArgs<'a, T: NautilusAccountBase> {
+    pub program_id: &'a Pubkey, 
+    pub autoinc_account: Option<AccountInfo<'a>>,
+    pub new_account: AccountInfo<'a>,
+    pub authorities: Vec<AccountInfo<'a>>,
+    pub fee_payer: AccountInfo<'a>,
+    pub system_program: AccountInfo<'a>,
+    pub data: T,
+}
+
+pub struct NautilusDeleteArgs<'a> {
+    pub program_id: &'a Pubkey, 
+    pub target_account: AccountInfo<'a>,
+    pub authorities: Vec<AccountInfo<'a>>,
+    pub fee_payer: AccountInfo<'a>,
+}
+
+pub struct NautilusUpdateArgs<'a, T: NautilusAccountBase> {
+    pub program_id: &'a Pubkey, 
+    pub target_account: AccountInfo<'a>,
+    pub authorities: Vec<AccountInfo<'a>>,
+    pub fee_payer: AccountInfo<'a>,
+    pub update_data: T,
 }
