@@ -142,8 +142,26 @@ pub trait NautilusAccountBase: BorshDeserialize + BorshSerialize + Sized {
         data.check_authorities(args.authorities)?;
 
         data = Self::process_nautilus_update_data(data, args.update_data);
-        data.serialize(&mut &mut args.target_account.data.borrow_mut()[..])?;
+        
+        let diff = data.lamports_required()? - args.target_account.lamports();
 
+        invoke(
+            &system_instruction::transfer(
+                args.fee_payer.key, 
+                args.target_account.key, 
+                diff
+            ),
+            &[
+                args.fee_payer.clone(), 
+                args.target_account.clone(), 
+                args.system_program.clone()
+            ],
+        )?;
+    
+        args.target_account.realloc(data.span()?, false)?;
+        
+        data.serialize(&mut &mut args.target_account.data.borrow_mut()[..])?;
+        
         Ok(())
     }
 
@@ -176,5 +194,6 @@ pub struct NautilusUpdateArgs<'a, T: NautilusAccountBase> {
     pub target_account: AccountInfo<'a>,
     pub authorities: Vec<AccountInfo<'a>>,
     pub fee_payer: AccountInfo<'a>,
+    pub system_program: AccountInfo<'a>,
     pub update_data: T,
 }

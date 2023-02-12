@@ -322,12 +322,14 @@ impl From<&NautilusAccountStruct> for TokenStream {
                     let target_account = next_account_info(accounts_iter)?.to_owned();
                     let authorities = #gather_authorities_syntax
                     let fee_payer = next_account_info(accounts_iter)?.to_owned();
+                    let system_program = next_account_info(accounts_iter)?.to_owned();
             
                     Ok(NautilusUpdateArgs { 
                         program_id, 
                         target_account, 
                         authorities,
                         fee_payer, 
+                        system_program, 
                         update_data, 
                     })
                 }
