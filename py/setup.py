@@ -19,5 +19,7 @@ setup(
        "pytest",
        "solana",
        "solders",
+       "sqlparse",
+       "termcolor",
    ],
 )
