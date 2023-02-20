@@ -1,30 +1,38 @@
 import { 
+    AccountInfo,
     Connection,
     GetProgramAccountsConfig,
     GetProgramAccountsFilter,
-    Keypair,
+    PublicKey,
+    SendOptions,
+    Signer,
     TransactionInstruction,
     TransactionMessage,
     VersionedTransaction,
 } from '@solana/web3.js';
-import { NautilusTable } from '../sql';
 
 export class NautilusUtils {
 
     // Get Program Accounts
 
     static async getProgramAccounts(
-        nautilusTable: NautilusTable, 
+        connection: Connection,
+        programId: PublicKey, 
         config: GetProgramAccountsConfig,
-    ): Promise<any[]> {
-        return nautilusTable.nautilus.connection.getProgramAccounts(
-            nautilusTable.nautilus.programId,
+        returnFields?: string[]
+    ): Promise<{
+        pubkey: PublicKey,
+        account: AccountInfo<any>
+    }[]> {
+        return connection.getProgramAccounts(
+            programId,
             config,
         )
     }
 
     // Nautilus Instruction Utils
 
+    // TODO: Create these filters based on the IDL and the passed tableName
     static evaluateWhereFilter(
         field: string,
         operator: string,
@@ -38,19 +46,37 @@ export class NautilusUtils {
         }
     }
 
-    // TODO: Build these functions so that they can craft a CUD instruction 
-    //      for the user's Solana program, based on the table schema
-    //
-    static createCreateInstruction(params: any): TransactionInstruction {
-        return ix;
+    // TODO: Create these instructions based on the IDL and the passed tableName
+    static createCreateInstruction(programId: PublicKey, tableName: string, data: any): TransactionInstruction {
+        return {
+            programId,
+            keys: [{
+                pubkey: PublicKey.unique(), isSigner: true, isWritable: true
+            }],
+            data: Buffer.alloc(0),
+        }
     }
 
-    static createUpdateInstruction(params: any): TransactionInstruction {
-        return ix;
+    // TODO: Create these instructions based on the IDL and the passed tableName
+    static createDeleteInstruction(programId: PublicKey, tableName: string, account: any): TransactionInstruction {
+        return {
+            programId,
+            keys: [{
+                pubkey: PublicKey.unique(), isSigner: true, isWritable: true
+            }],
+            data: Buffer.alloc(0),
+        }
     }
 
-    static createDeleteInstruction(params: any): TransactionInstruction {
-        return ix;
+    // TODO: Create these instructions based on the IDL and the passed tableName
+    static createUpdateInstruction(programId: PublicKey, tableName: string, data: any): TransactionInstruction {
+        return {
+            programId,
+            keys: [{
+                pubkey: PublicKey.unique(), isSigner: true, isWritable: true
+            }],
+            data: Buffer.alloc(0),
+        }
     }
 
 
@@ -59,11 +85,12 @@ export class NautilusUtils {
     static async buildTransaction(
         connection: Connection,
         instructionsList: TransactionInstruction[],
-        signer: Keypair,
+        signers: Signer[],
+        payerKey: PublicKey,
     ): Promise<VersionedTransaction> {
         const tx = new VersionedTransaction(
             new TransactionMessage({
-                payerKey: signer.publicKey,
+                payerKey,
                 recentBlockhash: (
                     await connection
                         .getLatestBlockhash()
@@ -72,22 +99,25 @@ export class NautilusUtils {
                 instructions: instructionsList,
             }).compileToV0Message()
         );
-        tx.sign([signer])
+        tx.sign(signers)
         return tx
     }
 
     static async sendTransactionWithSigner(
         connection: Connection,
-        instruction: TransactionInstruction,
-        signer: Keypair,
+        instructions: TransactionInstruction[],
+        signers: Signer[],
+        feePayer: PublicKey,
+        sendOptions?: SendOptions,
     ): Promise<string> {
         return connection.sendTransaction(
             (await NautilusUtils.buildTransaction(
                 connection, 
-                [instruction], 
-                signer,
+                instructions, 
+                signers,
+                feePayer,
             )),
-
+            sendOptions,
         )
     }
 }
