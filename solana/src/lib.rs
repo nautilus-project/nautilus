@@ -1,34 +1,26 @@
 //
-// --------------------
-//      Nautilus
-// --------------------
+//
+// ----------------------------------------------------------------
+//                          Nautilus
+// ----------------------------------------------------------------
+//
 //
 extern crate self as nautilus;
 
-pub use borsh::{ BorshDeserialize, BorshSerialize };
-pub use nautilus_derive::NautilusAccount;
-pub use nautilus_derive::NautilusEntrypoint;
-pub use solana_program::account_info::AccountInfo;
-pub use solana_program::entrypoint;
-pub use solana_program::entrypoint::ProgramResult;
-pub use solana_program::pubkey::Pubkey;
-pub use solana_program::sysvar::{
-    rent::Rent,
-    Sysvar,
+pub mod accounts;
+pub mod entry;
+
+pub use borsh::{BorshDeserialize, BorshSerialize};
+pub use nautilus_derive::{Nautilus, NautilusAccount};
+pub use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint,
+    entrypoint::ProgramResult,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    system_instruction, system_program, sysvar,
 };
-use std::io::Result;
 
-pub trait NautilusAccountBorsh: BorshDeserialize + BorshSerialize {
-
-    fn span(&self) -> Result<usize> {
-        Ok((self.try_to_vec()?).len())
-    }
-
-    fn size(&self) -> Result<u64> {
-        Ok(self.span()?.try_into().unwrap())
-    }
-
-    fn lamports_required(&self) -> Result<u64> {
-        Ok((Rent::get().unwrap()).minimum_balance(self.span()?))
-    }
-}
+pub use crate::accounts::*;
+pub use crate::entry::*;

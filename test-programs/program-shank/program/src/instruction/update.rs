@@ -29,21 +29,22 @@ pub fn update_person(
 ) -> ProgramResult {
 
     let accounts_iter = &mut accounts.iter();
-    let person_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
+    let target_account = next_account_info(accounts_iter)?;
+    let authority = next_account_info(accounts_iter)?;
+    let fee_payer = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
 
-    // let (person_account_pda, person_account_bump) = Person::shank_pda(program_id, args.id);
-    let (person_account_pda, _) = Pubkey::find_program_address(
+    // let (target_account_pda, target_account_bump) = Person::shank_pda(program_id, args.id);
+    let (target_account_pda, _) = Pubkey::find_program_address(
         &[
             b"person", 
             args.id.to_le_bytes().as_ref()
         ],
         program_id,
     );
-    assert!(&person_account_pda == person_account.key);
+    assert!(&target_account_pda == target_account.key);
 
-    let person_data = Person::try_from_slice(&person_account.data.borrow())?;
+    let person_data = Person::try_from_slice(&target_account.data.borrow())?;
 
     let mut new_person_data = person_data.clone();
     match args.name {
@@ -58,15 +59,15 @@ pub fn update_person(
     let account_span = (new_person_data.try_to_vec()?).len();
     let lamports_required = (Rent::get()?).minimum_balance(account_span);
     
-    let diff = lamports_required - person_account.lamports();
+    let diff = lamports_required - target_account.lamports();
     invoke(
-        &system_instruction::transfer(payer.key, person_account.key, diff),
-        &[payer.clone(), person_account.clone(), system_program.clone()],
+        &system_instruction::transfer(fee_payer.key, target_account.key, diff),
+        &[fee_payer.clone(), target_account.clone(), system_program.clone()],
     )?;
 
-    person_account.realloc(account_span, false)?;
+    target_account.realloc(account_span, false)?;
     
-    person_data.serialize(&mut &mut person_account.data.borrow_mut()[..])?;
+    person_data.serialize(&mut &mut target_account.data.borrow_mut()[..])?;
 
     Ok(())
 }

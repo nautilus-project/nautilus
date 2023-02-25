@@ -8,17 +8,12 @@ description = "Solana SQL driver for PDAs"
 rust-version = "1.59"
 edition = "2021"
 
-[[test]]
-name = "tests"
-path = "tests/test.rs"
-
-[dev-dependencies]
-solana-program = "1.15.0"
-trybuild = "1.0.77"
-
 [dependencies]
 borsh = "0.9.3"
 borsh-derive = "0.9.3"
 solana-program = "1.15.0"
 nautilus-derive = { path = "./derive", version = "0.0.1" }
 bytemuck = "1.13.0"
+
+[dev-dependencies]
+solana-program-test = "1.15.0"
