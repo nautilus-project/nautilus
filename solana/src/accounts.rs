@@ -1,7 +1,6 @@
 pub use borsh::{BorshDeserialize, BorshSerialize};
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo},
-    entrypoint,
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
     program_error::ProgramError,

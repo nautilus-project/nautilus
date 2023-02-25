@@ -3,12 +3,9 @@ pub fn nautilus_entrypoint_borsh(
     variants: &syn::punctuated::Punctuated<syn::Variant, syn::token::Comma>,
 ) -> proc_macro2::TokenStream {
     let mut x: u8 = 0;
-    let mut variants_with_values: Vec<(syn::Ident, syn::Ident)> = vec![];
+    let mut variants_with_values: Vec<(syn::Ident, u8)> = vec![];
     for v in variants.iter() {
-        variants_with_values.push((
-            v.ident.clone(),
-            syn::Ident::new(&(x.to_string() + "u8"), proc_macro2::Span::call_site()),
-        ));
+        variants_with_values.push((v.ident.clone(), x));
         x += 1;
     }
 
@@ -16,7 +13,7 @@ pub fn nautilus_entrypoint_borsh(
         quote::quote! { #enum_name::#v => #val }
     });
     let tokens_ser_match_arms = variants_with_values.iter().map(|(v, _)| {
-        quote::quote! { #enum_name::#v => {} }
+        quote::quote! { #enum_name::#v => {}, }
     });
     let tokens_deser_variants = variants_with_values.iter().map(|(v, val)| {
         quote::quote! { #val => #enum_name::#v }
@@ -33,7 +30,7 @@ pub fn nautilus_entrypoint_borsh(
                 };
                 writer.write_all(&variant_idx.to_le_bytes())?;
                 match self {
-                    #(#tokens_ser_match_arms,)*
+                    #(#tokens_ser_match_arms)*
                 }
                 Ok(())
             }

@@ -2,11 +2,14 @@
 fn can_parse() {
     use nautilus::*;
 
-    #[derive(NautilusEntrypoint)]
-    enum MyInstructions<'a> {
-        CreatePerson(NautilusCreateArgs<'a, Person>),
-        UpdatePerson(NautilusDeleteArgs<'a>),
-        DeletePerson(NautilusUpdateArgs<'a, PersonOptionized>),
+    nautilus! {
+        MyInstructions {
+            CreatePerson,
+            UpdatePerson,
+            DeletePerson,
+            #[instruction(custom_instruction)]
+            CustomInstruction(CustomInstructionArgs),
+        }
     }
 
     #[derive(NautilusAccount)]
@@ -19,4 +22,14 @@ fn can_parse() {
         #[authority]
         signer: Pubkey,
     }
+
+    struct CustomInstructionAccounts<'a> {
+        payer: AccountInfo<'a>,
+    }
+
+    struct CustomInstructionArgs {
+        name: String,
+    }
+
+    fn custom_instruction(accounts: CustomInstructionAccounts, args: CustomInstructionArgs) {}
 }

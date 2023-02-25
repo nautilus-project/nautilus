@@ -6,7 +6,7 @@
 //
 //
 pub mod accounts;
-pub mod entrypoint;
+pub mod entry;
 
 pub use accounts::*;
-pub use entrypoint::*;
+pub use entry::*;

@@ -1,11 +1,11 @@
 extern crate proc_macro;
 
+use nautilus_syn::{NautilusAccountStruct, NautilusEntrypointEnum};
 use proc_macro::TokenStream;
 use quote::ToTokens;
-use nautilus_syn::{ NautilusAccountStruct, NautilusEntrypointEnum };
 use syn::parse_macro_input;
 
-#[proc_macro_derive(NautilusEntrypoint)]
+#[proc_macro_derive(Nautilus)]
 pub fn derive_nautilus_entrypoint(input: TokenStream) -> TokenStream {
     parse_macro_input!(input as NautilusEntrypointEnum)
         .to_token_stream()
