@@ -1,13 +1,11 @@
-// #[test]
-// fn can_parse() {
-//     use nautilus::*;
+#[test]
+fn can_parse() {
+    use nautilus::*;
 
-//     #[derive(NautilusEntrypoint)]
-//     enum MyInstructions {
-//         CreatePerson,
-//         UpdatePerson,
-//         DeletePerson,
-//     }
-// }
-
-// TODO: More tests
+    #[derive(NautilusEntrypoint, BorshDeserialize, BorshSerialize)]
+    enum MyInstructions {
+        CreatePerson(CreatePersonArgs),
+        UpdatePerson(DeletePersonArgs),
+        DeletePerson(UpdatePersonArgs),
+    }
+}
