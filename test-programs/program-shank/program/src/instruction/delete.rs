@@ -9,13 +9,14 @@ pub fn delete_person(
 ) -> ProgramResult {
 
     let accounts_iter = &mut accounts.iter();
-    let person_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
+    let target_account = next_account_info(accounts_iter)?;
+    let authority = next_account_info(accounts_iter)?;
+    let fee_payer = next_account_info(accounts_iter)?;
 
-    let dest_starting_lamports = payer.lamports();
-    **payer.lamports.borrow_mut() =
-        dest_starting_lamports.checked_add(person_account.lamports()).unwrap();
-    **person_account.lamports.borrow_mut() = 0;
-    person_account.assign(&system_program::ID);
-    person_account.realloc(0, false).map_err(Into::into)
+    let dest_starting_lamports = fee_payer.lamports();
+    **fee_payer.lamports.borrow_mut() =
+        dest_starting_lamports.checked_add(target_account.lamports()).unwrap();
+    **target_account.lamports.borrow_mut() = 0;
+    target_account.assign(&system_program::ID);
+    target_account.realloc(0, false).map_err(Into::into)
 }

@@ -29,19 +29,21 @@ pub fn create_person(
 ) -> ProgramResult {
 
     let accounts_iter = &mut accounts.iter();
-    let person_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
+    let autoinc_account = next_account_info(accounts_iter)?;
+    let new_account = next_account_info(accounts_iter)?;
+    let authority = next_account_info(accounts_iter)?;
+    let fee_payer = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
 
-    // let (person_account_pda, person_account_bump) = Person::shank_pda(program_id, args.id);
-    let (person_account_pda, person_account_bump) = Pubkey::find_program_address(
+    // let (new_account_pda, new_account_bump) = Person::shank_pda(program_id, args.id);
+    let (new_account_pda, new_account_bump) = Pubkey::find_program_address(
         &[
             b"person", 
             args.id.to_le_bytes().as_ref()
         ],
         program_id,
     );
-    assert!(&person_account_pda == person_account.key);
+    assert!(&new_account_pda == new_account.key);
 
     let person_data = Person {
         id: args.id,
@@ -54,24 +56,24 @@ pub fn create_person(
 
     invoke_signed(
         &system_instruction::create_account(
-            &payer.key,
-            &person_account.key,
+            &fee_payer.key,
+            &new_account.key,
             lamports_required,
             account_span as u64,
             program_id,
         ),
         &[
-            payer.clone(), person_account.clone(), system_program.clone()
+            fee_payer.clone(), new_account.clone(), system_program.clone()
         ],
-        // Person::shank_seeds_with_bump(args.id, &[person_account_bump]),
+        // Person::shank_seeds_with_bump(args.id, &[new_account_bump]),
         &[&[
             b"person",
             person_data.id.to_le_bytes().as_ref(),
-            person_account_bump.to_le_bytes().as_ref(),
+            new_account_bump.to_le_bytes().as_ref(),
         ]]
     )?;
     
-    person_data.serialize(&mut &mut person_account.data.borrow_mut()[..])?;
+    person_data.serialize(&mut &mut new_account.data.borrow_mut()[..])?;
 
     Ok(())
 }

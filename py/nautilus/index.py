@@ -1,5 +1,12 @@
-import asyncio
-from py.nautilus.util.index import NautilusUtils
+#
+#
+# ----------------------------------------------------------------
+#                          Nautilus
+# ----------------------------------------------------------------
+#
+#
+
+from .util.index import NautilusUtils
 from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
 from solders.keypair import Keypair
@@ -12,7 +19,7 @@ class Nautilus:
 
     util: NautilusUtils
 
-    def __init__(self, connection, programId, payer):
+    def __init__(self, connection, programId, payer=None):
         self.connection = connection
         self.programId = programId
         self.payer = payer
