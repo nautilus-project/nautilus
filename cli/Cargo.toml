@@ -1,0 +1,9 @@
+[package]
+name = "nautilus-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.1.7", features = ["derive"] }
+spinners = "4.1.0"
+termcolor = "1.2.0"
