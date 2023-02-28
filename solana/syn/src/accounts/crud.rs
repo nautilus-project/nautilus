@@ -5,10 +5,10 @@ pub fn nautilus_account_create_tokens(
     quote::quote! {
         impl nautilus::NautilusAccountCreate for #struct_name {
             fn parse_nautilus_create_args<'a>(
-                program_id: &'a Pubkey,
+                program_id: &'a nautilus::Pubkey,
                 accounts: &'a [AccountInfo<'a>],
                 create_instruction_args: Self,
-            ) -> Result<NautilusCreateArgs<'a, Self>, ProgramError> {
+            ) -> Result<nautilus::NautilusCreateArgs<'a, Self>, nautilus::ProgramError> {
 
                 let accounts_iter = &mut accounts.iter();
                 let autoinc_account = match Self::AUTO_INCREMENT {
@@ -20,7 +20,7 @@ pub fn nautilus_account_create_tokens(
                 let fee_payer = next_account_info(accounts_iter)?.to_owned();
                 let system_program = next_account_info(accounts_iter)?.to_owned();
 
-                Ok(NautilusCreateArgs {
+                Ok(nautilus::NautilusCreateArgs {
                     program_id,
                     autoinc_account,
                     new_account,
@@ -41,16 +41,16 @@ pub fn nautilus_account_delete_tokens(
     quote::quote! {
         impl nautilus::NautilusAccountDelete for #struct_name {
             fn parse_nautilus_delete_args<'a>(
-                program_id: &'a Pubkey,
+                program_id: &'a nautilus::Pubkey,
                 accounts: &'a [AccountInfo<'a>],
-            ) -> Result<NautilusDeleteArgs<'a>, ProgramError> {
+            ) -> Result<nautilus::NautilusDeleteArgs<'a>, nautilus::ProgramError> {
 
                 let accounts_iter = &mut accounts.iter();
                 let target_account = next_account_info(accounts_iter)?.to_owned();
                 let authorities = #gather_authorities_syntax
                 let fee_payer = next_account_info(accounts_iter)?.to_owned();
 
-                Ok(NautilusDeleteArgs {
+                Ok(nautilus::NautilusDeleteArgs {
                     program_id,
                     target_account,
                     authorities,
@@ -70,10 +70,10 @@ pub fn nautilus_account_update_tokens(
         impl nautilus::NautilusAccountUpdate for #struct_name {
 
             fn parse_nautilus_update_args<'a, T: nautilus::NautilusOptionized>(
-                program_id: &'a Pubkey,
+                program_id: &'a nautilus::Pubkey,
                 accounts: &'a [AccountInfo<'a>],
                 update_data: T,
-            ) -> Result<NautilusUpdateArgs<'a, T>, ProgramError> {
+            ) -> Result<nautilus::NautilusUpdateArgs<'a, T>, nautilus::ProgramError> {
 
                 let accounts_iter = &mut accounts.iter();
                 let target_account = next_account_info(accounts_iter)?.to_owned();
@@ -81,7 +81,7 @@ pub fn nautilus_account_update_tokens(
                 let fee_payer = next_account_info(accounts_iter)?.to_owned();
                 let system_program = next_account_info(accounts_iter)?.to_owned();
 
-                Ok(NautilusUpdateArgs {
+                Ok(nautilus::NautilusUpdateArgs {
                     program_id,
                     target_account,
                     authorities,

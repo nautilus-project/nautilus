@@ -4,19 +4,19 @@ pub fn nautilus_borsh_self(
 ) -> proc_macro2::TokenStream {
     let borsh_ser_where = fields.iter().map(|f| {
         let field_ty = f.ty.clone();
-        quote::quote! { #field_ty: borsh::ser::BorshSerialize }
+        quote::quote! { #field_ty: nautilus::borsh::ser::BorshSerialize }
     });
     let borsh_ser_impl = fields.iter().map(|f| {
         let field_name = f.ident.clone();
-        quote::quote! { borsh::BorshSerialize::serialize(&self.#field_name, writer)? }
+        quote::quote! { nautilus::borsh::BorshSerialize::serialize(&self.#field_name, writer)? }
     });
     let borsh_deser_where = fields.iter().map(|f| {
         let field_ty = f.ty.clone();
-        quote::quote! { #field_ty: borsh::de::BorshDeserialize }
+        quote::quote! { #field_ty: nautilus::borsh::de::BorshDeserialize }
     });
     let borsh_deser_impl = fields.iter().map(|f| {
         let field_name = f.ident.clone();
-        quote::quote! { #field_name: borsh::BorshDeserialize::deserialize(buf)? }
+        quote::quote! { #field_name: nautilus::borsh::BorshDeserialize::deserialize(buf)? }
     });
     borsh_impl(
         struct_name,
@@ -33,16 +33,16 @@ pub fn nautilus_borsh_optionized(
     field_types: &Vec<proc_macro2::TokenStream>,
 ) -> proc_macro2::TokenStream {
     let borsh_ser_where = field_types.iter().map(|f| {
-        quote::quote! { #f: borsh::ser::BorshSerialize }
+        quote::quote! { #f: nautilus::borsh::ser::BorshSerialize }
     });
     let borsh_ser_impl = field_names.iter().map(|f| {
-        quote::quote! { borsh::BorshSerialize::serialize(&self.#f, writer)? }
+        quote::quote! { nautilus::borsh::BorshSerialize::serialize(&self.#f, writer)? }
     });
     let borsh_deser_where = field_types.iter().map(|f| {
-        quote::quote! { #f: borsh::de::BorshDeserialize }
+        quote::quote! { #f: nautilus::borsh::de::BorshDeserialize }
     });
     let borsh_deser_impl = field_names.iter().map(|f| {
-        quote::quote! { #f: borsh::BorshDeserialize::deserialize(buf)? }
+        quote::quote! { #f: nautilus::borsh::BorshDeserialize::deserialize(buf)? }
     });
     borsh_impl(
         struct_name,
@@ -61,25 +61,25 @@ fn borsh_impl(
     borsh_deser_impl: impl Iterator<Item = proc_macro2::TokenStream>,
 ) -> proc_macro2::TokenStream {
     quote::quote! {
-        impl borsh::ser::BorshSerialize for #struct_name
+        impl nautilus::borsh::ser::BorshSerialize for #struct_name
         where
             #(#borsh_ser_where,)*
         {
-            fn serialize<W: borsh::maybestd::io::Write>(
+            fn serialize<W: nautilus::borsh::maybestd::io::Write>(
                 &self,
                 writer: &mut W,
-            ) -> ::core::result::Result<(), borsh::maybestd::io::Error> {
+            ) -> ::core::result::Result<(), nautilus::borsh::maybestd::io::Error> {
                 #(#borsh_ser_impl;)*
                 Ok(())
             }
         }
-        impl borsh::de::BorshDeserialize for #struct_name
+        impl nautilus::borsh::de::BorshDeserialize for #struct_name
         where
             #(#borsh_deser_where,)*
         {
             fn deserialize(
                 buf: &mut &[u8],
-            ) -> ::core::result::Result<Self, borsh::maybestd::io::Error> {
+            ) -> ::core::result::Result<Self, nautilus::borsh::maybestd::io::Error> {
                 Ok(Self {
                     #(#borsh_deser_impl,)*
                 })

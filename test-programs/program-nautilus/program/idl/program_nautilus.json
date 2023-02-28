@@ -1,0 +1,134 @@
+{
+  "version": "0.1.0",
+  "name": "program_nautilus",
+  "instructions": [
+    {
+      "name": "CreateHero",
+      "accounts": [],
+      "args": [
+        {
+          "name": "hero",
+          "type": {
+            "defined": "Hero"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "DeleteHero",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
+      "name": "UpdateHero",
+      "accounts": [],
+      "args": [
+        {
+          "name": "heroOptionized",
+          "type": {
+            "defined": "HeroOptionized"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
+      "name": "CreateVillain",
+      "accounts": [],
+      "args": [
+        {
+          "name": "villain",
+          "type": {
+            "defined": "Villain"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
+    },
+    {
+      "name": "DeleteVillain",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    },
+    {
+      "name": "UpdateVillain",
+      "accounts": [],
+      "args": [
+        {
+          "name": "villainOptionized",
+          "type": {
+            "defined": "VillainOptionized"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 5
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Hero",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u8"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Villain",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u8"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "5yzKjkFpeSGfH8wjZEx7BjYBw4RFPQwh3w5nyoYRtMn7"
+  }
+}

@@ -2,7 +2,7 @@
 fn can_parse() {
     use nautilus::*;
 
-    #[derive(Nautilus, BorshDeserialize, BorshSerialize)]
+    #[derive(Nautilus)]
     enum MyInstructions {
         CreatePerson,
         UpdatePerson,

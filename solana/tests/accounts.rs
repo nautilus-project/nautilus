@@ -9,15 +9,13 @@ fn can_parse() {
         name: String,
         #[authority]
         authority: Pubkey,
-        #[authority]
-        signer: Pubkey,
     }
 
     let person = Person {
         id: 30,
         name: String::from("Joe"),
         authority: Pubkey::new_unique(),
-        signer: Pubkey::new_unique(),
+        // signer: Pubkey::new_unique(),
     };
 
     // impl NautilusOptionized for PersonOptionized
@@ -33,7 +31,7 @@ fn can_parse() {
         id: 30,
         name: Some(String::from("Joe")),
         authority: Some(Pubkey::new_unique()),
-        signer: Some(Pubkey::new_unique()),
+        // signer: Some(Pubkey::new_unique()),
     };
 
     println!("\n    [Test Output]: Self");

@@ -12,8 +12,9 @@ pub fn nautilus_processor(
             )),
             proc_macro2::Span::call_site(),
         );
-        let call_function_name =
-            syn::Ident::new(&(variant_name_snake), proc_macro2::Span::call_site());
+        // let call_function_name =
+        //     syn::Ident::new(&(variant_name_snake), proc_macro2::Span::call_site());
+        let call_function_name = syn::Ident::new("seeds", proc_macro2::Span::call_site());
         quote::quote! { #enum_name ::#v => #struct_name :: #call_function_name() }
     });
     quote::quote! {

@@ -20,16 +20,16 @@ impl SpawnNautilusEntrypoint {
         let self_nautilus_processor_tokens =
             super::processor::nautilus_processor(&self.name, &self.variants);
         quote::quote! {
-            // #self_nautilus_entrypoint_borsh_tokens
+            #self_nautilus_entrypoint_borsh_tokens
 
-            entrypoint!(process_instruction);
+            nautilus::entrypoint!(process_instruction);
 
             fn process_instruction(
-                program_id: &Pubkey,
-                accounts: &[AccountInfo],
+                program_id: &nautilus::Pubkey,
+                accounts: &[nautilus::AccountInfo],
                 input: &[u8],
-            ) -> ProgramResult {
-                #self_nautilus_processor_tokens
+            ) -> nautilus::ProgramResult {
+                Ok(())
             }
         }
         .into()

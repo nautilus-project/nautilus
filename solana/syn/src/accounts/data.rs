@@ -60,7 +60,7 @@ pub fn build_gather_check_authorities_tokens(
                     if (#(#tokens_signer_check_bools,)*) == (#(#tokens_signer_ref_bools,)*) {
                         Ok(())
                     } else {
-                        Err(solana_program::program_error::ProgramError::MissingRequiredSignature)
+                        Err(nautilus::ProgramError::MissingRequiredSignature)
                     }
                 },
             )
@@ -106,7 +106,7 @@ pub fn nautilus_account_auth_tokens(
 ) -> proc_macro2::TokenStream {
     quote::quote! {
         impl nautilus::NautilusAccountAuth for #ident_struct_name {
-            fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
+            fn check_authorities(&self, accounts: Vec<nautilus::AccountInfo>) -> Result<(), ProgramError> {
                 #check_authorities_syntax
             }
         }

@@ -20,11 +20,11 @@ pub fn nautilus_entrypoint_borsh(
     });
     //
     quote::quote! {
-        impl borsh::ser::BorshSerialize for #enum_name {
-            fn serialize<W: borsh::maybestd::io::Write>(
+        impl nautilus::borsh::ser::BorshSerialize for #enum_name {
+            fn serialize<W: nautilus::borsh::maybestd::io::Write>(
                 &self,
                 writer: &mut W,
-            ) -> core::result::Result<(), borsh::maybestd::io::Error> {
+            ) -> core::result::Result<(), nautilus::borsh::maybestd::io::Error> {
                 let variant_idx: u8 = match self {
                     #(#tokens_ser_variants,)*
                 };
@@ -35,11 +35,11 @@ pub fn nautilus_entrypoint_borsh(
                 Ok(())
             }
         }
-        impl borsh::de::BorshDeserialize for #enum_name {
+        impl nautilus::borsh::de::BorshDeserialize for #enum_name {
             fn deserialize(
                 buf: &mut &[u8],
-            ) -> core::result::Result<Self, borsh::maybestd::io::Error> {
-                let variant_idx: u8 = borsh::BorshDeserialize::deserialize(buf)?;
+            ) -> core::result::Result<Self, nautilus::borsh::maybestd::io::Error> {
+                let variant_idx: u8 = nautilus::borsh::BorshDeserialize::deserialize(buf)?;
                 let return_value = match variant_idx {
                     #(#tokens_deser_variants,)*
                     _ => {
@@ -50,8 +50,8 @@ pub fn nautilus_entrypoint_borsh(
                             res
                         };
                         return Err(
-                            borsh::maybestd::io::Error::new(
-                                borsh::maybestd::io::ErrorKind::InvalidInput,
+                            nautilus::borsh::maybestd::io::Error::new(
+                                nautilus::borsh::maybestd::io::ErrorKind::InvalidInput,
                                 msg,
                             ),
                         );

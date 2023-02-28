@@ -1,44 +1,62 @@
 use nautilus::*;
+use shank::{ShankAccount, ShankInstruction};
 
-#[derive(NautilusEntrypoint)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankInstruction)]
 enum MyInstructions {
-    CreateHero,
+    CreateHero(Hero),
     DeleteHero,
-    UpdateHero,
-    CreateVillain,
+    UpdateHero(HeroOptionized),
+    CreateVillain(Villain),
     DeleteVillain,
-    UpdateVillain,
+    UpdateVillain(VillainOptionized),
 }
 
-#[derive(NautilusAccount)]
+entrypoint!(process_instruction);
+
+fn process_instruction<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
+    input: &[u8],
+) -> ProgramResult {
+    let instruction = MyInstructions::try_from_slice(input)?;
+    match instruction {
+        MyInstructions::CreateHero(args) => Hero::nautilus_create(
+            Hero::parse_nautilus_create_args(program_id, accounts, args)?,
+        ),
+        MyInstructions::DeleteHero => {
+            Hero::nautilus_delete(Hero::parse_nautilus_delete_args(program_id, accounts)?)
+        }
+        MyInstructions::UpdateHero(args) => Hero::nautilus_update(
+            Hero::parse_nautilus_update_args(program_id, accounts, args)?,
+        ),
+        MyInstructions::CreateVillain(args) => Villain::nautilus_create(
+            Villain::parse_nautilus_create_args(program_id, accounts, args)?,
+        ),
+        MyInstructions::DeleteVillain => {
+            Villain::nautilus_delete(Villain::parse_nautilus_delete_args(program_id, accounts)?)
+        }
+        MyInstructions::UpdateVillain(args) => Villain::nautilus_update(
+            Villain::parse_nautilus_update_args(program_id, accounts, args)?,
+        ),
+    }
+}
+
+// ----------------------------------------------------
+
+#[derive(NautilusAccount, ShankAccount)]
 pub struct Hero {
     #[primary_key(autoincrement = true)]
-    id: u32,
+    id: u8,
     name: String,
     #[authority]
     authority: Pubkey,
 }
 
-#[derive(NautilusAccount)]
+#[derive(NautilusAccount, ShankAccount)]
 pub struct Villain {
     #[primary_key(autoincrement = true)]
-    id: u32,
+    id: u8,
     name: String,
     #[authority]
-    authority: Pubkey,
-}
-
-// ------------------------------------
-// -- Concept --
-//
-
-#[derive(NautilusAccount)]
-pub struct Sidekick {
-    #[primary_key(autoincrement = true)]
-    id: u32,
-    #[foreign_key(table = Hero)]
-    hero_id: u32
-    name: String,
-    #[authority(inherit_from_parent = true)]
     authority: Pubkey,
 }
