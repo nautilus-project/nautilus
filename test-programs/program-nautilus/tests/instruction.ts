@@ -2,20 +2,21 @@ import * as borsh from "borsh"
 import { Buffer } from "buffer"
 import { 
     PublicKey, 
+    SystemProgram, 
     TransactionInstruction 
 } from '@solana/web3.js'
 
-export enum MyInstruction {
+enum MyInstruction {
     CreateHero,
-    UpdateHero,
     DeleteHero,
+    UpdateHero,
 }
 
-export class CreateHero {
+class CreateHero {
     instruction: MyInstruction
     id: number
     name: string
-    authority: PublicKey
+    authority: Uint8Array
     constructor(props: {
         instruction: MyInstruction,
         id: number,
@@ -25,14 +26,14 @@ export class CreateHero {
         this.instruction = props.instruction;
         this.id = props.id;
         this.name = props.name;
-        this.authority = props.authority;
+        this.authority = props.authority.toBytes();
     }
     toBuffer() { 
         return Buffer.from(borsh.serialize(CreateHeroSchema, this)) 
     }
 }
 
-export const CreateHeroSchema = new Map([
+const CreateHeroSchema = new Map([
     [ CreateHero, { 
         kind: 'struct', 
         fields: [ 
@@ -52,6 +53,16 @@ export function createCreateHeroInstruction(
     authority: PublicKey,
 ): TransactionInstruction {
 
+    const autoincrementPublicKey = PublicKey.findProgramAddressSync(
+        [Buffer.from("hero_autoincrement")],
+        programId,
+    )[0];
+
+    const newAccountPublicKey = PublicKey.findProgramAddressSync(
+        [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
+        programId,
+    )[0];
+
     const myInstructionObject = new CreateHero({
         instruction: MyInstruction.CreateHero,
         id,
@@ -61,18 +72,22 @@ export function createCreateHeroInstruction(
 
     return new TransactionInstruction({
         keys: [
+            {pubkey: autoincrementPublicKey, isSigner: false, isWritable: true},
+            {pubkey: newAccountPublicKey, isSigner: false, isWritable: true},
+            {pubkey: payer, isSigner: false, isWritable: false}, // Authority
             {pubkey: payer, isSigner: true, isWritable: true},
+            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
         ],
         programId: programId,
         data: myInstructionObject.toBuffer(),
     })
 }
 
-export class UpdateHero {
+class UpdateHero {
     instruction: MyInstruction
     id: number
     name: string
-    authority: PublicKey
+    authority: Uint8Array
     constructor(props: {
         instruction: MyInstruction,
         id: number,
@@ -82,14 +97,14 @@ export class UpdateHero {
         this.instruction = props.instruction;
         this.id = props.id;
         this.name = props.name;
-        this.authority = props.authority;
+        this.authority = props.authority.toBytes();
     }
     toBuffer() { 
         return Buffer.from(borsh.serialize(UpdateHeroSchema, this)) 
     }
 }
 
-export const UpdateHeroSchema = new Map([
+const UpdateHeroSchema = new Map([
     [ UpdateHero, { 
         kind: 'struct', 
         fields: [ 
@@ -109,6 +124,11 @@ export function createUpdateHeroInstruction(
     authority: PublicKey,
 ): TransactionInstruction {
 
+    const targetAccountPublicKey = PublicKey.findProgramAddressSync(
+        [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
+        programId,
+    )[0];
+
     const myInstructionObject = new UpdateHero({
         instruction: MyInstruction.UpdateHero,
         id,
@@ -118,14 +138,17 @@ export function createUpdateHeroInstruction(
 
     return new TransactionInstruction({
         keys: [
+            {pubkey: targetAccountPublicKey, isSigner: false, isWritable: true},
+            {pubkey: payer, isSigner: true, isWritable: false}, // Authority
             {pubkey: payer, isSigner: true, isWritable: true},
+            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
         ],
         programId: programId,
         data: myInstructionObject.toBuffer(),
     })
 }
 
-export class DeleteHero {
+class DeleteHero {
     instruction: MyInstruction
     constructor(props: {
         instruction: MyInstruction,
@@ -137,7 +160,7 @@ export class DeleteHero {
     }
 }
 
-export const DeleteHeroSchema = new Map([
+const DeleteHeroSchema = new Map([
     [ DeleteHero, { 
         kind: 'struct', 
         fields: [ 
@@ -149,7 +172,13 @@ export const DeleteHeroSchema = new Map([
 export function createDeleteHeroInstruction(
     payer: PublicKey,
     programId: PublicKey,
+    id: number,
 ): TransactionInstruction {
+
+    const targetAccountPublicKey = PublicKey.findProgramAddressSync(
+        [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
+        programId,
+    )[0];
 
     const myInstructionObject = new DeleteHero({
         instruction: MyInstruction.DeleteHero,
@@ -157,6 +186,8 @@ export function createDeleteHeroInstruction(
 
     return new TransactionInstruction({
         keys: [
+            {pubkey: targetAccountPublicKey, isSigner: false, isWritable: true},
+            {pubkey: payer, isSigner: true, isWritable: false}, // Authority
             {pubkey: payer, isSigner: true, isWritable: true},
         ],
         programId: programId,

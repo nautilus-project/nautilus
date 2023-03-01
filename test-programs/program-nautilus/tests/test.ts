@@ -8,7 +8,11 @@ import {
     sendAndConfirmTransaction,
     Transaction,
 } from '@solana/web3.js'
-import { createCreateHeroInstruction, createDeleteHeroInstruction, createUpdateHeroInstruction } from './instruction'
+import { 
+    createCreateHeroInstruction, 
+    createDeleteHeroInstruction, 
+    createUpdateHeroInstruction, 
+} from './instruction'
 
 
 function loadKeypairFromFile(path: string): Keypair {
@@ -17,10 +21,11 @@ function loadKeypairFromFile(path: string): Keypair {
     )
 }
 
+const ID: number = 2
 
-describe("Nautilus Program Unit Tests", () => {
+describe("Nautilus Program Unit Tests", async () => {
 
-    const connection = new Connection(`https://api.devnet.solana.com`, 'confirmed')
+    const connection = new Connection(`http://localhost:8899`, 'confirmed')
     const payer = loadKeypairFromFile(require('os').homedir() + '/.config/solana/id.json')
     const program = loadKeypairFromFile('./program/target/deploy/program_nautilus-keypair.json')
   
@@ -28,7 +33,7 @@ describe("Nautilus Program Unit Tests", () => {
         let ix = createCreateHeroInstruction(
             payer.publicKey,
             program.publicKey,
-            1,
+            ID,
             "Hercules",
             payer.publicKey,
         )
@@ -43,7 +48,7 @@ describe("Nautilus Program Unit Tests", () => {
         let ix = createUpdateHeroInstruction(
             payer.publicKey,
             program.publicKey,
-            1,
+            ID,
             "Hercules",
             payer.publicKey,
         )
@@ -58,6 +63,7 @@ describe("Nautilus Program Unit Tests", () => {
         let ix = createDeleteHeroInstruction(
             payer.publicKey,
             program.publicKey,
+            ID,
         )
         await sendAndConfirmTransaction(
             connection, 

@@ -1,7 +1,7 @@
 use nautilus::*;
 use shank::{ShankAccount, ShankInstruction};
 
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankInstruction)]
+#[derive(BorshDeserialize, BorshSerialize, ShankInstruction)]
 enum MyInstructions {
     CreateHero(Hero),
     DeleteHero,
@@ -20,24 +20,12 @@ fn process_instruction<'a>(
 ) -> ProgramResult {
     let instruction = MyInstructions::try_from_slice(input)?;
     match instruction {
-        MyInstructions::CreateHero(args) => Hero::nautilus_create(
-            Hero::parse_nautilus_create_args(program_id, accounts, args)?,
-        ),
-        MyInstructions::DeleteHero => {
-            Hero::nautilus_delete(Hero::parse_nautilus_delete_args(program_id, accounts)?)
-        }
-        MyInstructions::UpdateHero(args) => Hero::nautilus_update(
-            Hero::parse_nautilus_update_args(program_id, accounts, args)?,
-        ),
-        MyInstructions::CreateVillain(args) => Villain::nautilus_create(
-            Villain::parse_nautilus_create_args(program_id, accounts, args)?,
-        ),
-        MyInstructions::DeleteVillain => {
-            Villain::nautilus_delete(Villain::parse_nautilus_delete_args(program_id, accounts)?)
-        }
-        MyInstructions::UpdateVillain(args) => Villain::nautilus_update(
-            Villain::parse_nautilus_update_args(program_id, accounts, args)?,
-        ),
+        MyInstructions::CreateHero(args) => Hero::nautilus_create(program_id, accounts, args),
+        MyInstructions::DeleteHero => Hero::nautilus_delete(program_id, accounts),
+        MyInstructions::UpdateHero(args) => Hero::nautilus_update(program_id, accounts, args),
+        MyInstructions::CreateVillain(args) => Villain::nautilus_create(program_id, accounts, args),
+        MyInstructions::DeleteVillain => Villain::nautilus_delete(program_id, accounts),
+        MyInstructions::UpdateVillain(args) => Villain::nautilus_update(program_id, accounts, args),
     }
 }
 
