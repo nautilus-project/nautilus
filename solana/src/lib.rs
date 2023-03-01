@@ -8,9 +8,9 @@
 extern crate self as nautilus;
 
 pub mod accounts;
-pub mod entry;
+// pub mod entry;
 
-pub use borsh;
+pub use borsh::{self, BorshDeserialize, BorshSerialize};
 pub use nautilus_derive::{Nautilus, NautilusAccount};
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -23,3 +23,4 @@ pub use solana_program::{
 };
 
 pub use crate::accounts::*;
+// pub use crate::entry::*;

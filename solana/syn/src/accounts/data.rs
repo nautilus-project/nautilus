@@ -21,11 +21,11 @@ pub fn build_tokens_primary_key_seed(
     }
 }
 
-pub fn build_gather_check_authorities_tokens(
+pub fn build_count_check_authorities_tokens(
     idents_authorities: &Vec<syn::Ident>,
-) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
+) -> (u8, proc_macro2::TokenStream) {
     match idents_authorities.len() == 0 {
-        true => (quote::quote! { vec![]; }, quote::quote! { Ok(()) }),
+        true => (0, quote::quote! { Ok(()) }),
         false => {
             let mut tokens_gather_account_infos: Vec<proc_macro2::TokenStream> = vec![];
             let mut tokens_signer_init_bools: Vec<proc_macro2::TokenStream> = vec![];
@@ -47,11 +47,7 @@ pub fn build_gather_check_authorities_tokens(
                 tokens_signer_ref_bools.push(quote::quote! { true });
             }
             (
-                quote::quote! {
-                    vec![
-                        #(#tokens_gather_account_infos,)*
-                    ];
-                },
+                idents_authorities.len().try_into().unwrap(),
                 quote::quote! {
                     #(#tokens_signer_init_bools;)*
                     for account in accounts {
@@ -103,11 +99,16 @@ pub fn nautilus_account_data_tokens(
 pub fn nautilus_account_auth_tokens(
     ident_struct_name: &syn::Ident,
     check_authorities_syntax: proc_macro2::TokenStream,
+    count_authorities: u8,
 ) -> proc_macro2::TokenStream {
     quote::quote! {
         impl nautilus::NautilusAccountAuth for #ident_struct_name {
             fn check_authorities(&self, accounts: Vec<nautilus::AccountInfo>) -> Result<(), ProgramError> {
                 #check_authorities_syntax
+            }
+
+            fn count_authorities<'a>() -> u8 {
+                #count_authorities
             }
         }
     }

@@ -136,8 +136,8 @@ impl SpawnNautilusAccount {
             tokens_primary_key_seed.clone(),
         );
 
-        let (gather_authorities_tokens, check_authorities_tokens) =
-            super::data::build_gather_check_authorities_tokens(&self.idents_authorities);
+        let (count_authorities, check_authorities_tokens) =
+            super::data::build_count_check_authorities_tokens(&self.idents_authorities);
 
         let self_nautilus_account_borsh_tokens =
             super::borsh::nautilus_borsh_self(&self.ident_struct_name, &self.fields);
@@ -150,19 +150,15 @@ impl SpawnNautilusAccount {
         let self_nautilus_account_auth_tokens = super::data::nautilus_account_auth_tokens(
             &self.ident_struct_name,
             check_authorities_tokens,
+            count_authorities,
         );
-        let self_nautilus_account_create_tokens = super::crud::nautilus_account_create_tokens(
-            &self.ident_struct_name,
-            gather_authorities_tokens.clone(),
-        );
-        let self_nautilus_account_delete_tokens = super::crud::nautilus_account_delete_tokens(
-            &self.ident_struct_name,
-            gather_authorities_tokens.clone(),
-        );
-        let self_nautilus_account_update_tokens = super::crud::nautilus_account_update_tokens(
+        let self_nautilus_create_tokens =
+            super::crud::nautilus_create_tokens(&self.ident_struct_name);
+        let self_nautilus_delete_tokens =
+            super::crud::nautilus_delete_tokens(&self.ident_struct_name);
+        let self_nautilus_update_tokens = super::crud::nautilus_update_tokens(
             &self.ident_struct_name,
             &self.ident_optionized_struct_name,
-            gather_authorities_tokens,
         );
 
         quote::quote! {
@@ -172,9 +168,9 @@ impl SpawnNautilusAccount {
             #self_nautilus_account_borsh_tokens
             #self_nautilus_account_data_tokens
             #self_nautilus_account_auth_tokens
-            #self_nautilus_account_create_tokens
-            #self_nautilus_account_delete_tokens
-            #self_nautilus_account_update_tokens
+            #self_nautilus_create_tokens
+            #self_nautilus_delete_tokens
+            #self_nautilus_update_tokens
         }
         .into()
     }

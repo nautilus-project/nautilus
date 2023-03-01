@@ -2,7 +2,7 @@
 name = "nautilus"
 version = "0.0.1"
 authors = ["Joe Caulfield <jcaulfield135@gmail.com>"]
-repository = "https://github.com/realbuffalojoe/nautilus"
+repository = "https://github.com/nautilus-project/nautilus"
 license = "Apache-2.0"
 description = "Solana SQL driver for PDAs"
 rust-version = "1.59"
@@ -13,8 +13,3 @@ borsh = "0.9.3"
 borsh-derive = "0.9.3"
 solana-program = "1.15.2"
 nautilus-derive = { path = "./derive", version = "0.0.1" }
-bytemuck = "1.13.0"
-
-[dev-dependencies]
-solana-program-test = "1.15.0"
-solana-sdk = "1.15.2"
