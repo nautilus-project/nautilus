@@ -11,7 +11,6 @@ pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttribu
     for attr in field.attrs.iter() {
         if let Ok(syn::Meta::List(meta_list)) = attr.parse_meta() {
             if meta_list.path.is_ident("primary_key") {
-                // TODO: Add type check on Primary Key
                 primary_key = true;
                 for nested_meta in &meta_list.nested {
                     if let syn::NestedMeta::Meta(syn::Meta::NameValue(meta_name_value)) =

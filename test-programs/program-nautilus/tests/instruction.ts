@@ -46,6 +46,7 @@ const CreateHeroSchema = new Map([
 ])
 
 export function createCreateHeroInstruction(
+    autoincrement: boolean,
     payer: PublicKey,
     programId: PublicKey,
     id: number,
@@ -57,11 +58,13 @@ export function createCreateHeroInstruction(
         [Buffer.from("hero_autoincrement")],
         programId,
     )[0];
+    console.log(`Autoincrement: ${autoincrementPublicKey}`);
 
     const newAccountPublicKey = PublicKey.findProgramAddressSync(
         [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
         programId,
     )[0];
+    console.log(`Account: ${newAccountPublicKey}`);
 
     const myInstructionObject = new CreateHero({
         instruction: MyInstruction.CreateHero,
@@ -70,14 +73,23 @@ export function createCreateHeroInstruction(
         authority,
     })
 
+    const keys = autoincrement ? [
+        {pubkey: autoincrementPublicKey, isSigner: false, isWritable: true},
+        {pubkey: newAccountPublicKey, isSigner: false, isWritable: true},
+        {pubkey: payer, isSigner: false, isWritable: false}, // Authority
+        {pubkey: payer, isSigner: true, isWritable: true},
+        {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+    ]
+    :
+    [
+        {pubkey: newAccountPublicKey, isSigner: false, isWritable: true},
+        {pubkey: payer, isSigner: false, isWritable: false}, // Authority
+        {pubkey: payer, isSigner: true, isWritable: true},
+        {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+    ]
+
     return new TransactionInstruction({
-        keys: [
-            {pubkey: autoincrementPublicKey, isSigner: false, isWritable: true},
-            {pubkey: newAccountPublicKey, isSigner: false, isWritable: true},
-            {pubkey: payer, isSigner: false, isWritable: false}, // Authority
-            {pubkey: payer, isSigner: true, isWritable: true},
-            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
-        ],
+        keys,
         programId: programId,
         data: myInstructionObject.toBuffer(),
     })

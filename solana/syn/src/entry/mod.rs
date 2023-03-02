@@ -88,11 +88,11 @@ impl quote::ToTokens for NautilusEntrypointEnum {
     }
 }
 
-///
-///
-/// Code generation
-///
-///
+//
+//
+// Code generation
+//
+//
 impl From<&NautilusEntrypointEnum> for proc_macro2::TokenStream {
     fn from(ast: &NautilusEntrypointEnum) -> Self {
         spawn::SpawnNautilusEntrypoint::from_ast(ast).generate()

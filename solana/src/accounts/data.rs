@@ -31,6 +31,8 @@ pub trait NautilusAccountData: BorshDeserialize + BorshSerialize + Sized {
     /// The seeds for this PDA as an array of buffers.
     ///
     /// These seeds will always be <table-name> + <primary-key>.
+    ///
+    /// For autoincrement PDAs, the primary key is always 1.
     fn seeds<'a>(&self) -> [&'a [u8]; 2] {
         [Self::TABLE_NAME.as_bytes(), self.primary_key()]
     }

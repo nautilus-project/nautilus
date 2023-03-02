@@ -1,15 +1,9 @@
 use crate::{
     invoke_signed, next_account_info, system_instruction, AccountInfo, BorshDeserialize,
-    BorshSerialize, ProgramError, ProgramResult, Pubkey,
+    NautilusAutoincrementAccount, ProgramError, ProgramResult, Pubkey,
 };
 
 use super::{auth::NautilusAccountAuth, data::NautilusAccountData};
-
-/// The inner data for a table's associated autoincrement account.
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct NautilusAutoincrementData {
-    pub count: u64,
-}
 
 /// The default args for implementing the `nautilus_create(..)` instruction.
 ///
@@ -26,15 +20,6 @@ pub struct NautilusCreateArgs<'a, T: NautilusAccountData> {
 
 /// The trait that enables the default `nautilus_create(..)` instruction for the PDA.
 pub trait NautilusAccountCreate: NautilusAccountData + NautilusAccountAuth {
-    /// If autoincrement is enabled for this PDA, increments the autoincrement account by 1.
-    fn autoincrement(autoinc_account: AccountInfo) -> ProgramResult {
-        let mut counter =
-            NautilusAutoincrementData::try_from_slice(&autoinc_account.data.borrow_mut())?;
-        counter.count += 1;
-        counter.serialize(&mut &mut autoinc_account.data.borrow_mut()[..])?;
-        Ok(())
-    }
-
     /// Parses the program ID, list of accounts, and instruction args into the `NautilusCreateArgs`.
     fn parse_nautilus_create_args<'a>(
         program_id: &'a Pubkey,
@@ -96,7 +81,22 @@ pub trait NautilusAccountCreate: NautilusAccountData + NautilusAccountAuth {
 
         if Self::AUTO_INCREMENT {
             match args.autoinc_account {
-                Some(autoinc_account) => Self::autoincrement(autoinc_account)?,
+                Some(autoinc_account) => {
+                    if autoinc_account.lamports() == 0 {
+                        NautilusAutoincrementAccount::create(
+                            args.program_id,
+                            autoinc_account,
+                            args.fee_payer.clone(),
+                            args.system_program.clone(),
+                            &Self::TABLE_NAME,
+                        )?;
+                    } else {
+                        let mut autoinc_data = NautilusAutoincrementAccount::try_from_slice(
+                            &autoinc_account.data.borrow_mut(),
+                        )?;
+                        autoinc_data.autoincrement(autoinc_account)?;
+                    }
+                }
                 None => return Err(ProgramError::NotEnoughAccountKeys),
             }
         };
