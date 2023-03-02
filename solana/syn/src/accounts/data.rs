@@ -63,40 +63,6 @@ pub fn build_count_check_authorities_tokens(
     }
 }
 
-pub fn nautilus_optionized(
-    ident_optionized_struct_name: &syn::Ident,
-    tokens_optionized_struct_fields: &Vec<proc_macro2::TokenStream>,
-    ident_struct_name: &syn::Ident,
-    fields: &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
-    ident_primary_key: &syn::Ident,
-) -> proc_macro2::TokenStream {
-    let process_update_tokens: Vec<proc_macro2::TokenStream> = fields
-        .iter()
-        .filter(|f| !f.ident.as_ref().unwrap().eq(ident_primary_key))
-        .map(|f| {
-            let ident_field = &f.ident;
-            quote::quote! {
-                match update_data.#ident_field {
-                    Some(val) => data.#ident_field = val,
-                    None => (),
-                }
-            }
-        })
-        .collect();
-
-    quote::quote! {
-        struct #ident_optionized_struct_name {
-            #(#tokens_optionized_struct_fields,)*
-        }
-        impl nautilus::NautilusOptionized for #ident_optionized_struct_name {
-            fn process_nautilus_update_data<T: NautilusAccountData>(data: T, update_data: Self) -> T {
-                // #(#process_update_tokens;)*
-                data
-            }
-        }
-    }
-}
-
 pub fn nautilus_account_data_tokens(
     ident_struct_name: &syn::Ident,
     table_name: &String,

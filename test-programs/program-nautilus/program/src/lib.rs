@@ -1,15 +1,12 @@
-use nautilus::*;
-use shank::{ShankAccount, ShankInstruction};
+mod custom_instruction;
+mod instruction;
+mod state;
 
-#[derive(BorshDeserialize, BorshSerialize, ShankInstruction)]
-enum MyInstructions {
-    CreateHero(Hero),
-    DeleteHero,
-    UpdateHero(HeroOptionized),
-    CreateVillain(Villain),
-    DeleteVillain,
-    UpdateVillain(VillainOptionized),
-}
+use nautilus::*;
+
+use crate::custom_instruction::custom;
+use crate::instruction::MyInstructions;
+use crate::state::{Hero, Villain};
 
 entrypoint!(process_instruction);
 
@@ -21,30 +18,11 @@ fn process_instruction<'a>(
     let instruction = MyInstructions::try_from_slice(input)?;
     match instruction {
         MyInstructions::CreateHero(args) => Hero::nautilus_create(program_id, accounts, args),
-        MyInstructions::DeleteHero => Hero::nautilus_delete(program_id, accounts),
+        MyInstructions::DeleteHero => Hero::nautilus_delete(accounts),
         MyInstructions::UpdateHero(args) => Hero::nautilus_update(program_id, accounts, args),
         MyInstructions::CreateVillain(args) => Villain::nautilus_create(program_id, accounts, args),
-        MyInstructions::DeleteVillain => Villain::nautilus_delete(program_id, accounts),
+        MyInstructions::DeleteVillain => Villain::nautilus_delete(accounts),
         MyInstructions::UpdateVillain(args) => Villain::nautilus_update(program_id, accounts, args),
+        MyInstructions::CustomInstruction(args) => custom(program_id, accounts, args),
     }
-}
-
-// ----------------------------------------------------
-
-#[derive(NautilusAccount, ShankAccount)]
-pub struct Hero {
-    #[primary_key(autoincrement = false)]
-    id: u8,
-    name: String,
-    #[authority]
-    authority: Pubkey,
-}
-
-#[derive(NautilusAccount, ShankAccount)]
-pub struct Villain {
-    #[primary_key(autoincrement = false)]
-    id: u8,
-    name: String,
-    #[authority]
-    authority: Pubkey,
 }

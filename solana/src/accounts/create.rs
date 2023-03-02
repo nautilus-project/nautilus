@@ -5,27 +5,23 @@ use crate::{
 
 use super::{auth::NautilusAccountAuth, data::NautilusAccountData};
 
-/// The default args for implementing the `nautilus_create(..)` instruction.
+/// The default accounts for implementing the `nautilus_create(..)` instruction.
 ///
 /// Includes all necessary accounts for the operation plus any specified authorities on the account from the #[authority] attribute.
-pub struct NautilusCreateArgs<'a, T: NautilusAccountData> {
-    pub program_id: &'a Pubkey,
+pub struct NautilusCreateAccounts<'a> {
     pub autoinc_account: Option<AccountInfo<'a>>,
     pub new_account: AccountInfo<'a>,
     pub authorities: Vec<AccountInfo<'a>>,
     pub fee_payer: AccountInfo<'a>,
     pub system_program: AccountInfo<'a>,
-    pub create_data: T,
 }
 
 /// The trait that enables the default `nautilus_create(..)` instruction for the PDA.
 pub trait NautilusAccountCreate: NautilusAccountData + NautilusAccountAuth {
-    /// Parses the program ID, list of accounts, and instruction args into the `NautilusCreateArgs`.
-    fn parse_nautilus_create_args<'a>(
-        program_id: &'a Pubkey,
+    /// Parses the program ID, list of accounts, and instruction accounts into the `NautilusCreateaccounts`.
+    fn parse_nautilus_create_accounts<'a>(
         accounts: &'a [AccountInfo<'a>],
-        create_data: Self,
-    ) -> Result<NautilusCreateArgs<'a, Self>, ProgramError> {
+    ) -> Result<NautilusCreateAccounts<'a>, ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let autoinc_account = match Self::AUTO_INCREMENT {
             true => Some(next_account_info(accounts_iter)?.to_owned()),
@@ -42,14 +38,12 @@ pub trait NautilusAccountCreate: NautilusAccountData + NautilusAccountAuth {
         let fee_payer = next_account_info(accounts_iter)?.to_owned();
         let system_program = next_account_info(accounts_iter)?.to_owned();
 
-        Ok(nautilus::NautilusCreateArgs {
-            program_id,
+        Ok(nautilus::NautilusCreateAccounts {
             autoinc_account,
             new_account,
             authorities,
             fee_payer,
             system_program,
-            create_data,
         })
     }
 
@@ -63,31 +57,33 @@ pub trait NautilusAccountCreate: NautilusAccountData + NautilusAccountAuth {
     ///
     /// # Arguments
     ///
-    /// * `NautilusCreateArgs` - the necessary accounts and data for creating this PDA.
+    /// * program_id - This program's ID.
+    /// * accounts - The list of accounts provided.
+    /// * create_data - The data to serialize into the new account.
     ///
     /// # Returns
     ///
     /// `ProgramResult`
     fn nautilus_create<'a>(
         program_id: &'a Pubkey,
-        accounts: &'a [AccountInfo<'a>],
+        provided_accounts: &'a [AccountInfo<'a>],
         create_data: Self,
     ) -> ProgramResult {
-        let args = Self::parse_nautilus_create_args(program_id, accounts, create_data)?;
-        let (pda, bump) = args.create_data.pda(args.program_id);
-        assert!(args.new_account.key.eq(&pda));
+        let accounts = Self::parse_nautilus_create_accounts(provided_accounts)?;
+        let (pda, bump) = create_data.pda(program_id);
+        assert!(accounts.new_account.key.eq(&pda));
 
-        args.create_data.check_authorities(args.authorities)?;
+        create_data.check_authorities(accounts.authorities)?;
 
         if Self::AUTO_INCREMENT {
-            match args.autoinc_account {
+            match accounts.autoinc_account {
                 Some(autoinc_account) => {
                     if autoinc_account.lamports() == 0 {
                         NautilusAutoincrementAccount::create(
-                            args.program_id,
+                            program_id,
                             autoinc_account,
-                            args.fee_payer.clone(),
-                            args.system_program.clone(),
+                            accounts.fee_payer.clone(),
+                            accounts.system_program.clone(),
                             &Self::TABLE_NAME,
                         )?;
                     } else {
@@ -103,24 +99,21 @@ pub trait NautilusAccountCreate: NautilusAccountData + NautilusAccountAuth {
 
         invoke_signed(
             &system_instruction::create_account(
-                args.fee_payer.key,
-                args.new_account.key,
-                args.create_data.lamports_required()?,
-                args.create_data.size()?,
-                args.program_id,
+                accounts.fee_payer.key,
+                accounts.new_account.key,
+                create_data.lamports_required()?,
+                create_data.size()?,
+                program_id,
             ),
             &[
-                args.new_account.clone(),
-                args.fee_payer,
-                args.system_program,
+                accounts.new_account.clone(),
+                accounts.fee_payer,
+                accounts.system_program,
             ],
-            &[&args
-                .create_data
-                .seeds_with_bump(bump.to_le_bytes().as_ref())],
+            &[&create_data.seeds_with_bump(bump.to_le_bytes().as_ref())],
         )?;
 
-        args.create_data
-            .serialize(&mut &mut args.new_account.data.borrow_mut()[..])?;
+        create_data.serialize(&mut &mut accounts.new_account.data.borrow_mut()[..])?;
 
         Ok(())
     }

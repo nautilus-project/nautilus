@@ -4,7 +4,38 @@
   "instructions": [
     {
       "name": "CreateHero",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "autoincAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The autoincrement account."
+        },
+        {
+          "name": "newAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be created."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The System Program"
+        }
+      ],
       "args": [
         {
           "name": "hero",
@@ -20,7 +51,26 @@
     },
     {
       "name": "DeleteHero",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "targetAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be deleted."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        }
+      ],
       "args": [],
       "discriminant": {
         "type": "u8",
@@ -29,12 +79,37 @@
     },
     {
       "name": "UpdateHero",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "targetAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be updated."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The System Program"
+        }
+      ],
       "args": [
         {
-          "name": "heroOptionized",
+          "name": "hero",
           "type": {
-            "defined": "HeroOptionized"
+            "defined": "Hero"
           }
         }
       ],
@@ -45,7 +120,38 @@
     },
     {
       "name": "CreateVillain",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "autoincAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The autoincrement account."
+        },
+        {
+          "name": "newAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be created."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The System Program"
+        }
+      ],
       "args": [
         {
           "name": "villain",
@@ -61,7 +167,26 @@
     },
     {
       "name": "DeleteVillain",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "targetAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be deleted."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        }
+      ],
       "args": [],
       "discriminant": {
         "type": "u8",
@@ -70,18 +195,84 @@
     },
     {
       "name": "UpdateVillain",
-      "accounts": [],
+      "accounts": [
+        {
+          "name": "targetAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be updated."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The System Program"
+        }
+      ],
       "args": [
         {
-          "name": "villainOptionized",
+          "name": "villain",
           "type": {
-            "defined": "VillainOptionized"
+            "defined": "Villain"
           }
         }
       ],
       "discriminant": {
         "type": "u8",
         "value": 5
+      }
+    },
+    {
+      "name": "CustomInstruction",
+      "accounts": [
+        {
+          "name": "targetAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to be used as a test."
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "One of the authorities specified for this account."
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Fee payer"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The System Program"
+        }
+      ],
+      "args": [
+        {
+          "name": "customArgs",
+          "type": {
+            "defined": "CustomArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 6
       }
     }
   ],
@@ -122,6 +313,24 @@
           {
             "name": "authority",
             "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "CustomArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "string1",
+            "type": "string"
+          },
+          {
+            "name": "string2",
+            "type": "string"
           }
         ]
       }

@@ -17,7 +17,7 @@ impl SpawnNautilusEntrypoint {
     pub fn generate(&self) -> proc_macro2::TokenStream {
         let self_nautilus_entrypoint_borsh_tokens =
             super::borsh::nautilus_entrypoint_borsh(&self.name, &self.variants);
-        let self_nautilus_processor_tokens =
+        let _self_nautilus_processor_tokens =
             super::processor::nautilus_processor(&self.name, &self.variants);
         quote::quote! {
             #self_nautilus_entrypoint_borsh_tokens
