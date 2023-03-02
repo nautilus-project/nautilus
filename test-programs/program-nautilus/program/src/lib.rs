@@ -33,7 +33,7 @@ fn process_instruction<'a>(
 
 #[derive(NautilusAccount, ShankAccount)]
 pub struct Hero {
-    #[primary_key(autoincrement = true)]
+    #[primary_key(autoincrement = false)]
     id: u8,
     name: String,
     #[authority]
@@ -42,7 +42,7 @@ pub struct Hero {
 
 #[derive(NautilusAccount, ShankAccount)]
 pub struct Villain {
-    #[primary_key(autoincrement = true)]
+    #[primary_key(autoincrement = false)]
     id: u8,
     name: String,
     #[authority]

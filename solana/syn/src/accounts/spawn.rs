@@ -19,7 +19,9 @@ pub struct SpawnNautilusAccount {
 }
 
 impl SpawnNautilusAccount {
-    pub fn from_ast(ast: &crate::NautilusAccountStruct) -> Self {
+    pub fn from_ast(
+        ast: &crate::NautilusAccountStruct,
+    ) -> Result<Self, super::error::EnforceStructsError> {
         let mut primary_key_ident_opt: Option<(syn::Ident, syn::Type)> = None;
         let mut autoincrement_enabled: bool = true;
         let mut idents_authorities: Vec<syn::Ident> = vec![];
@@ -29,6 +31,7 @@ impl SpawnNautilusAccount {
             &(ident_struct_name.to_string() + "Optionized"),
             proc_macro2::Span::call_site(),
         );
+
         let table_name = ident_struct_name.to_string().to_lowercase();
 
         let fields = if let syn::Data::Struct(syn::DataStruct {
@@ -38,7 +41,7 @@ impl SpawnNautilusAccount {
         {
             named.clone()
         } else {
-            unimplemented!() // TODO: Can only be for structs
+            return Err(super::error::EnforceStructsError());
         };
 
         let mut optionized_struct_fields: Vec<(
@@ -80,7 +83,7 @@ impl SpawnNautilusAccount {
             None => todo!("Throw an error on None value"),
         };
 
-        SpawnNautilusAccount {
+        Ok(SpawnNautilusAccount {
             autoincrement_enabled,
             table_name,
             fields,
@@ -90,7 +93,7 @@ impl SpawnNautilusAccount {
             idents_authorities,
             optionized_struct_fields,
             ty_primary_key,
-        }
+        })
     }
 
     fn idents_optionized_struct_fields(&self) -> Vec<syn::Ident> {
@@ -114,15 +117,20 @@ impl SpawnNautilusAccount {
             .collect()
     }
 
-    pub fn generate(&self) -> proc_macro2::TokenStream {
+    pub fn generate(
+        &self,
+    ) -> Result<proc_macro2::TokenStream, super::error::EnforcePrimaryKeyType> {
         let tokens_primary_key_seed = super::data::build_tokens_primary_key_seed(
             &self.ident_primary_key,
             &self.ty_primary_key,
-        );
+        )?;
 
         let optionized_nautilus_account_tokens = super::data::nautilus_optionized(
             &self.ident_optionized_struct_name,
             &self.tokens_optionized_struct_fields(),
+            &self.ident_struct_name,
+            &self.fields,
+            &self.ident_primary_key,
         );
         let optionized_nautilus_account_borsh_tokens = super::borsh::nautilus_borsh_optionized(
             &self.ident_optionized_struct_name,
@@ -156,12 +164,10 @@ impl SpawnNautilusAccount {
             super::crud::nautilus_create_tokens(&self.ident_struct_name);
         let self_nautilus_delete_tokens =
             super::crud::nautilus_delete_tokens(&self.ident_struct_name);
-        let self_nautilus_update_tokens = super::crud::nautilus_update_tokens(
-            &self.ident_struct_name,
-            &self.ident_optionized_struct_name,
-        );
+        let self_nautilus_update_tokens =
+            super::crud::nautilus_update_tokens(&self.ident_struct_name);
 
-        quote::quote! {
+        Ok(quote::quote! {
             #optionized_nautilus_account_tokens
             #optionized_nautilus_account_borsh_tokens
             #optionized_nautilus_account_data_tokens
@@ -172,6 +178,6 @@ impl SpawnNautilusAccount {
             #self_nautilus_delete_tokens
             #self_nautilus_update_tokens
         }
-        .into()
+        .into())
     }
 }

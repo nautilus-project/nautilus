@@ -12,6 +12,7 @@
 mod borsh;
 mod crud;
 mod data;
+mod error;
 mod parser;
 mod spawn;
 
@@ -51,7 +52,7 @@ impl syn::parse::Parse for NautilusAccountStruct {
             }
             .into())
         } else {
-            Err(lookahead.error())
+            Err(syn::Error::new(input.span(), error::EnforceStructsError()))
         }
     }
 }
@@ -92,7 +93,7 @@ pub fn data_struct(
         let semi = input.parse()?;
         Ok((where_clause, syn::Fields::Unit, Some(semi)))
     } else {
-        Err(lookahead.error()) // TODO: Can only be for structs
+        Err(lookahead.error())
     }
 }
 
@@ -114,13 +115,16 @@ impl quote::ToTokens for NautilusAccountStruct {
     }
 }
 
-///
-///
-/// Code generation
-///
-///
+//
+//
+// Code generation
+//
+//
 impl From<&NautilusAccountStruct> for proc_macro2::TokenStream {
     fn from(ast: &NautilusAccountStruct) -> Self {
-        spawn::SpawnNautilusAccount::from_ast(ast).generate()
+        spawn::SpawnNautilusAccount::from_ast(ast)
+            .expect("Error parsing annotated tokens.")
+            .generate()
+            .expect("Error generating Nautilus tokens.")
     }
 }

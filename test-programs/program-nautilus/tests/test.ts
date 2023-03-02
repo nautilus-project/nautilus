@@ -21,7 +21,8 @@ function loadKeypairFromFile(path: string): Keypair {
     )
 }
 
-const ID: number = 2
+const AUTOINCREMENT: boolean = false
+const ID: number = 1
 
 describe("Nautilus Program Unit Tests", async () => {
 
@@ -31,6 +32,7 @@ describe("Nautilus Program Unit Tests", async () => {
   
     it("Try CreateHero", async () => {
         let ix = createCreateHeroInstruction(
+            AUTOINCREMENT,
             payer.publicKey,
             program.publicKey,
             ID,

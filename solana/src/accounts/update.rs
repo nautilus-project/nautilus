@@ -5,7 +5,13 @@ use crate::{
 use super::{auth::NautilusAccountAuth, data::NautilusAccountData};
 
 /// The trait that marks an "optionized" struct as being a valid optionized version of a PDA struct's data and thus allowing it to be used inside `NautilusUpdateArgs`.
-pub trait NautilusOptionized: NautilusAccountData {}
+pub trait NautilusOptionized: NautilusAccountData {
+    /// Evaluates if an "optionized" field is either `Some(T)` or `None`.
+    ///
+    /// * If `Some(T)`, it will replace that field on the object with the new value from the `Some(T)` arg.
+    /// * If `None`, it will do nothing to that field.
+    fn process_nautilus_update_data<T: NautilusAccountData>(data: T, update_data: Self) -> T;
+}
 
 /// The default args for implementing the `nautilus_update(..)` instruction.
 ///
@@ -58,8 +64,10 @@ pub trait NautilusAccountUpdate: NautilusAccountData + NautilusAccountAuth {
     /// * If `Some(T)`, it will replace that field on the object with the new value from the `Some(T)` arg.
     /// * If `None`, it will do nothing to that field.
     ///
-    /// Note: This is a mutable self-reference method and does not return anything, only updates the object itself in-place.
-    fn process_nautilus_update_data<T: NautilusOptionized>(&mut self, update_data: T);
+    /// Note: This function, under the `NautilusAccountUpdate` trait, calls on the same function in the `NautilusOptionized` trait to accopmlish this process.
+    fn process_nautilus_update_data<T: NautilusOptionized>(data: Self, update_data: T) -> Self {
+        T::process_nautilus_update_data(data, update_data)
+    }
 
     /// The default `update` instruction for the PDA.
     ///
@@ -90,7 +98,7 @@ pub trait NautilusAccountUpdate: NautilusAccountData + NautilusAccountAuth {
 
         let mut data = Self::try_from_slice(&args.target_account.data.borrow_mut())?;
         data.check_authorities(args.authorities)?;
-        data.process_nautilus_update_data(args.update_data);
+        data = Self::process_nautilus_update_data(data, args.update_data);
 
         let diff = data.lamports_required()? - args.target_account.lamports();
 
