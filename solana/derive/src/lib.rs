@@ -1,20 +1,25 @@
 extern crate proc_macro;
 
-use nautilus_syn::{NautilusAccountStruct, NautilusEntrypointEnum};
 use proc_macro::TokenStream;
-use quote::ToTokens;
-use syn::parse_macro_input;
+use quote::quote;
+use syn::{parse_macro_input, ItemFn};
 
-#[proc_macro_derive(Nautilus)]
-pub fn derive_nautilus_entrypoint(input: TokenStream) -> TokenStream {
-    parse_macro_input!(input as NautilusEntrypointEnum)
-        .to_token_stream()
-        .into()
-}
+#[proc_macro_attribute]
+pub fn nautilus(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input_fn = parse_macro_input!(input as ItemFn);
+    let fn_name = &input_fn.sig.ident;
 
-#[proc_macro_derive(NautilusAccount, attributes(primary_key, authority))]
-pub fn derive_nautilus_account(input: TokenStream) -> TokenStream {
-    parse_macro_input!(input as NautilusAccountStruct)
-        .to_token_stream()
-        .into()
+    let parameter_types = input_fn.sig.inputs.iter().map(|param| {
+        quote! { #param }
+    });
+
+    let fn_body = &input_fn.block.stmts;
+
+    quote! {
+        fn #fn_name(#(#parameter_types, context: String),*) {
+            println!("{}", context);
+            #(#fn_body)*
+        }
+    }
+    .into()
 }
