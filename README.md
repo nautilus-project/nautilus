@@ -1,301 +1,321 @@
 # ⛴️ Nautilus
 
-[📝 Features & Roadmap Doc](https://funny-fur-524.notion.site/Nautilus-e9335efcc6cd46acbdcbf123c234fff3)
+🚧 **Note**:   
+This framework is still under active development and this spec is subject to change.   
+Consider this document a general outline of the goals of this project for the time being.
 
-### 🦀 Writing a Nautilus Program
+---
 
+The ⛴️ Nautilus Framework is a brand-new Solana program framework for 🦀 Rust. It introduces:
+* 🦀 **On-Chain** (Rust):
+    * [📥 Object-oriented on-chain programming](#📥-object-oriented-on-chain-programming)
+    * [🔗 Relational program data](#🔗-relational-program-data-pdas)
+* 👾 **Client-Side** (TypeScript):
+    * [🔍 Native SQL support for program data](#🔍-native-sql-support-for-program-data)
+    * [⚡️ Account resolution](#⚡️-account-resolution)
+
+Some other notable elements:
+* 🗝️ Dynamic CPI Support
+* 🗝️ High-quality error logs
+* 🗝️ TypeScript-native client-side types
+* 🗝️ More verbose IDL
+
+## 🦀 On-Chain (Rust)
+
+### Overview
+
+Entrypoint:
 ```rust
-#[derive(NautilusEntrypoint)]
-enum MyInstructions {
-    CreatePerson,
-    UpdatePerson,
-    DeletePerson,
+// Entrypoint:
+#[nautilus]
+mod program {
+    fn some_instruction(..) -> ProgramResult {}
+    fn some_other_instruction(..) -> ProgramResult {}
 }
 
-#[derive(NautilusAccount)]
-pub struct Person {
-    #[primary_key(autoincrement = true)]
-    id: u32,
-    name: String,
-    #[authority]
-    authority: Pubkey,
-}
-```
-
-### 📜 PDA Data Mapping
-
-Each PDA account for a Nautilus program follows this specific pattern for it's Program Derived Address (PDA):
-```shell
-seeds = <table name> + <id value>
-```
-Or, more specifically, where `TABLE_NAME` is the name of the struct plus string `"_table"`.
-
-### ➕ How AutoIncrement Works
-
-Nautilus leverages what's called a `Counter` account for each table specified by the program. For example, in the case of a struct `Person`:
+// State:
 ```rust
-// Seeds: "person_table" + <id value (u32)>
-pub struct Person {
-    id: u32,
-    name: String,
-}
-
-// Re-used struct for each "Counter" account
-// Seeds (example): "person_table_counter"
-pub struct Counter {
-    id: u32,
-    name: String,
+#[derive(Nautilus)]
+struct MyData {
+    value: u8
 }
 ```
-As you can probably predict, every time we create new "records" in the table, we update this counter.
 
-### 📘 Repository Layout
-```text
-/cli        -- CLI
-/js         -- Client-side SDK
-/solana     -- Solana program crate
-    /derive     -- derive(Nautilus) macro
-    /src        -- Nautilus crate core (traits & functions)
-    /syn        -- Parsing operations for the derive(Nautilus) macro
-    /tests      -- Nautilus crate tests
-/test       -- Test repositories
-```
+### 📥 Object-Oriented On-Chain Programming
 
-### ⚙️ The `#[derive(NautilusAccount)]` Macro
-
-The macro itself consists of a `proc_derive` macro and it's associated attributes.   
+Similar to the [🐴 Seahorse Framework](https://seahorse-lang.org/), Nautilus takes an object-oriented approach to writing on-chain program logic.   
+With this approach, one can simply call operations on these objects via methods, such as `transfer`.
 ```rust
-#[derive(NautilusAccount)]
-pub struct Person {
-    #[primary_key(autoincrement = true)]
-    id: u32,
-    name: String,
-    #[authority]
-    authority: Pubkey,
-}
-```
-Attributes:
-* `primary_key` : Which field we're going to be using as the object's ID, and therefore also it's **PDA derivation seeds**.
-    * `auto_increment` : Enables or disables autoincrementing of the primary key by adding the logic to check the [Counter account](#how-autoincrement-works) to auto-increment the ID field. 
-        * Primary Key must be a number to use autoincrement.
-        * Autoincrement is enabled by default.
-* `authority` : Add signer checks to verify that a specific record's `authority` has signed the instruction.
-    * Supports multiple `authority` attributes for "multi-sig".
+#[nautilus]
+mod program {
+    fn my_wallet_function(from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
 
-Nautilus will implement the `NautilusCrud` type for your struct, giving it the following features:
-* Default `create()`, `update()`, and `delete()` operations
-    * These leverage `invoke_signed` and add checks based on the `authority` attributes provided.
-* Seed management util functions
-    * These leverage `shank` to give developers easy access to a struct's seeds, address, and checks.
-* Inner data state management util functions
-    * These directly manipulate the account's inner data based on the struct.
-    * Think `new()`, `update()`, and `realloc()`.
+        from.transfer(to, amount)
+    }
 
-### :gear: The `#[derive(NautilusEntrypoint)]` Macro
+    fn my_token_function(from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
 
-This macro builds your program's entrypoint and processor.   
-   
-For example, consider the enum provided above:
-```rust
-#[derive(NautilusEntrypoint)]
-NautilusProgramInstruction {
-    CreatePerson,
-    UpdatePerson,
-    DeletePerson,
-}
-```
-The will actually generate the following code:
-```rust
-use solana_program::{
-    account_info::AccountInfo, 
-    entrypoint, 
-    entrypoint::ProgramResult, 
-    pubkey::Pubkey,
-};
-
-NautilusProgramInstruction {
-    CreatePerson(CreatePersonArgs),
-    UpdatePerson(UpdatePersonArgs),
-    DeletePerson(DeletePersonArgs),
-}
-
-entrypoint!(process_instruction);
-
-fn process_instruction(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8],
-) -> ProgramResult {
-
-    let instruction = NautilusProgramInstruction::try_from_slice(&instruction_data)?;
-
-    match instruction {
-
-        NautilusProgramInstruction::CreatePerson(args) => {
-            msg!("Nautilus Program Instruction: CreatePerson");
-            return Person::create(program_id, accounts, args)
-        }
-        NautilusProgramInstruction::UpdatePerson(args) => {
-            msg!("Nautilus Program Instruction: UpdatePerson");
-            return Person::update(program_id, accounts, args)
-        }
-        NautilusProgramInstruction::DeletePerson(args) => {
-            msg!("Nautilus Program Instruction: DeletePerson");
-            return Person::delete(program_id, accounts, args)
-        }
+        from.transfer(to, amount)
     }
 }
 ```
-Note the naming conventions of the enum variants dictate the methods called within the processor.   
-For example, consider this variant:
+
+A `Create<T>` wrapper is used for creating new objects, but the concept is still the same as above.
 ```rust
-    CreatePerson,
+#[nautilus]
+mod program {
+    fn create_token(new_token: Create<Token>, decimals: u8) -> ProgramResult {
+
+        new_token.create(decimals)
+    }
+
+    fn create_token_with_metadata(
+        new_token: Create<Token>, 
+        decimals: u8,
+        title: String,
+        symbol: String,
+        uri: String,
+    ) -> ProgramResult {
+
+        new_token.create(decimals)?;
+        new_token.create_metadata(title, symbol, uri)?;
+        Ok(())
+    }
+}
 ```
-The name `CreatePerson` tells Nautilus to use the `create` method from the `Person` struct. This method is automatically implemented for the struct `Person` when the `#[derive(NautilusAccount)]` annotation is added to the Person struct.  
+
+As you can infer, all accounts are abstracted away from you and packed into your instruction automatically based on the operations you conduct on these objects.   
    
-If someone wanted to define their own instruction, or override one of the defaults, they just need to provide custom args, like so:
+But what about custom data (PDAs)? 👇🏼
+
+### 🔗 Relational Program Data (PDAs)
+
+Nautilus provides high-level abstractions around seeds and data relationships, which provide a much more familiar, SQL-based approach to Solana program data.   
+   
+The supported integrations are as follows:
+| Integration | Definition | Seeds |
+|:------------|:-----------|:------|
+|[Default Non-Unique](#default-non-unique)|This account has no foreign key relation to other data types within this program, but there can be many records.|`<prefix> + <id>`|
+|[Default Unique](#default-unique)|This account has no foreign key relation to other data types within this program, and **there can only be one** record of its kind.|`<prefix>`|
+|[Related Non-Unique](#related-non-unique)|This account has **at least one** foreign key relation to other data types within this program, but there can be many records.|`<prefix> + <foreign-key> + <id>`|
+|[Related Unique](#related-unique)|This account has **at least one** foreign key relation to other data types within this program, and **there can only be one** record of its kind.|`<prefix> + <foreign-key>`|
+
+#### Default Non-Unique
 ```rust
-#[derive(NautilusEntrypoint)]
-NautilusProgramInstruction {
-    CreatePerson,
-    UpdatePerson(MyCustomUpdatePersonArgs),
-    DeletePerson,
+#[derive(Nautilus)]
+struct Person {
+    name: String,
 }
 ```
-Then when they define their actual operation for that instruction variant, it looks like this:
+#### Default Unique
 ```rust
-struct MyCustomUpdatePersonArgs {
-    is_paul: bool,
-}
-
-fn update_person(program_id: &Pubkey, accounts: &[AccountInfo], args: MyCustomUpdatePersonArgs) {
-    
-    // The developer's custom logic can still make use of methods and associated functions for the struct
-    //      that implements the NautilusCrud trait
-    let accounts_iter = accounts.iter();
-    let person = Person::from_account_info(accounts_iter.next_account_info());
-    
-    if (is_paul) {
-        person.update(None, Some("Paul"), None); // Updates only the `name` field
-    };
-
-    Ok(())
+#[derive(Nautilus)]
+#[relation(
+    unique
+)]
+struct Person {
+    name: String,
 }
 ```
 
-### 📡 Client-Side SDK
-Nautilus makes use of the Shank-generated IDL to create the client-side SDK types and functions, just like Anchor and Solita.
+Creating `Default` PDAs is the same as seen above.
+```rust
+#[nautilus]
+mod program {
+    fn create_person(new_person: Create<Person>, name: String) -> ProgramResult {
 
-**Initializing**
-```typescript
-import nautilus from '@nautilus/js'
-import { Connection } from '@solana/web3.js'
+        new_person.create(name)
+    }
+}
+```
 
-const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-const nautilus = new Nautilus(connection);
-nautilus.addProgram('MyProgram', '../idl.json');
+#### Related Non-Unique
+```rust
+#[derive(Nautilus)]
+#[relation(
+    foreign_keys(
+        mint: Pubkey,
+    ),
+)]
+struct Person {
+    name: String,
+}
 ```
-Note Nautilus also supports multiple programs in the same instance:
-```typescript
-const nautilus = new Nautilus(connection);
-nautilus.addProgram('MyProgram', '../idl.json');
-nautilus.addProgram('MyProgram2', '../idl2.json');
+#### Related Unique
+```rust
+#[derive(Nautilus)]
+#[relation(
+    unique,
+    foreign_keys(
+        mint: Pubkey,
+    ),
+)]
+struct Person {
+    name: String,
+}
 ```
-You can set the default program to avoid having to specify on each call:
-```typescript
-nautilus.addProgram('MyProgram', '../idl.json');
-nautilus.setDefault('MyProgram');
-// or
-nautilus.addDefault('MyProgram', '../idl.json');
-```
-**Writing Data**
-```typescript
-nautilus
-    .program('MyProgram')
-    .table('person')
-    .create({
-        name: "Joe",
-        twitterHandle: "realbuffalojoe",
-    })
-    .signers([payer])
-    .execute();
-```
-```typescript
-const ix = nautilus
-    .program('MyProgram')
-    .table('person')
-    .create({
-        name: "Joe",
-        twitterHandle: "realbuffalojoe",
-    })
-    .signers([payer])
-    .instruction();
 
-let tx = nautilus.util.createTransaction(
-    instructions: [ix],
-    feePayer: payer
-);
-await sendTransaction(tx);
-```
-Note Nautilus' util functions support Versioned Transactions.
+When a foreign key is introduced, the `.create(..)` method changes.
+```rust
+#[nautilus]
+mod program {
+    fn create_person(new_person: Create<Person>, name: String, mint: Token) -> ProgramResult {
 
-**Reading Data**
-```typescript
-const allPeople = nautilus
-    .program('MyProgram')
-    .table('person')
-    .get()
-    .execute();
+        new_person.create(name, (mint.key()))   // Takes 2 parameters now: ( name: String, foreign_keys: (mint: Pubkey) )
+    }
+}
 ```
-**Querying Data with SQL**
+Same thing with more than one foreign key.
+```rust
+#[derive(Nautilus)]
+#[relation(
+    unique,
+    foreign_keys(
+        wallet: Pubkey,
+        mint: Pubkey,
+    ),
+)]
+struct Person {
+    name: String,
+}
+```
+```rust
+#[nautilus]
+mod program {
+    fn create_person(new_person: Create<Person>, name: String, mint: Token, wallet: Wallet) -> ProgramResult {
 
-Use simple selects or joins:
+        new_person.create(name, (wallet.key(), mint.key()))   // Parameters: ( name: String, foreign_keys: (wallet: Pubkey, mint: Pubkey) )
+    }
+}
+```
+> Foreign keys are passed into `.create(..)` as a tuple.   
+   
+You might be wondering 🤔, why does this relation matter? 👇🏼
+
+## 👾 Client-Side (TypeScript)
+
+### Overview
+
 ```typescript
-const peopleNamedJoe = nautilus
-    .program('MyProgram')
-    .table('person')
-    .where('name', '==', 'Joe')
-    .get()
-    .execute();
+import { myProgram } from '../target/nautilus/myProgram'
+
+const nautilus = new Nautilus(connection, myProgram)
+
+// Fetching data
+let account = nautilus.get(address)                         // Any address, returns byte array non-deserialized data
+let person = nautilus.where('Person').address(address)      // Address field, returns deserialized data of type Person
+
+// Sending transactions
+nautilus.myProgramInstruction(
+    param1,
+    param2,
+)
+.feePayer(payer)
+.execute()
+// - or -
+nautilus.utils.buildTransaction(
+    arbitraryInstructions,      // TransactionInstruction[]
+    payer,                      // Signer
+)
+.execute()
+```
+
+### 🔍 Native SQL Support for Program Data
+
+Because of Nautilus's concept of relational program data, the client-side SDK can make use of powerful optimizations for loading and querying data.   
+   
+First, we can filter against `getProgramAccounts` using fields within our data records.
+```typescript
+let persons: Person[] = nautilus.where('Person').get()
+
+// SQL:
+let personsNamedJoe = nautilus.where('Person').eq('name', 'Joe').get()
+let personsNamedJoeOrDan = nautilus.where('Person').eq('name', ['Joe', 'Dan']).get()
+
+// SQL & GraphQL:
+let personsNamedJoe = nautilus.where('Person').eq('name', 'Joe').get({
+    name: string!,
+    someOtherField: string?,
+})
+let personsNamedJoeOrDan = nautilus.where('Person').eq('name', ['Joe', 'Dan']).get({
+    name: string!,
+    someOtherField: string?,
+})
+```
+
+Nautilus can also use your data's **defined relations** (foreign keys) to provide lookup methods.
+```typescript
+let personsForWalletAndMint: Person[] = nautilus.where('Person').relatedRecords(wallet, mint)
+
+// Or, for unique:
+let personForWalletAndMint: Person = nautilus.where('Person').relatedUniqueRecord(wallet, mint)
+```
+
+### ⚡️ Account Resolution
+
+Nautilus will make every effort to resolve required accounts while allowing you to override it's resolutions where desired.   
+   
+Take for example the following instruction for transferring an SPL Token, where the associated token accounts can be automatically derived.
+```rust
+#[nautilus]
+mod program {
+    fn my_token_function(from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
+
+        from.transfer(to, amount)
+    }
+}
 ```
 ```typescript
-const peopleNamedJoe = nautilus
-    .program('MyProgram')
-    .table('person')
-    .innerJoin('address', 'address_id')
-    .where('name', '==', 'Joe')
-    .get()
-    .execute();
+nautilus.myTokenFunction(
+    fromPublicKey,          // Public key of the wallet
+    toPublicKey,            // Public key of the wallet
+    amount,                 // Automatic conversion from `number` to `BN`
+)
+.feePayer(payer)
+.signers([fromKeypair])
+.execute()
 ```
-Or make use of raw SQL syntax:
+
+This same concept also applies to PDAs, so you no longer have to worry about deriving the address off-chain **to perform a write**.
+```rust
+#[derive(Nautilus)]
+#[relation(
+    unique,
+    foreign_keys(
+        wallet: Pubkey,
+        mint: Pubkey,
+    ),
+)]
+struct Person {
+    name: String,
+}
+
+#[nautilus]
+mod program {
+    fn create_person(new_person: Create<Person>, name: String, mint: Token, wallet: Wallet) -> ProgramResult {
+
+        new_person.create(name, (wallet.key(), mint.key()))
+    }
+}
+```
 ```typescript
-const peopleNamedJoe = nautilus
-    .program('MyProgram')
-    .query('SELECT * FROM person WHERE name == "Joe"')
-    .execute();
+nautilus.createPerson(
+    name,
+    mint,
+    wallet,
+)
+.feePayer(payer)
+.execute()
 ```
-```typescript
-const peopleNamedJoe = nautilus
-    .program('MyProgram')
-    .query('SELECT * FROM person INNER JOIN address (address_id) WHERE name == "Joe"')
-    .execute();
-```
-**Querying Data with GraphQL**
-```typescript
-const allPeopleJustNames = nautilus.table('person')
-    .get()
-    .schema({
-        name: string!,
-    })
-    .execute();
-```
-```typescript
-const peopleNamedJoeJustNames = nautilus.table('person')
-    .get()
-    .schema({
-        name: string!,
-    })
-    .where('name', '==', 'Joe')
-    .execute();
-```
-> Note: Querying data across multiple programs is still a spec, but should also be possible.
+
+## 🗝️ Notes on Other Notable Elements
+
+`<coming soon>`
+
+# 🤔 How Does Nautilus Work?
+
+`<coming soon>`
+
+> A full explanation of how the framework works will be provided as features are enabled.   
+> Right now as of writing, many proof-of-concepts have been built in Rust, inside and out of this repository, and the remainder of the spec has been fleshed out on plain 'ol pen and paper.   
+> Expect this document to update regularly in the coming weeks. 💪🏼
