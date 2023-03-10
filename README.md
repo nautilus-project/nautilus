@@ -78,6 +78,13 @@ mod program {
 
         new_token.create(decimals)?;
         new_token.create_metadata(title, symbol, uri)?;
+        // - or -
+        new_token.create_with_metadata(
+            decimals,
+            title,
+            symbol,
+            uri,
+        )?;
         Ok(())
     }
 }
