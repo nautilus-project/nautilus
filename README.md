@@ -34,7 +34,6 @@ mod program {
 }
 
 // State:
-```rust
 #[derive(Nautilus)]
 struct MyData {
     value: u8
@@ -53,9 +52,9 @@ mod program {
         from.transfer(to, amount)
     }
 
-    fn my_token_function(from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
+    fn my_token_function(mint: Token, from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
 
-        from.transfer(to, amount)
+        mint.transfer(from, to, amount)
     }
 }
 ```
