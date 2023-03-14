@@ -4,25 +4,32 @@ mod state;
 
 use nautilus::*;
 
-use crate::custom_instruction::custom;
-use crate::instruction::MyInstructions;
-use crate::state::{Hero, Villain};
+#[nautilus]
+mod program_nautilus {
 
-entrypoint!(process_instruction);
-
-fn process_instruction<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
-    input: &[u8],
-) -> ProgramResult {
-    let instruction = MyInstructions::try_from_slice(input)?;
-    match instruction {
-        MyInstructions::CreateHero(args) => Hero::nautilus_create(program_id, accounts, args),
-        MyInstructions::DeleteHero => Hero::nautilus_delete(accounts),
-        MyInstructions::UpdateHero(args) => Hero::nautilus_update(program_id, accounts, args),
-        MyInstructions::CreateVillain(args) => Villain::nautilus_create(program_id, accounts, args),
-        MyInstructions::DeleteVillain => Villain::nautilus_delete(accounts),
-        MyInstructions::UpdateVillain(args) => Villain::nautilus_update(program_id, accounts, args),
-        MyInstructions::CustomInstruction(args) => custom(program_id, accounts, args),
+    fn create_hero(new_hero: Create<Hero>, fee_payer: Wallet, id: u8, name: String) -> ProgramResult {
+        new_hero.create(id, name)
     }
+
+    fn create_villain(new_villain: Create<Villain>, fee_payer: Wallet, id: u8, name: String) -> ProgramResult {
+        new_villain.create(id, name, (id))
+    }
+}
+
+#[derive(Nautilus)]
+pub struct Hero {
+    #[primary_key(autoincrement = true)]
+    id: u8,
+    name: String,
+    #[authority]
+    authority: Pubkey,
+}
+
+#[derive(Nautilus)]
+pub struct Villain {
+    #[primary_key(autoincrement = false)]
+    id: u8,
+    name: String,
+    #[authority]
+    authority: Pubkey,
 }

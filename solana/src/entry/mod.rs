@@ -7,11 +7,3 @@ pub use solana_program::{
     pubkey::Pubkey,
     system_instruction, system_program, sysvar,
 };
-
-// enum ButtMuncher {
-//     CreatePerson,
-//     DeletePerson,
-//     UpdatePerson,
-// }
-
-// pub trait NautilusEntryProcessor {}

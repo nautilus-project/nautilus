@@ -1,13 +1,7 @@
+#[derive(Clone)]
 pub struct Metadata<'a> {
-    account_info: solana_program::account_info::AccountInfo<'a>,
-}
-
-impl<'a> From<solana_program::account_info::AccountInfo<'a>> for Metadata<'a> {
-    fn from(value: solana_program::account_info::AccountInfo<'a>) -> Self {
-        Self {
-            account_info: value,
-        }
-    }
+    pub account_info: solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Metadata<'a> {
@@ -16,7 +10,7 @@ impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> crate::NautilusAccountInfo<'a> for Metadata<'a> {
+impl<'a> crate::properties::NautilusAccountInfo<'a> for Metadata<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -49,21 +43,92 @@ impl<'a> crate::NautilusAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> Metadata<'a> {
-    pub fn create<T: crate::NautilusAccountInfo<'a>>(
+impl<'a> crate::properties::NautilusCreateMetadata<'a>
+    for crate::properties::Create<'a, Metadata<'a>>
+{
+    fn create_metadata<T: crate::properties::NautilusAccountInfo<'a>>(
+        &self,
         title: String,
         symbol: String,
         uri: String,
+        mint: crate::token::Mint<'a>,
+        mint_authority: T,
         update_authority: T,
-    ) -> Self {
-        todo!()
+    ) -> solana_program::entrypoint::ProgramResult {
+        let metadata = self.self_account.clone();
+        let payer = self.fee_payer.clone();
+        let rent = self.rent.clone();
+        let token_metadata_program = metadata.token_metadata_program.clone();
+        solana_program::program::invoke(
+            &mpl_token_metadata::instruction::create_metadata_accounts_v3(
+                *token_metadata_program.key,
+                *crate::properties::NautilusAccountInfo::key(&metadata),
+                *crate::properties::NautilusAccountInfo::key(&mint),
+                *mint_authority.key(),
+                *payer.key,
+                *update_authority.key(),
+                title,
+                symbol,
+                uri,
+                None,
+                0,
+                true,
+                false,
+                None,
+                None,
+                None,
+            ),
+            &[
+                metadata.into(),
+                mint.account_info.clone(),
+                mint_authority.into(),
+                payer,
+                token_metadata_program,
+                rent,
+            ],
+        )
     }
 
-    pub fn delete(self) -> solana_program::entrypoint::ProgramResult {
-        todo!()
-    }
-
-    pub fn update() -> Self {
-        todo!()
+    fn create_metadata_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
+        &self,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint: crate::token::Mint<'a>,
+        mint_authority: T,
+        update_authority: T,
+        payer: T,
+    ) -> solana_program::entrypoint::ProgramResult {
+        let metadata = self.self_account.clone();
+        let rent = self.rent.clone();
+        let token_metadata_program = metadata.token_metadata_program.clone();
+        solana_program::program::invoke(
+            &mpl_token_metadata::instruction::create_metadata_accounts_v3(
+                *token_metadata_program.key,
+                *crate::properties::NautilusAccountInfo::key(&metadata),
+                *crate::properties::NautilusAccountInfo::key(&mint),
+                *mint_authority.key(),
+                *payer.key(),
+                *update_authority.key(),
+                title,
+                symbol,
+                uri,
+                None,
+                0,
+                true,
+                false,
+                None,
+                None,
+                None,
+            ),
+            &[
+                metadata.into(),
+                mint.account_info.clone(),
+                mint_authority.into(),
+                payer.into(),
+                token_metadata_program,
+                rent,
+            ],
+        )
     }
 }

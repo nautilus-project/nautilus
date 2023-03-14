@@ -1,19 +1,18 @@
 use crate::properties::NautilusAccountInfo;
 
 #[derive(Clone)]
-pub struct AssociatedTokenAccount<'a> {
+pub struct Wallet<'a> {
     pub account_info: solana_program::account_info::AccountInfo<'a>,
-    pub token_program: solana_program::account_info::AccountInfo<'a>,
-    pub associated_token_program: solana_program::account_info::AccountInfo<'a>,
+    pub system_program: solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a> solana_program::account_info::IntoAccountInfo<'a> for AssociatedTokenAccount<'a> {
+impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Wallet<'a> {
     fn into_account_info(self) -> solana_program::account_info::AccountInfo<'a> {
         self.account_info
     }
 }
 
-impl<'a> crate::properties::NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
+impl<'a> crate::properties::NautilusAccountInfo<'a> for Wallet<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -46,50 +45,58 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for AssociatedTokenAccount<'
     }
 }
 
-impl<'a> crate::properties::NautilusCreateAssociatedTokenAccount<'a>
-    for crate::properties::Create<'a, AssociatedTokenAccount<'a>>
-{
-    fn create(&self, mint: crate::token::Mint<'a>) -> solana_program::entrypoint::ProgramResult {
+impl<'a> crate::properties::NautilusTransferLamports<'a> for Wallet<'a> {
+    fn transfer_lamports<T: crate::properties::NautilusAccountInfo<'a>>(
+        self,
+        to: T,
+        amount: u64,
+    ) -> solana_program::entrypoint::ProgramResult {
+        let from = self.account_info;
+        let system_program = self.system_program;
+        solana_program::program::invoke(
+            &solana_program::system_instruction::transfer(from.key, to.key(), amount),
+            &[from.into(), to.into(), system_program.into()],
+        )
+    }
+}
+
+impl<'a> crate::properties::NautilusCreate<'a> for crate::properties::Create<'a, Wallet<'a>> {
+    fn create(&self) -> solana_program::entrypoint::ProgramResult {
         let payer = self.fee_payer.clone();
         let system_program = self.system_program.clone();
         solana_program::program::invoke(
-            &spl_associated_token_account::instruction::create_associated_token_account(
+            &solana_program::system_instruction::create_account(
                 payer.key,
-                self.key(),
-                mint.key(),
-                self.self_account.token_program.key,
+                self.self_account.key(),
+                self.self_account.required_rent()?,
+                self.self_account.size(),
+                system_program.key,
             ),
             &[
-                mint.into(),
-                self.self_account.account_info.clone(),
                 payer,
+                self.self_account.account_info.clone(),
                 system_program,
-                self.self_account.token_program.clone(),
-                self.self_account.associated_token_program.clone(),
             ],
         )
     }
 
     fn create_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
         &self,
-        mint: crate::token::Mint<'a>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
         let system_program = self.system_program.clone();
         solana_program::program::invoke(
-            &spl_associated_token_account::instruction::create_associated_token_account(
+            &solana_program::system_instruction::create_account(
                 payer.key(),
-                self.key(),
-                mint.key(),
-                self.self_account.token_program.key,
+                self.self_account.key(),
+                self.self_account.required_rent()?,
+                self.self_account.size(),
+                system_program.key,
             ),
             &[
-                mint.into(),
-                self.self_account.account_info.clone(),
                 payer.into(),
+                self.self_account.account_info.clone(),
                 system_program,
-                self.self_account.token_program.clone(),
-                self.self_account.associated_token_program.clone(),
             ],
         )
     }

@@ -11,7 +11,8 @@ pub mod entry;
 pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
-pub use nautilus_derive::nautilus;
+pub use nautilus_derive::{nautilus, Nautilus};
+pub use shank::{ShankAccount, ShankInstruction};
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo, IntoAccountInfo},
     declare_id, entrypoint,
