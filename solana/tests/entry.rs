@@ -1,14 +1,14 @@
-#[test]
-fn entry() {
-    use nautilus::*;
+use nautilus::*;
 
-    #[nautilus]
-    mod my_mod {
-        fn print_something(from: String, to: String) {
-            println!("Something");
-        }
-        fn print_something_again(from: String, to: String) {
-            println!("Something again");
-        }
+#[nautilus]
+pub mod my_mod {
+    use super::*;
+    fn print_something(from: Darryl, to: JoeC) {
+        println!("Something");
     }
+    #[derive(Nautilus, BorshDeserialize, BorshSerialize)]
+    pub struct JoeC {}
 }
+
+#[test]
+fn entry() {}

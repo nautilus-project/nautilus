@@ -9,26 +9,42 @@
 //                                  * New tokens created here
 //
 //
+mod entry_enum;
+mod entry_variant;
+mod required_account;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct NautilusEntrypoint {
-    pub attrs: Vec<syn::Attribute>,
-    pub vis: syn::Visibility,
-    pub mod_token: syn::token::Mod,
-    pub ident: syn::Ident,
-    pub content: Option<(syn::token::Brace, Vec<syn::Item>)>,
-    pub semi: Option<syn::token::Semi>,
+    pub mod_ident: syn::Ident,
+    pub mod_content: Vec<syn::Item>,
+    pub nautilus_enum: entry_enum::NautilusEntrypointEnum,
+    pub crate_context: shank_macro_impl::krate::CrateContext,
 }
 
 impl From<syn::ItemMod> for NautilusEntrypoint {
     fn from(value: syn::ItemMod) -> Self {
+        let root = std::env::current_dir().unwrap().join("src/lib.rs");
+        let crate_context = shank_macro_impl::krate::CrateContext::parse(root).expect(
+            "Failed to detect `src/lib.rs`. Are you sure you've built your program with `--lib` ?",
+        );
+        let nautilus_structs = parse_nautilus_structs(crate_context.structs().cloned().into_iter());
+        let mod_ident = value.ident;
+        let mod_content = value.content.unwrap().1;
+        let nautilus_enum = entry_enum::NautilusEntrypointEnum::new(
+            nautilus_structs,
+            mod_content.iter().filter_map(|item| {
+                if let syn::Item::Fn(item_fn) = item {
+                    Some(item_fn.clone())
+                } else {
+                    None
+                }
+            }),
+        );
         Self {
-            attrs: value.attrs,
-            vis: value.vis,
-            mod_token: value.mod_token,
-            ident: value.ident,
-            content: value.content,
-            semi: value.semi,
+            mod_ident,
+            mod_content,
+            nautilus_enum,
+            crate_context,
         }
     }
 }
@@ -46,156 +62,57 @@ impl quote::ToTokens for NautilusEntrypoint {
 }
 
 impl From<&NautilusEntrypoint> for proc_macro2::TokenStream {
-    fn from(_ast: &NautilusEntrypoint) -> Self {
+    fn from(ast: &NautilusEntrypoint) -> Self {
+        let mod_ident = &ast.mod_ident;
+        let content = &ast.mod_content;
+
+        let nautilus_enum = &ast.nautilus_enum;
+        // nautilus_enum.write_idl_fragment();
+
+        let (instruction_enum, processor) = nautilus_enum.into();
+
         quote::quote! {
-
-            #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, shank::ShankInstruction)]
-            pub enum MyEntrypoint {
-                #[account(
-                    0,
-                    writable,
-                    name = "autoinc_account",
-                    desc = "The autoincrement account."
-                )]
-                #[account(1, writable, name = "new_account", desc = "The account to be created.")]
-                #[account(
-                    2,
-                    writable,
-                    signer,
-                    name = "authority",
-                    desc = "One of the authorities specified for this account."
-                )]
-                #[account(3, writable, signer, name = "fee_payer", desc = "Fee payer")]
-                #[account(4, name = "system_program", desc = "The System Program")]
-                CreateHero,
-
-                #[account(
-                    0,
-                    writable,
-                    name = "target_account",
-                    desc = "The account to be deleted."
-                )]
-                #[account(
-                    1,
-                    writable,
-                    signer,
-                    name = "authority",
-                    desc = "One of the authorities specified for this account."
-                )]
-                #[account(2, writable, signer, name = "fee_payer", desc = "Fee payer")]
-                DeleteHero,
-
-                #[account(
-                    0,
-                    writable,
-                    name = "target_account",
-                    desc = "The account to be updated."
-                )]
-                #[account(
-                    1,
-                    writable,
-                    signer,
-                    name = "authority",
-                    desc = "One of the authorities specified for this account."
-                )]
-                #[account(2, writable, signer, name = "fee_payer", desc = "Fee payer")]
-                #[account(3, name = "system_program", desc = "The System Program")]
-                UpdateHero,
-
-                #[account(
-                    0,
-                    writable,
-                    name = "autoinc_account",
-                    desc = "The autoincrement account."
-                )]
-                #[account(1, writable, name = "new_account", desc = "The account to be created.")]
-                #[account(
-                    2,
-                    writable,
-                    signer,
-                    name = "authority",
-                    desc = "One of the authorities specified for this account."
-                )]
-                #[account(3, writable, signer, name = "fee_payer", desc = "Fee payer")]
-                #[account(4, name = "system_program", desc = "The System Program")]
-                CreateVillain,
-
-                #[account(
-                    0,
-                    writable,
-                    name = "target_account",
-                    desc = "The account to be deleted."
-                )]
-                #[account(
-                    1,
-                    writable,
-                    signer,
-                    name = "authority",
-                    desc = "One of the authorities specified for this account."
-                )]
-                #[account(2, writable, signer, name = "fee_payer", desc = "Fee payer")]
-                DeleteVillain,
-
-                #[account(
-                    0,
-                    writable,
-                    name = "target_account",
-                    desc = "The account to be updated."
-                )]
-                #[account(
-                    1,
-                    writable,
-                    signer,
-                    name = "authority",
-                    desc = "One of the authorities specified for this account."
-                )]
-                #[account(2, writable, signer, name = "fee_payer", desc = "Fee payer")]
-                #[account(3, name = "system_program", desc = "The System Program")]
-                UpdateVillain,
+            use #mod_ident::*;
+            #instruction_enum
+            #processor
+            pub mod #mod_ident {
+                use nautilus::*;
+                #(#content)*
             }
-
-
-            fn process_instruction(
-                program_id: &solana_program::pubkey::Pubkey,
-                accounts: &[solana_program::account_info::AccountInfo],
-                input: &[u8]
-            ) -> solana_program::entrypoint::ProgramResult {
-
-                let instruction = MyEntrypoint::try_from_slice(input)?;
-                match instruction {
-                    MyEntrypoint::CreateHero => {
-                        println!("CreateHero");
-                        Ok(())
-                    }
-                    MyEntrypoint::CreateHero => {
-                        println!("CreateHero");
-                        Ok(())
-                    }
-                    MyEntrypoint::DeleteHero => {
-                        println!("DeleteHero");
-                        Ok(())
-                    }
-                    MyEntrypoint::UpdateHero => {
-                        println!("UpdateHero");
-                        Ok(())
-                    }
-                    MyEntrypoint::CreateVillain => {
-                        println!("CreateVillain");
-                        Ok(())
-                    }
-                    MyEntrypoint::DeleteVillain => {
-                        println!("DeleteVillain");
-                        Ok(())
-                    }
-                    MyEntrypoint::UpdateVillain => {
-                        println!("UpdateVillain");
-                        Ok(())
-                    }
-                }
-            }
-
-            solana_program::entrypoint!(process_instruction);
         }
         .into()
     }
+}
+
+fn parse_nautilus_structs(
+    structs: impl Iterator<Item = syn::ItemStruct>,
+) -> Vec<(String, Vec<required_account::RequiredAccount>)> {
+    let mut parsed_structs: Vec<(String, Vec<required_account::RequiredAccount>)> = structs
+        .filter_map(|s| {
+            if let Some(attr) = s.attrs.iter().find(|attr| attr.path.is_ident("derive")) {
+                if let Ok(meta) = attr.parse_meta() {
+                    if let syn::Meta::List(meta_list) = meta {
+                        if meta_list.nested.iter().any(|nested| {
+                            if let syn::NestedMeta::Meta(syn::Meta::Path(path)) = nested {
+                                path.is_ident("Nautilus")
+                            } else {
+                                false
+                            }
+                        }) {
+                            return Some(s.ident.to_string());
+                        }
+                    }
+                }
+            }
+            None
+        })
+        .map(|s| {
+            (
+                s,
+                required_account::RequiredAccount::get_default_create_required_accounts(),
+            )
+        })
+        .collect();
+    parsed_structs.extend(required_account::RequiredAccount::get_default_nautilus_structs());
+    parsed_structs
 }

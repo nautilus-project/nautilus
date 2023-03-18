@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct Mint<'a> {
     pub account_info: solana_program::account_info::AccountInfo<'a>,
     pub token_program: solana_program::account_info::AccountInfo<'a>,

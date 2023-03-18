@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct Metadata<'a> {
     pub account_info: solana_program::account_info::AccountInfo<'a>,
     pub token_metadata_program: solana_program::account_info::AccountInfo<'a>,

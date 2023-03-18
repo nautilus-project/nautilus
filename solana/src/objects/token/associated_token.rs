@@ -1,6 +1,6 @@
 use crate::properties::NautilusAccountInfo;
 
-#[derive(Clone)]
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct AssociatedTokenAccount<'a> {
     pub account_info: solana_program::account_info::AccountInfo<'a>,
     pub token_program: solana_program::account_info::AccountInfo<'a>,

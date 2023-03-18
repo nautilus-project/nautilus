@@ -8,7 +8,7 @@ pub use mint::*;
 
 use crate::properties::{NautilusCreateMetadata, NautilusCreateMint};
 
-#[derive(Clone)]
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct Token<'a> {
     mint: Mint<'a>,
     metadata: Option<Metadata<'a>>,

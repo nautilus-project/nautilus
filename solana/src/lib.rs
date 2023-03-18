@@ -25,3 +25,6 @@ pub use solana_program::{
 
 pub use crate::entry::*;
 pub use crate::objects::*;
+
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize)]
+pub struct Darryl {}

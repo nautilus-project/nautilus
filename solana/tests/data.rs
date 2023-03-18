@@ -1,5 +1,5 @@
 #[test]
-fn object() {
+fn data() {
     use nautilus::*;
 
     #[derive(Nautilus)]
