@@ -54,9 +54,9 @@ mod program {
         from.transfer(to, amount)
     }
 
-    fn my_token_function(from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
+    fn my_token_function(mint: Token, from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
 
-        from.transfer(to, amount)
+        mint.transfer(from, to, amount)
     }
 }
 ```
@@ -80,6 +80,13 @@ mod program {
 
         new_token.create(decimals)?;
         new_token.create_metadata(title, symbol, uri)?;
+        // - or -
+        new_token.create_with_metadata(
+            decimals,
+            title,
+            symbol,
+            uri,
+        )?;
         Ok(())
     }
 }
@@ -130,6 +137,7 @@ mod program {
     }
 }
 ```
+
 However, on the client side, you will have to provide the value for `id` (`primary_key`) if autoincrement is disabled.
 
 
@@ -227,6 +235,8 @@ mod program {
     }
 }
 ```
+
+Nautilus can also use your data's **defined relations** (foreign keys) to provide lookup methods.
 ```typescript
 nautilus.myTokenFunction(
     fromPublicKey,          // Public key of the wallet (ATA is not required, but resolved for you)
