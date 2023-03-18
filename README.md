@@ -34,10 +34,11 @@ mod program {
 }
 
 // State:
-```rust
 #[derive(Nautilus)]
 struct MyData {
-    value: u8
+    #[primary_key]
+    id: u8,
+    value: u8,
 }
 ```
 
