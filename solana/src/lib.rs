@@ -7,13 +7,14 @@
 //
 extern crate self as nautilus;
 
-pub mod accounts;
-// pub mod entry;
+pub mod entry;
+pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
-pub use nautilus_derive::{Nautilus, NautilusAccount};
+pub use nautilus_derive::{nautilus, Nautilus};
+pub use shank::{ShankAccount, ShankInstruction};
 pub use solana_program::{
-    account_info::{next_account_info, AccountInfo},
+    account_info::{next_account_info, AccountInfo, IntoAccountInfo},
     declare_id, entrypoint,
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
@@ -22,5 +23,8 @@ pub use solana_program::{
     system_instruction, system_program, sysvar,
 };
 
-pub use crate::accounts::*;
-// pub use crate::entry::*;
+pub use crate::entry::*;
+pub use crate::objects::*;
+
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize)]
+pub struct Darryl {}

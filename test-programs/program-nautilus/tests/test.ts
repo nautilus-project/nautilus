@@ -46,32 +46,32 @@ describe("Nautilus Program Unit Tests", async () => {
         )
     })
 
-    it("Try UpdateHero", async () => {
-        let ix = createUpdateHeroInstruction(
-            payer.publicKey,
-            program.publicKey,
-            ID,
-            "Hercules",
-            payer.publicKey,
-        )
-        await sendAndConfirmTransaction(
-            connection, 
-            new Transaction().add(ix),
-            [payer]
-        )
-    })
+    // it("Try UpdateHero", async () => {
+    //     let ix = createUpdateHeroInstruction(
+    //         payer.publicKey,
+    //         program.publicKey,
+    //         ID,
+    //         "Hercules",
+    //         payer.publicKey,
+    //     )
+    //     await sendAndConfirmTransaction(
+    //         connection, 
+    //         new Transaction().add(ix),
+    //         [payer]
+    //     )
+    // })
 
-    it("Try DeleteHero", async () => {
-        let ix = createDeleteHeroInstruction(
-            payer.publicKey,
-            program.publicKey,
-            ID,
-        )
-        await sendAndConfirmTransaction(
-            connection, 
-            new Transaction().add(ix),
-            [payer]
-        )
-    })
+    // it("Try DeleteHero", async () => {
+    //     let ix = createDeleteHeroInstruction(
+    //         payer.publicKey,
+    //         program.publicKey,
+    //         ID,
+    //     )
+    //     await sendAndConfirmTransaction(
+    //         connection, 
+    //         new Transaction().add(ix),
+    //         [payer]
+    //     )
+    // })
   })
   

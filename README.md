@@ -9,7 +9,7 @@ Consider this document a general outline of the goals of this project for the ti
 The ⛴️ Nautilus Framework is a brand-new Solana program framework for 🦀 Rust. It introduces:
 * 🦀 **On-Chain** (Rust):
     * [📥 Object-oriented on-chain programming](#📥-object-oriented-on-chain-programming)
-    * [🔗 Relational program data](#🔗-relational-program-data-pdas)
+    * [🔗 SQL-native program data](#🔗-sql-native-program-data-pdas)
 * 👾 **Client-Side** (TypeScript):
     * [🔍 Native SQL support for program data](#🔍-native-sql-support-for-program-data)
     * [⚡️ Account resolution](#⚡️-account-resolution)
@@ -36,7 +36,9 @@ mod program {
 // State:
 #[derive(Nautilus)]
 struct MyData {
-    value: u8
+    #[primary_key]
+    id: u8,
+    value: u8,
 }
 ```
 
@@ -94,37 +96,38 @@ As you can infer, all accounts are abstracted away from you and packed into your
    
 But what about custom data (PDAs)? 👇🏼
 
-### 🔗 Relational Program Data (PDAs)
+### 🔗 SQL-Native Program Data (PDAs)
 
 Nautilus provides high-level abstractions around seeds and data relationships, which provide a much more familiar, SQL-based approach to Solana program data.   
    
 The supported integrations are as follows:
-| Integration | Definition | Seeds |
-|:------------|:-----------|:------|
-|[Default Non-Unique](#default-non-unique)|This account has no foreign key relation to other data types within this program, but there can be many records.|`<prefix> + <id>`|
-|[Default Unique](#default-unique)|This account has no foreign key relation to other data types within this program, and **there can only be one** record of its kind.|`<prefix>`|
-|[Related Non-Unique](#related-non-unique)|This account has **at least one** foreign key relation to other data types within this program, but there can be many records.|`<prefix> + <foreign-key> + <id>`|
-|[Related Unique](#related-unique)|This account has **at least one** foreign key relation to other data types within this program, and **there can only be one** record of its kind.|`<prefix> + <foreign-key>`|
+| Integration | Definition |
+|:------------|:-----------|
+|[Default](#default)|This table has the default configuration (no custom `authority` applied) and has `autoincrement` **enabled**.|
+|[Default Non-Autoincrement](#default-non-autoincrement)|This table has the default configuration (no custom `authority` applied) but `autoincrement` is **disabled**, so you'll need to provide a primary key.|
+|[Authority-Protected](#authority-protected)|Regardless of `autoincrement`, each record for this table requires a signature from the `authority` to modify.|
+|[Multiple Authority-Protected](#multiple-authority-protected)|Similar to `Authority-Protected`, each record requires a signature from **each** `authority` to modify.|
 
-#### Default Non-Unique
+#### Default
 ```rust
 #[derive(Nautilus)]
 struct Person {
+    #[primary_key]
+    id: u32,
     name: String,
 }
 ```
-#### Default Unique
+#### Default Non-Autoincrement
 ```rust
 #[derive(Nautilus)]
-#[relation(
-    unique
-)]
 struct Person {
+    #[primary_key(autoincrement = false)]
+    id: u32,
     name: String,
 }
 ```
 
-Creating `Default` PDAs is the same as seen above.
+Creating `Default` and `Default Non-Autoincrement` PDAs is the same as seen above in your program's code.
 ```rust
 #[nautilus]
 mod program {
@@ -135,66 +138,35 @@ mod program {
 }
 ```
 
-#### Related Non-Unique
+However, on the client side, you will have to provide the value for `id` (`primary_key`) if autoincrement is disabled.
+
+
+#### Authority-Protected
 ```rust
 #[derive(Nautilus)]
-#[relation(
-    foreign_keys(
-        mint: Pubkey,
-    ),
-)]
 struct Person {
+    #[primary_key]
+    id: u32,
     name: String,
+    #[authority]
+    authority: Pubkey,
 }
 ```
-#### Related Unique
+#### Multiple Authority-Protected
 ```rust
 #[derive(Nautilus)]
-#[relation(
-    unique,
-    foreign_keys(
-        mint: Pubkey,
-    ),
-)]
 struct Person {
+    #[primary_key(autoincrement = false)]
+    id: u32,
     name: String,
+    #[authority]
+    authority: Pubkey,
+    #[authority]
+    second_authority: Pubkey,
 }
 ```
 
-When a foreign key is introduced, the `.create(..)` method changes.
-```rust
-#[nautilus]
-mod program {
-    fn create_person(new_person: Create<Person>, name: String, mint: Token) -> ProgramResult {
-
-        new_person.create(name, (mint.key()))   // Takes 2 parameters now: ( name: String, foreign_keys: (mint: Pubkey) )
-    }
-}
-```
-Same thing with more than one foreign key.
-```rust
-#[derive(Nautilus)]
-#[relation(
-    unique,
-    foreign_keys(
-        wallet: Pubkey,
-        mint: Pubkey,
-    ),
-)]
-struct Person {
-    name: String,
-}
-```
-```rust
-#[nautilus]
-mod program {
-    fn create_person(new_person: Create<Person>, name: String, mint: Token, wallet: Wallet) -> ProgramResult {
-
-        new_person.create(name, (wallet.key(), mint.key()))   // Parameters: ( name: String, foreign_keys: (wallet: Pubkey, mint: Pubkey) )
-    }
-}
-```
-> Foreign keys are passed into `.create(..)` as a tuple.   
+As you can probably guess, these authority fields will required signatures to modify these records.
    
 You might be wondering 🤔, why does this relation matter? 👇🏼
 
@@ -249,14 +221,6 @@ let personsNamedJoeOrDan = nautilus.where('Person').eq('name', ['Joe', 'Dan']).g
 })
 ```
 
-Nautilus can also use your data's **defined relations** (foreign keys) to provide lookup methods.
-```typescript
-let personsForWalletAndMint: Person[] = nautilus.where('Person').relatedRecords(wallet, mint)
-
-// Or, for unique:
-let personForWalletAndMint: Person = nautilus.where('Person').relatedUniqueRecord(wallet, mint)
-```
-
 ### ⚡️ Account Resolution
 
 Nautilus will make every effort to resolve required accounts while allowing you to override it's resolutions where desired.   
@@ -271,10 +235,12 @@ mod program {
     }
 }
 ```
+
+Nautilus can also use your data's **defined relations** (foreign keys) to provide lookup methods.
 ```typescript
 nautilus.myTokenFunction(
-    fromPublicKey,          // Public key of the wallet
-    toPublicKey,            // Public key of the wallet
+    fromPublicKey,          // Public key of the wallet (ATA is not required, but resolved for you)
+    toPublicKey,            // Public key of the wallet (ATA is not required, but resolved for you)
     amount,                 // Automatic conversion from `number` to `BN`
 )
 .feePayer(payer)
@@ -285,32 +251,52 @@ nautilus.myTokenFunction(
 This same concept also applies to PDAs, so you no longer have to worry about deriving the address off-chain **to perform a write**.
 ```rust
 #[derive(Nautilus)]
-#[relation(
-    unique,
-    foreign_keys(
-        wallet: Pubkey,
-        mint: Pubkey,
-    ),
-)]
 struct Person {
+    #[primary_key]
+    id: u32,
     name: String,
 }
 
 #[nautilus]
 mod program {
-    fn create_person(new_person: Create<Person>, name: String, mint: Token, wallet: Wallet) -> ProgramResult {
+    fn create_person(new_person: Create<Person>) -> ProgramResult {
 
-        new_person.create(name, (wallet.key(), mint.key()))
+        new_person.create(name)
     }
 }
 ```
 ```typescript
 nautilus.createPerson(
     name,
-    mint,
-    wallet,
 )
 .feePayer(payer)
+.execute()
+```
+
+Creation of accounts defaults to using the transaction fee-payer as the rent-payer, but you can override this.
+```rust
+#[derive(Nautilus)]
+struct Person {
+    #[primary_key]
+    id: u32,
+    name: String,
+}
+
+#[nautilus]
+mod program {
+    fn create_person(new_person: Create<Person>, rent_payer: Wallet) -> ProgramResult {
+
+        new_person.create_with_payer(name, rent_payer)
+    }
+}
+```
+```typescript
+nautilus.createPerson(
+    name,
+    rentPayer,
+)
+.feePayer(payer)
+.signers([rentPayer])
 .execute()
 ```
 

@@ -1,0 +1,343 @@
+{
+    "version": "0.1.0",
+    "name": "nautilus-idl",
+    "instructions": [
+        {
+            "name": "CreateHero",
+            "accounts": [
+                {
+                    "name": "autoincAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The autoincrement account."
+                },
+                {
+                    "name": "newAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be created."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                },
+                {
+                    "name": "systemProgram",
+                    "is_mut": false,
+                    "is_signer": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "hero",
+                    "type": {
+                        "defined": "Hero"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 0
+            }
+        },
+        {
+            "name": "DeleteHero",
+            "accounts": [
+                {
+                    "name": "targetAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be deleted."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                }
+            ],
+            "args": [],
+            "discriminant": {
+                "type": "u8",
+                "value": 1
+            }
+        },
+        {
+            "name": "UpdateHero",
+            "accounts": [
+                {
+                    "name": "targetAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be updated."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                },
+                {
+                    "name": "systemProgram",
+                    "is_mut": false,
+                    "is_signer": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "hero",
+                    "type": {
+                        "defined": "Hero"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 2
+            }
+        },
+        {
+            "name": "CreateVillain",
+            "accounts": [
+                {
+                    "name": "autoincAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The autoincrement account."
+                },
+                {
+                    "name": "newAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be created."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                },
+                {
+                    "name": "systemProgram",
+                    "is_mut": false,
+                    "is_signer": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "villain",
+                    "type": {
+                        "defined": "Villain"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 3
+            }
+        },
+        {
+            "name": "DeleteVillain",
+            "accounts": [
+                {
+                    "name": "targetAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be deleted."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                }
+            ],
+            "args": [],
+            "discriminant": {
+                "type": "u8",
+                "value": 4
+            }
+        },
+        {
+            "name": "UpdateVillain",
+            "accounts": [
+                {
+                    "name": "targetAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be updated."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                },
+                {
+                    "name": "systemProgram",
+                    "is_mut": false,
+                    "is_signer": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "villain",
+                    "type": {
+                        "defined": "Villain"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 5
+            }
+        },
+        {
+            "name": "CustomInstruction",
+            "accounts": [
+                {
+                    "name": "targetAccount",
+                    "is_mut": true,
+                    "is_signer": false,
+                    "desc": "The account to be used as a test."
+                },
+                {
+                    "name": "authority",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "One of the authorities specified for this account."
+                },
+                {
+                    "name": "feePayer",
+                    "is_mut": true,
+                    "is_signer": true,
+                    "desc": "Fee payer"
+                },
+                {
+                    "name": "systemProgram",
+                    "is_mut": false,
+                    "is_signer": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "customArgs",
+                    "type": {
+                        "defined": "CustomArgs"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 6
+            }
+        }
+    ],
+    "accounts": [
+        {
+            "name": "Hero",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "name",
+                        "type": "string"
+                    },
+                    {
+                        "name": "authority",
+                        "type": "publicKey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Villain",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "name",
+                        "type": "string"
+                    },
+                    {
+                        "name": "authority",
+                        "type": "publicKey"
+                    }
+                ]
+            }
+        }
+    ],
+    "types": [
+        {
+            "name": "CustomArgs",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "string1",
+                        "type": "string"
+                    },
+                    {
+                        "name": "string2",
+                        "type": "string"
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "origin": "nautilus",
+        "address": "some-program-id"
+    }
+}
