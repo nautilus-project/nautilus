@@ -1,4 +1,11 @@
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlAccount {
     pub name: String,
     #[serde(rename = "type")]

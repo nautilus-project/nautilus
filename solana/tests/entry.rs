@@ -2,12 +2,12 @@ use nautilus::*;
 
 #[nautilus]
 pub mod my_mod {
-    use super::*;
-    fn print_something(from: Darryl, to: JoeC) {
+    fn print_something(from: Darryl, to: String) {
         println!("Something");
     }
-    #[derive(Nautilus, BorshDeserialize, BorshSerialize)]
-    pub struct JoeC {}
+    fn print_something_else(from: Darryl, to: Darryl, amount: u64) {
+        println!("Something else");
+    }
 }
 
 #[test]

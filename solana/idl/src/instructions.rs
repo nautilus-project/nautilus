@@ -1,4 +1,11 @@
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlInstruction {
     pub name: String,
     pub accounts: Vec<IdlInstructionAccount>,
@@ -22,7 +29,14 @@ impl IdlInstruction {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlInstructionAccount {
     pub name: String,
     pub is_mut: bool,
@@ -41,7 +55,14 @@ impl IdlInstructionAccount {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlInstructionArg {
     pub name: String,
     #[serde(rename = "type")]
@@ -57,7 +78,14 @@ impl IdlInstructionArg {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlInstructionArgType {
     pub defined: String,
 }
@@ -70,7 +98,14 @@ impl IdlInstructionArgType {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlInstructionDiscriminant {
     #[serde(rename = "type")]
     pub discriminant_type: String,

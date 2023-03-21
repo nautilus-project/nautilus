@@ -1,4 +1,11 @@
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlType {
     pub name: String,
     #[serde(rename = "type")]
@@ -14,7 +21,14 @@ impl IdlType {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlTypeType {
     pub kind: String,
     pub fields: Vec<IdlTypeTypeField>,
@@ -29,7 +43,14 @@ impl IdlTypeType {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlTypeTypeField {
     pub name: String,
     #[serde(rename = "type")]

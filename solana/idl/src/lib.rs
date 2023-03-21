@@ -8,7 +8,14 @@ pub use instructions::*;
 pub use types::*;
 pub use util::*;
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct Idl {
     pub version: String,
     pub name: String,
@@ -47,7 +54,14 @@ impl Idl {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, serde::Deserialize, serde::Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    borsh::BorshDeserialize,
+    borsh::BorshSerialize,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 pub struct IdlMetadata {
     origin: String,
     address: String,

@@ -11,8 +11,10 @@ edition = "2021"
 [dependencies]
 borsh = "0.9.3"
 borsh-derive = "0.9.3"
+cargo_toml = "0.15.2"
 case = "1.0.0"
 convert_case = "0.6.0"
+nautilus-idl = { version = "0.0.1", path = "../idl" }
 proc-macro2 = "1.0"
 quote = "1.0"
 shank_macro_impl = "0.0.12"
