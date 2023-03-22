@@ -6,6 +6,7 @@
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlInstruction {
     pub name: String,
     pub accounts: Vec<IdlInstructionAccount>,
@@ -37,6 +38,7 @@ impl IdlInstruction {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlInstructionAccount {
     pub name: String,
     pub is_mut: bool,
@@ -63,6 +65,7 @@ impl IdlInstructionAccount {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlInstructionArg {
     pub name: String,
     #[serde(rename = "type")]
@@ -86,6 +89,7 @@ impl IdlInstructionArg {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlInstructionArgType {
     pub defined: String,
 }
@@ -106,6 +110,7 @@ impl IdlInstructionArgType {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlInstructionDiscriminant {
     #[serde(rename = "type")]
     pub discriminant_type: String,

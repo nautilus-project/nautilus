@@ -6,6 +6,7 @@
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlAccount {
     pub name: String,
     #[serde(rename = "type")]
@@ -38,6 +39,7 @@ impl IdlAccount {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlAccountType {
     pub kind: String,
     pub fields: Vec<IdlAccountTypeField>,
@@ -60,6 +62,7 @@ impl IdlAccountType {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlAccountTypeField {
     pub name: String,
     #[serde(rename = "type")]
@@ -92,6 +95,7 @@ impl IdlAccountTypeField {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlAccountNautilusDefaultInstruction {
     pub default: String,
     pub instruction: String,

@@ -16,6 +16,7 @@ pub use util::*;
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct Idl {
     pub version: String,
     pub name: String,
@@ -62,6 +63,7 @@ impl Idl {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlMetadata {
     origin: String,
     address: String,

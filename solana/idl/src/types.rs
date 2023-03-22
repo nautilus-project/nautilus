@@ -6,6 +6,7 @@
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlType {
     pub name: String,
     #[serde(rename = "type")]
@@ -29,6 +30,7 @@ impl IdlType {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlTypeType {
     pub kind: String,
     pub fields: Vec<IdlTypeTypeField>,
@@ -51,6 +53,7 @@ impl IdlTypeType {
     serde::Deserialize,
     serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub struct IdlTypeTypeField {
     pub name: String,
     #[serde(rename = "type")]
