@@ -27,6 +27,10 @@ pub use crate::entry::*;
 pub use crate::objects::*;
 
 #[derive(Nautilus, borsh::BorshDeserialize, borsh::BorshSerialize)]
+#[default_instructions(Create, Delete)]
 pub struct Darryl {
+    #[primary_key]
     id: u8,
+    #[authority]
+    authority: Pubkey,
 }

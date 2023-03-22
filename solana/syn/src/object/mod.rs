@@ -4,11 +4,8 @@
 //                 Nautilus object token generation
 // ----------------------------------------------------------------
 //
-//     proc_macro2::TokenStream -> ItemStruct
-//         -> NautilusObject -> * -> proc_macro2::TokenStream
-//                                  * New tokens created here
 //
-//
+pub mod parser;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NautilusObject {

@@ -5,9 +5,9 @@
 // ----------------------------------------------------------------
 //
 //
-mod entry_enum;
-mod entry_variant;
-mod required_account;
+pub mod entry_enum;
+pub mod entry_variant;
+pub mod required_account;
 
 #[derive(Debug)]
 pub struct NautilusEntrypoint {
@@ -129,7 +129,7 @@ fn parse_crate_context() -> (
                             } else {
                                 idl_types.push(nautilus_idl::IdlType::new(
                                     &s.ident.to_string(),
-                                    idl_type_from_struct_fields(&s.fields),
+                                    idl_type_type_from_struct_fields(&s.fields),
                                 ));
                                 false
                             }
@@ -137,7 +137,11 @@ fn parse_crate_context() -> (
                             let account_ident_string = s.ident.to_string();
                             idl_accounts.push(nautilus_idl::IdlAccount::new(
                                 &account_ident_string,
-                                idl_type_from_struct_fields(&s.fields),
+                                idl_account_type_from_struct_fields(&s.fields),
+                                crate::object::parser::parse_top_level_attributes(
+                                    &account_ident_string,
+                                    &s.attrs,
+                                ),
                             ));
                             return Some(account_ident_string);
                         }
@@ -152,7 +156,33 @@ fn parse_crate_context() -> (
     (nautilus_structs, idl_accounts, idl_types)
 }
 
-fn idl_type_from_struct_fields<'a>(fields: &'a syn::Fields) -> nautilus_idl::IdlTypeType {
+fn idl_account_type_from_struct_fields<'a>(
+    fields: &'a syn::Fields,
+) -> nautilus_idl::IdlAccountType {
+    nautilus_idl::IdlAccountType::new(
+        "struct",
+        match fields {
+            syn::Fields::Named(fields) => fields
+                .named
+                .iter()
+                .map(|field| {
+                    let field_name = field.ident.as_ref().unwrap().to_string();
+                    let field_type = format!("{}", quote::quote! { #field.ty });
+                    let nautilus_attributes = crate::object::parser::parse_field_attributes(field);
+                    nautilus_idl::IdlAccountTypeField::new(
+                        &field_name,
+                        &field_type,
+                        nautilus_attributes.is_primary_key,
+                        nautilus_attributes.is_authority,
+                    )
+                })
+                .collect(),
+            _ => vec![],
+        },
+    )
+}
+
+fn idl_type_type_from_struct_fields<'a>(fields: &'a syn::Fields) -> nautilus_idl::IdlTypeType {
     nautilus_idl::IdlTypeType::new(
         "struct",
         match fields {
