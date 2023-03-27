@@ -69,7 +69,6 @@ impl crate::NautilusData for NautilusIndexData {
 pub struct NautilusIndex<'a> {
     pub program_id: &'a solana_program::pubkey::Pubkey,
     pub account_info: solana_program::account_info::AccountInfo<'a>,
-    pub system_program: solana_program::account_info::AccountInfo<'a>,
     pub data: NautilusIndexData,
 }
 

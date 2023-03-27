@@ -45,7 +45,7 @@ impl crate::NautilusObject {
         ];
         source
             .into_iter()
-            .map(|s| Self::default(crate::util::name_to_ident(s)))
+            .map(|s| Self::default(crate::required_account::name_to_ident(s)))
             .collect()
     }
 

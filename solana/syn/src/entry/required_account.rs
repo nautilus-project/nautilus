@@ -6,6 +6,8 @@ pub struct RequiredAccount {
     pub is_signer: bool,
     pub desc: String,
     pub account_type: RequiredAccountType,
+    pub object_type: ObjectType,
+    pub construct: Construct,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -23,7 +25,7 @@ pub enum RequiredAccountType {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ObjectType {
-    Pda(Vec<Defaults>),
+    Pda(Vec<Construct>),
     Wallet,
     Token(bool),
     Mint(bool),
@@ -32,34 +34,37 @@ pub enum ObjectType {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Defaults {
-    Index(bool),
-    SelfAccount(String, String, bool, bool),
-    Metadata(String, String, bool, bool),
-    MintAuthority(String, String, bool, bool),
-    FeePayer,
-    SystemProgram,
-    TokenProgram,
-    AssociatedTokenProgram,
-    TokenMetadataProgram,
+pub enum Construct {
+    Index(bool, ObjectType),
+    SelfAccount(String, String, bool, bool, ObjectType),
+    Metadata(String, String, bool, bool, ObjectType),
+    MintAuthority(String, String, bool, bool, ObjectType),
+    FeePayer(ObjectType),
+    SystemProgram(ObjectType),
+    TokenProgram(ObjectType),
+    AssociatedTokenProgram(ObjectType),
+    TokenMetadataProgram(ObjectType),
 }
 
-impl Defaults {
+impl Construct {
     pub fn resolve(self) -> RequiredAccount {
+        let construct = self.clone();
         match self {
-            Defaults::Index(is_mut) => {
+            Construct::Index(is_mut, object_type) => {
                 let name = "index".to_string();
                 RequiredAccount {
-                    ident: crate::util::name_to_ident_snake(&name),
+                    ident: name_to_ident_snake(&name),
                     name,
                     is_mut,
                     is_signer: false,
                     desc: "The Nautilus Index for this program".to_string(),
                     account_type: RequiredAccountType::IndexAccount,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::SelfAccount(name, desc, is_mut, is_pda) => {
-                let ident = crate::util::name_to_ident_snake(&name);
+            Construct::SelfAccount(name, desc, is_mut, is_pda, object_type) => {
+                let ident = name_to_ident_snake(&name);
                 RequiredAccount {
                     ident,
                     name,
@@ -67,10 +72,12 @@ impl Defaults {
                     is_signer: (is_mut && !is_pda),
                     desc,
                     account_type: RequiredAccountType::Account,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::Metadata(name, desc, is_mut, is_pda) => {
-                let ident = crate::util::name_to_ident_snake(&name);
+            Construct::Metadata(name, desc, is_mut, is_pda, object_type) => {
+                let ident = name_to_ident_snake(&name);
                 RequiredAccount {
                     ident,
                     name,
@@ -78,10 +85,12 @@ impl Defaults {
                     is_signer: (is_mut && !is_pda),
                     desc,
                     account_type: RequiredAccountType::Account,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::MintAuthority(name, desc, is_mut, is_pda) => {
-                let ident = crate::util::name_to_ident_snake(&name);
+            Construct::MintAuthority(name, desc, is_mut, is_pda, object_type) => {
+                let ident = name_to_ident_snake(&name);
                 RequiredAccount {
                     ident,
                     name,
@@ -89,61 +98,73 @@ impl Defaults {
                     is_signer: (is_mut && !is_pda),
                     desc,
                     account_type: RequiredAccountType::Account,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::FeePayer => {
+            Construct::FeePayer(object_type) => {
                 let name = "feePayer".to_string();
                 RequiredAccount {
-                    ident: crate::util::name_to_ident_snake(&name),
+                    ident: name_to_ident_snake(&name),
                     name,
                     is_mut: true,
                     is_signer: true,
                     desc: "The transaction fee payer".to_string(),
                     account_type: RequiredAccountType::SystemAccount,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::SystemProgram => {
+            Construct::SystemProgram(object_type) => {
                 let name = "systemProgram".to_string();
                 RequiredAccount {
-                    ident: crate::util::name_to_ident_snake(&name),
+                    ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The System Program".to_string(),
                     account_type: RequiredAccountType::SystemProgram,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::TokenProgram => {
+            Construct::TokenProgram(object_type) => {
                 let name = "tokenProgram".to_string();
                 RequiredAccount {
-                    ident: crate::util::name_to_ident_snake(&name),
+                    ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The Token Program".to_string(),
                     account_type: RequiredAccountType::TokenProgram,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::AssociatedTokenProgram => {
+            Construct::AssociatedTokenProgram(object_type) => {
                 let name = "associatedTokenProgram".to_string();
                 RequiredAccount {
-                    ident: crate::util::name_to_ident_snake(&name),
+                    ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The Associated Token Program".to_string(),
                     account_type: RequiredAccountType::AssociatedTokenProgram,
+                    object_type,
+                    construct,
                 }
             }
-            Defaults::TokenMetadataProgram => {
+            Construct::TokenMetadataProgram(object_type) => {
                 let name = "tokenMetadataProgram".to_string();
                 RequiredAccount {
-                    ident: crate::util::name_to_ident_snake(&name),
+                    ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The Token Metadata Program".to_string(),
                     account_type: RequiredAccountType::TokenMetadataProgram,
+                    object_type,
+                    construct,
                 }
             }
         }
@@ -169,116 +190,211 @@ impl RequiredAccount {
         }
     }
 
-    pub fn resolve_for_read(obj_name: String, obj_type: ObjectType) -> Vec<Self> {
+    pub fn resolve_for_read(obj_name: String, object_type: ObjectType) -> Vec<Self> {
         let is_mut = false;
-        match obj_type {
+        match object_type {
             ObjectType::Pda(_) => {
-                vec![Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, true).resolve()]
+                vec![
+                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true, object_type)
+                        .resolve(),
+                ]
             }
             ObjectType::Wallet => {
                 vec![
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, false).resolve(),
-                    Defaults::SystemProgram.resolve(),
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        false,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::SystemProgram(object_type).resolve(),
                 ]
             }
             ObjectType::Token(is_pda) => {
                 let metadata_name = obj_name.clone() + "Metadata";
                 let mint_authority_name = obj_name.clone() + "MintAuthority";
                 vec![
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                    Defaults::Metadata(metadata_name.clone(), metadata_name, is_mut, is_pda)
-                        .resolve(),
-                    Defaults::MintAuthority(
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::Metadata(
+                        metadata_name.clone(),
+                        metadata_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::MintAuthority(
                         mint_authority_name.clone(),
                         mint_authority_name,
                         is_mut,
                         is_pda,
+                        object_type.clone(),
                     )
                     .resolve(),
-                    Defaults::TokenProgram.resolve(),
-                    Defaults::TokenMetadataProgram.resolve(),
+                    Construct::TokenProgram(object_type.clone()).resolve(),
+                    Construct::TokenMetadataProgram(object_type).resolve(),
                 ]
             }
             ObjectType::Mint(is_pda) => {
                 vec![
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                    Defaults::TokenProgram.resolve(),
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::TokenProgram(object_type).resolve(),
                 ]
             }
             ObjectType::Metadata(is_pda) => {
                 vec![
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                    Defaults::TokenMetadataProgram.resolve(),
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::TokenMetadataProgram(object_type).resolve(),
                 ]
             }
             ObjectType::AssociatedTokenAccount(is_pda) => {
                 vec![
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                    Defaults::AssociatedTokenProgram.resolve(),
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::AssociatedTokenProgram(object_type).resolve(),
                 ]
             }
         }
     }
 
-    pub fn resolve_for_create(obj_name: String, obj_type: ObjectType) -> Vec<Self> {
+    pub fn resolve_for_create(obj_name: String, object_type: ObjectType) -> Vec<Self> {
         let is_mut = true;
-        match obj_type {
+        match object_type {
             ObjectType::Pda(authorities) => {
+                let this_object_type = ObjectType::Pda(vec![]);
                 let mut accounts = vec![
-                    Defaults::Index(is_mut).resolve(),
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, true).resolve(),
+                    Construct::Index(is_mut, this_object_type.clone()).resolve(),
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        true,
+                        this_object_type.clone(),
+                    )
+                    .resolve(),
                 ];
                 authorities
                     .into_iter()
                     .for_each(|authority_type| accounts.push(authority_type.resolve()));
                 accounts.extend(vec![
-                    Defaults::FeePayer.resolve(),
-                    Defaults::SystemProgram.resolve(),
+                    Construct::FeePayer(this_object_type.clone()).resolve(),
+                    Construct::SystemProgram(this_object_type).resolve(),
                 ]);
                 accounts
             }
             ObjectType::Wallet => vec![
-                Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, false).resolve(),
-                Defaults::FeePayer.resolve(),
-                Defaults::SystemProgram.resolve(),
+                Construct::SelfAccount(
+                    obj_name.clone(),
+                    obj_name,
+                    is_mut,
+                    false,
+                    object_type.clone(),
+                )
+                .resolve(),
+                Construct::FeePayer(object_type.clone()).resolve(),
+                Construct::SystemProgram(object_type).resolve(),
             ],
             ObjectType::Token(is_pda) => {
                 let metadata_name = obj_name.clone() + "Metadata";
                 let mint_authority_name = obj_name.clone() + "MintAuthority";
                 vec![
-                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                    Defaults::Metadata(metadata_name.clone(), metadata_name, is_mut, is_pda)
-                        .resolve(),
-                    Defaults::MintAuthority(
+                    Construct::SelfAccount(
+                        obj_name.clone(),
+                        obj_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::Metadata(
+                        metadata_name.clone(),
+                        metadata_name,
+                        is_mut,
+                        is_pda,
+                        object_type.clone(),
+                    )
+                    .resolve(),
+                    Construct::MintAuthority(
                         mint_authority_name.clone(),
                         mint_authority_name,
                         is_mut,
                         is_pda,
+                        object_type.clone(),
                     )
                     .resolve(),
-                    Defaults::FeePayer.resolve(),
-                    Defaults::SystemProgram.resolve(),
-                    Defaults::TokenProgram.resolve(),
-                    Defaults::TokenMetadataProgram.resolve(),
+                    Construct::FeePayer(object_type.clone()).resolve(),
+                    Construct::SystemProgram(object_type.clone()).resolve(),
+                    Construct::TokenProgram(object_type.clone()).resolve(),
+                    Construct::TokenMetadataProgram(object_type).resolve(),
                 ]
             }
             ObjectType::Mint(is_pda) => vec![
-                Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                Defaults::FeePayer.resolve(),
-                Defaults::SystemProgram.resolve(),
-                Defaults::TokenProgram.resolve(),
+                Construct::SelfAccount(
+                    obj_name.clone(),
+                    obj_name,
+                    is_mut,
+                    is_pda,
+                    object_type.clone(),
+                )
+                .resolve(),
+                Construct::FeePayer(object_type.clone()).resolve(),
+                Construct::SystemProgram(object_type.clone()).resolve(),
+                Construct::TokenProgram(object_type).resolve(),
             ],
             ObjectType::Metadata(is_pda) => vec![
-                Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                Defaults::FeePayer.resolve(),
-                Defaults::SystemProgram.resolve(),
-                Defaults::TokenMetadataProgram.resolve(),
+                Construct::SelfAccount(
+                    obj_name.clone(),
+                    obj_name,
+                    is_mut,
+                    is_pda,
+                    object_type.clone(),
+                )
+                .resolve(),
+                Construct::FeePayer(object_type.clone()).resolve(),
+                Construct::SystemProgram(object_type.clone()).resolve(),
+                Construct::TokenMetadataProgram(object_type).resolve(),
             ],
             ObjectType::AssociatedTokenAccount(is_pda) => vec![
-                Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
-                Defaults::FeePayer.resolve(),
-                Defaults::SystemProgram.resolve(),
-                Defaults::AssociatedTokenProgram.resolve(),
+                Construct::SelfAccount(
+                    obj_name.clone(),
+                    obj_name,
+                    is_mut,
+                    is_pda,
+                    object_type.clone(),
+                )
+                .resolve(),
+                Construct::FeePayer(object_type.clone()).resolve(),
+                Construct::SystemProgram(object_type.clone()).resolve(),
+                Construct::AssociatedTokenProgram(object_type).resolve(),
             ],
         }
     }
@@ -319,16 +435,49 @@ impl RequiredAccount {
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
     fn from(ast: &RequiredAccount) -> Self {
         match ast.account_type {
-            RequiredAccountType::Account
-            | RequiredAccountType::Program
-            | RequiredAccountType::SystemAccount
-            | RequiredAccountType::Sysvar => {
-                let ident = crate::util::self_account_ident(&ast.ident);
+            RequiredAccountType::IndexAccount => quote::quote! { index: index.to_owned() },
+            RequiredAccountType::Account => match ast.construct {
+                Construct::SelfAccount(..) => {
+                    let ident = self_account_ident(&ast.ident);
+                    match ast.object_type {
+                        ObjectType::Pda(_)
+                        | ObjectType::Wallet
+                        | ObjectType::Mint(_)
+                        | ObjectType::Metadata(_)
+                        | ObjectType::AssociatedTokenAccount(_) => {
+                            quote::quote! { account_info: #ident.to_owned() }
+                        }
+                        ObjectType::Token(_) => {
+                            quote::quote! { mint: #ident.to_owned() }
+                        }
+                    }
+                }
+                Construct::Metadata(..) => {
+                    let ident = metadata_ident(&ast.ident);
+                    quote::quote! { metadata: #ident.to_owned() }
+                }
+                Construct::MintAuthority(..) => {
+                    let ident = mint_authority_ident(&ast.ident);
+                    quote::quote! { mint_authority: #ident.to_owned() }
+                }
+                _ => {
+                    panic!("An unexpected error occured while resolving entrypoint account tokens.")
+                }
+            },
+            RequiredAccountType::SystemAccount => {
+                let ident = self_account_ident(&ast.ident);
                 quote::quote! { account_info: #ident.to_owned() }
             }
-            RequiredAccountType::IndexAccount => quote::quote! { index: index.to_owned() },
+            RequiredAccountType::Sysvar => {
+                let ident = self_account_ident(&ast.ident);
+                quote::quote! { #ident: #ident.to_owned() }
+            }
             RequiredAccountType::SystemProgram => {
                 quote::quote! { system_program: system_program.to_owned() }
+            }
+            RequiredAccountType::Program => {
+                let ident = self_account_ident(&ast.ident);
+                quote::quote! { #ident: #ident.to_owned() }
             }
             RequiredAccountType::TokenProgram => {
                 quote::quote! { token_program: token_program.to_owned() }
@@ -341,4 +490,36 @@ impl From<&RequiredAccount> for proc_macro2::TokenStream {
             }
         }
     }
+}
+
+fn appended_ident(ident: &syn::Ident, to_append: &str) -> syn::Ident {
+    syn::Ident::new(
+        &(ident.to_string() + to_append),
+        proc_macro2::Span::call_site(),
+    )
+}
+
+pub fn self_account_ident(ident: &syn::Ident) -> syn::Ident {
+    appended_ident(ident, "_self_account")
+}
+
+pub fn metadata_ident(ident: &syn::Ident) -> syn::Ident {
+    appended_ident(ident, "_metadata_account")
+}
+
+pub fn mint_authority_ident(ident: &syn::Ident) -> syn::Ident {
+    appended_ident(ident, "_mint_authority")
+}
+
+pub fn name_to_ident(name: &str) -> syn::Ident {
+    syn::Ident::new(name, proc_macro2::Span::call_site())
+}
+
+pub fn name_to_ident_snake(name: &str) -> syn::Ident {
+    use case::CaseExt;
+
+    syn::Ident::new(
+        &(name.to_string().to_snake()),
+        proc_macro2::Span::call_site(),
+    )
 }

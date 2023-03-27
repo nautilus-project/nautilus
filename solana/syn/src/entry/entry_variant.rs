@@ -42,10 +42,16 @@ impl NautilusEntrypointEnumVariant {
     }
 
     fn build_match_arm_logic(&self) -> proc_macro2::TokenStream {
-        use crate::required_account::RequiredAccountType;
+        use crate::required_account::{Construct, RequiredAccountType};
         let all_accounts = self.required_accounts.iter().map(|r| {
             let ident = match &r.account_type {
-                RequiredAccountType::Account => crate::util::self_account_ident(&r.ident),
+                RequiredAccountType::Account => match &r.construct {
+                    Construct::Metadata(..) => crate::required_account::metadata_ident(&r.ident),
+                    Construct::MintAuthority(..) => {
+                        crate::required_account::mint_authority_ident(&r.ident)
+                    }
+                    _ => crate::required_account::self_account_ident(&r.ident),
+                },
                 _ => r.ident.clone(),
             };
             quote::quote! { let #ident = next_account_info(accounts_iter)?; }
