@@ -1,9 +1,24 @@
 #[derive(Clone, Debug, PartialEq)]
 pub struct RequiredAccount {
+    pub ident: syn::Ident,
     pub name: String,
     pub is_mut: bool,
     pub is_signer: bool,
     pub desc: String,
+    pub account_type: RequiredAccountType,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum RequiredAccountType {
+    IndexAccount,
+    Account,
+    SystemAccount,
+    Sysvar,
+    SystemProgram,
+    Program,
+    TokenProgram,
+    AssociatedTokenProgram,
+    TokenMetadataProgram,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -32,60 +47,105 @@ pub enum Defaults {
 impl Defaults {
     pub fn resolve(self) -> RequiredAccount {
         match self {
-            Defaults::Index(is_mut) => RequiredAccount {
-                name: "index".to_string(),
-                is_mut,
-                is_signer: false,
-                desc: "The Nautilus Index for this program".to_string(),
-            },
-            Defaults::SelfAccount(name, desc, is_mut, is_pda) => RequiredAccount {
-                name,
-                is_mut,
-                is_signer: (is_mut && !is_pda),
-                desc,
-            },
-            Defaults::Metadata(name, desc, is_mut, is_pda) => RequiredAccount {
-                name,
-                is_mut,
-                is_signer: (is_mut && !is_pda),
-                desc,
-            },
-            Defaults::MintAuthority(name, desc, is_mut, is_pda) => RequiredAccount {
-                name,
-                is_mut,
-                is_signer: (is_mut && !is_pda),
-                desc,
-            },
-            Defaults::FeePayer => RequiredAccount {
-                name: "feePayer".to_string(),
-                is_mut: true,
-                is_signer: true,
-                desc: "The transaction fee payer".to_string(),
-            },
-            Defaults::SystemProgram => RequiredAccount {
-                name: "systemProgram".to_string(),
-                is_mut: false,
-                is_signer: false,
-                desc: "The System Program".to_string(),
-            },
-            Defaults::TokenProgram => RequiredAccount {
-                name: "tokenProgram".to_string(),
-                is_mut: false,
-                is_signer: false,
-                desc: "The Token Program".to_string(),
-            },
-            Defaults::AssociatedTokenProgram => RequiredAccount {
-                name: "associatedTokenProgram".to_string(),
-                is_mut: false,
-                is_signer: false,
-                desc: "The Associated Token Program".to_string(),
-            },
-            Defaults::TokenMetadataProgram => RequiredAccount {
-                name: "tokenMetadataProgram".to_string(),
-                is_mut: false,
-                is_signer: false,
-                desc: "The Token Metadata Program".to_string(),
-            },
+            Defaults::Index(is_mut) => {
+                let name = "index".to_string();
+                RequiredAccount {
+                    ident: crate::util::name_to_ident_snake(&name),
+                    name,
+                    is_mut,
+                    is_signer: false,
+                    desc: "The Nautilus Index for this program".to_string(),
+                    account_type: RequiredAccountType::IndexAccount,
+                }
+            }
+            Defaults::SelfAccount(name, desc, is_mut, is_pda) => {
+                let ident = crate::util::name_to_ident_snake(&name);
+                RequiredAccount {
+                    ident,
+                    name,
+                    is_mut,
+                    is_signer: (is_mut && !is_pda),
+                    desc,
+                    account_type: RequiredAccountType::Account,
+                }
+            }
+            Defaults::Metadata(name, desc, is_mut, is_pda) => {
+                let ident = crate::util::name_to_ident_snake(&name);
+                RequiredAccount {
+                    ident,
+                    name,
+                    is_mut,
+                    is_signer: (is_mut && !is_pda),
+                    desc,
+                    account_type: RequiredAccountType::Account,
+                }
+            }
+            Defaults::MintAuthority(name, desc, is_mut, is_pda) => {
+                let ident = crate::util::name_to_ident_snake(&name);
+                RequiredAccount {
+                    ident,
+                    name,
+                    is_mut,
+                    is_signer: (is_mut && !is_pda),
+                    desc,
+                    account_type: RequiredAccountType::Account,
+                }
+            }
+            Defaults::FeePayer => {
+                let name = "feePayer".to_string();
+                RequiredAccount {
+                    ident: crate::util::name_to_ident_snake(&name),
+                    name,
+                    is_mut: true,
+                    is_signer: true,
+                    desc: "The transaction fee payer".to_string(),
+                    account_type: RequiredAccountType::SystemAccount,
+                }
+            }
+            Defaults::SystemProgram => {
+                let name = "systemProgram".to_string();
+                RequiredAccount {
+                    ident: crate::util::name_to_ident_snake(&name),
+                    name,
+                    is_mut: false,
+                    is_signer: false,
+                    desc: "The System Program".to_string(),
+                    account_type: RequiredAccountType::SystemProgram,
+                }
+            }
+            Defaults::TokenProgram => {
+                let name = "tokenProgram".to_string();
+                RequiredAccount {
+                    ident: crate::util::name_to_ident_snake(&name),
+                    name,
+                    is_mut: false,
+                    is_signer: false,
+                    desc: "The Token Program".to_string(),
+                    account_type: RequiredAccountType::TokenProgram,
+                }
+            }
+            Defaults::AssociatedTokenProgram => {
+                let name = "associatedTokenProgram".to_string();
+                RequiredAccount {
+                    ident: crate::util::name_to_ident_snake(&name),
+                    name,
+                    is_mut: false,
+                    is_signer: false,
+                    desc: "The Associated Token Program".to_string(),
+                    account_type: RequiredAccountType::AssociatedTokenProgram,
+                }
+            }
+            Defaults::TokenMetadataProgram => {
+                let name = "tokenMetadataProgram".to_string();
+                RequiredAccount {
+                    ident: crate::util::name_to_ident_snake(&name),
+                    name,
+                    is_mut: false,
+                    is_signer: false,
+                    desc: "The Token Metadata Program".to_string(),
+                    account_type: RequiredAccountType::TokenMetadataProgram,
+                }
+            }
         }
     }
 }
@@ -93,16 +153,6 @@ impl Defaults {
 // TODO: Add support for custom descriptions
 //
 impl RequiredAccount {
-    pub fn get_source_nautilus_structs() -> Vec<String> {
-        vec![
-            "Wallet".to_string(),
-            "Token".to_string(),
-            "Mint".to_string(),
-            "Metadata".to_string(),
-            "AssociatedTokenAccount".to_string(),
-        ]
-    }
-
     pub fn derive_object_type(ty_name: &str) -> ObjectType {
         if ty_name.eq("Wallet") {
             ObjectType::Wallet
@@ -126,7 +176,10 @@ impl RequiredAccount {
                 vec![Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, true).resolve()]
             }
             ObjectType::Wallet => {
-                vec![Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, false).resolve()]
+                vec![
+                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, false).resolve(),
+                    Defaults::SystemProgram.resolve(),
+                ]
             }
             ObjectType::Token(is_pda) => {
                 let metadata_name = obj_name.clone() + "Metadata";
@@ -142,16 +195,27 @@ impl RequiredAccount {
                         is_pda,
                     )
                     .resolve(),
+                    Defaults::TokenProgram.resolve(),
+                    Defaults::TokenMetadataProgram.resolve(),
                 ]
             }
             ObjectType::Mint(is_pda) => {
-                vec![Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve()]
+                vec![
+                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
+                    Defaults::TokenProgram.resolve(),
+                ]
             }
             ObjectType::Metadata(is_pda) => {
-                vec![Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve()]
+                vec![
+                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
+                    Defaults::TokenMetadataProgram.resolve(),
+                ]
             }
             ObjectType::AssociatedTokenAccount(is_pda) => {
-                vec![Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve()]
+                vec![
+                    Defaults::SelfAccount(obj_name.clone(), obj_name, is_mut, is_pda).resolve(),
+                    Defaults::AssociatedTokenProgram.resolve(),
+                ]
             }
         }
     }
@@ -230,7 +294,16 @@ impl RequiredAccount {
             entry.is_signer |= account.is_signer;
             entry.desc = account.desc;
         }
-        map.into_iter().map(|(_, v)| v).collect()
+        let mut res: Vec<RequiredAccount> = map.into_iter().map(|(_, v)| v).collect();
+        res.sort_by(|a, b| {
+            let account_type_cmp = a.account_type.cmp(&b.account_type);
+            if account_type_cmp == std::cmp::Ordering::Equal {
+                a.name.cmp(&b.name)
+            } else {
+                account_type_cmp
+            }
+        });
+        res
     }
 
     pub fn to_idl_instruction_account(&self) -> nautilus_idl::IdlInstructionAccount {
@@ -239,6 +312,33 @@ impl RequiredAccount {
             is_mut: self.is_mut,
             is_signer: self.is_signer,
             desc: self.desc.clone(),
+        }
+    }
+}
+
+impl From<&RequiredAccount> for proc_macro2::TokenStream {
+    fn from(ast: &RequiredAccount) -> Self {
+        match ast.account_type {
+            RequiredAccountType::Account
+            | RequiredAccountType::Program
+            | RequiredAccountType::SystemAccount
+            | RequiredAccountType::Sysvar => {
+                let ident = crate::util::self_account_ident(&ast.ident);
+                quote::quote! { account_info: #ident.to_owned() }
+            }
+            RequiredAccountType::IndexAccount => quote::quote! { index: index.to_owned() },
+            RequiredAccountType::SystemProgram => {
+                quote::quote! { system_program: system_program.to_owned() }
+            }
+            RequiredAccountType::TokenProgram => {
+                quote::quote! { token_program: token_program.to_owned() }
+            }
+            RequiredAccountType::AssociatedTokenProgram => {
+                quote::quote! { associated_token_program: associated_token_program.to_owned() }
+            }
+            RequiredAccountType::TokenMetadataProgram => {
+                quote::quote! { token_metadata_program: token_metadata_program.to_owned() }
+            }
         }
     }
 }

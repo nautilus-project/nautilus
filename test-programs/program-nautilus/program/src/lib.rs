@@ -2,11 +2,14 @@ use nautilus::*;
 
 #[nautilus]
 mod program_nautilus {
-
-    fn wallet_transfer_test<'a>(from: Wallet<'a>, to: JoeIsADarryl, amount: u64) -> ProgramResult {
-        from.transfer_lamports(to, amount)
+    fn wallet_test(from: Wallet, to: Wallet) -> ProgramResult {
+        msg!("{}", from.key());
+        msg!("{}", to.key());
+        Ok(())
+    }
+    fn wallet_test_2(from: Wallet, to: Wallet) -> ProgramResult {
+        msg!("{}", from.key());
+        msg!("{}", to.key());
+        Ok(())
     }
 }
-
-#[derive(Debug, BorshDeserialize, BorshSerialize, Nautilus)]
-pub struct JoeIsADarryl {}

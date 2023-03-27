@@ -11,9 +11,8 @@ edition = "2021"
 [dependencies]
 borsh = "0.9.3"
 borsh-derive = "0.9.3"
-mpl-token-metadata = "1.9.1"
+mpl-token-metadata = { version = "1.9.1", features = ["no-entrypoint"] }
 nautilus-derive = { path = "./derive", version = "0.0.1" }
-shank = "0.0.12"
-solana-program = "1.15.0"
+solana-program = "1.15.2"
 spl-associated-token-account = "1.1.3"
 spl-token = "3.5.0"

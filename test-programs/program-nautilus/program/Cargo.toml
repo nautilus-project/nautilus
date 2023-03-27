@@ -8,4 +8,3 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 nautilus = { path = "../../../solana", version = "0.0.1" }
-shank = "0.0.12"

@@ -1,9 +1,10 @@
-pub fn parse_cargo_toml(file_path: &str) -> Option<(String, String)> {
-    let file_contents = std::fs::read_to_string(file_path).ok()?;
-    let toml: toml::Value = file_contents.parse().ok()?;
-    let package = toml.get("package")?.as_table()?;
-    let name = package.get("name")?.as_str()?.to_string();
-    let version = package.get("version")?.as_str()?.to_string();
-
-    Some((name, version))
+pub fn update_program_id(
+    idl_path: &str,
+    program_id: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let file = std::fs::File::open(idl_path)?;
+    let mut idl: crate::Idl = serde_json::from_reader(file)?;
+    idl.metadata = crate::IdlMetadata::new(program_id);
+    idl.write();
+    Ok(())
 }

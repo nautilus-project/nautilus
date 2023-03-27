@@ -2,10 +2,11 @@ use nautilus::*;
 
 #[nautilus]
 pub mod my_mod {
-    fn print_something(from: Darryl, to: String) {
+    use super::*;
+    fn print_something(from: Wallet, to: Wallet) {
         println!("Something");
     }
-    fn print_something_else(from: Darryl, to: Darryl, amount: u64) {
+    fn print_something_else(from: Wallet, to: Wallet, amount: u64) {
         println!("Something else");
     }
 }

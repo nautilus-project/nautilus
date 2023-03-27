@@ -8,11 +8,12 @@ import {
     sendAndConfirmTransaction,
     Transaction,
 } from '@solana/web3.js'
-import { 
-    createCreateHeroInstruction, 
-    createDeleteHeroInstruction, 
-    createUpdateHeroInstruction, 
-} from './instruction'
+import { createTestInstruction, TestInstruction } from './test-ix'
+// import { 
+//     createCreateHeroInstruction, 
+//     createDeleteHeroInstruction, 
+//     createUpdateHeroInstruction, 
+// } from './instruction'
 
 
 function loadKeypairFromFile(path: string): Keypair {
@@ -29,22 +30,38 @@ describe("Nautilus Program Unit Tests", async () => {
     const connection = new Connection(`http://localhost:8899`, 'confirmed')
     const payer = loadKeypairFromFile(require('os').homedir() + '/.config/solana/id.json')
     const program = loadKeypairFromFile('./program/target/deploy/program_nautilus-keypair.json')
-  
-    it("Try CreateHero", async () => {
-        let ix = createCreateHeroInstruction(
-            AUTOINCREMENT,
+
+    async function bs_test(instruction: TestInstruction) {
+        let ix = createTestInstruction(
             payer.publicKey,
             program.publicKey,
-            ID,
-            "Hercules",
-            payer.publicKey,
+            instruction,
         )
         await sendAndConfirmTransaction(
             connection, 
             new Transaction().add(ix),
             [payer]
         )
-    })
+    }
+
+    it("Try One", async () => await bs_test(TestInstruction.One))
+    it("Try Two", async () => await bs_test(TestInstruction.Two))
+  
+    // it("Try CreateHero", async () => {
+    //     let ix = createCreateHeroInstruction(
+    //         AUTOINCREMENT,
+    //         payer.publicKey,
+    //         program.publicKey,
+    //         ID,
+    //         "Hercules",
+    //         payer.publicKey,
+    //     )
+    //     await sendAndConfirmTransaction(
+    //         connection, 
+    //         new Transaction().add(ix),
+    //         [payer]
+    //     )
+    // })
 
     // it("Try UpdateHero", async () => {
     //     let ix = createUpdateHeroInstruction(

@@ -59,7 +59,7 @@ impl<'a, T: super::NautilusAccountInfo<'a>> super::NautilusAccountInfo<'a> for C
 impl<'a, T: super::NautilusTransferLamports<'a>> crate::properties::NautilusTransferLamports<'a>
     for Create<'a, T>
 {
-    fn transfer_lamports<U: super::NautilusAccountInfo<'a>>(
+    fn transfer_lamports<U: super::NautilusAccountInfo<'a> + 'a>(
         self,
         to: U,
         amount: u64,

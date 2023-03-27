@@ -55,6 +55,8 @@ impl<'a> crate::properties::NautilusCreateMetadata<'a>
         mint_authority: T,
         update_authority: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        use crate::properties::NautilusAccountInfo;
+
         let metadata = self.self_account.clone();
         let payer = self.fee_payer.clone();
         let rent = self.rent.clone();
@@ -62,8 +64,8 @@ impl<'a> crate::properties::NautilusCreateMetadata<'a>
         solana_program::program::invoke(
             &mpl_token_metadata::instruction::create_metadata_accounts_v3(
                 *token_metadata_program.key,
-                *crate::properties::NautilusAccountInfo::key(&metadata),
-                *crate::properties::NautilusAccountInfo::key(&mint),
+                *metadata.key(),
+                *mint.key(),
                 *mint_authority.key(),
                 *payer.key,
                 *update_authority.key(),
@@ -99,14 +101,16 @@ impl<'a> crate::properties::NautilusCreateMetadata<'a>
         update_authority: T,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        use crate::properties::NautilusAccountInfo;
+
         let metadata = self.self_account.clone();
         let rent = self.rent.clone();
         let token_metadata_program = metadata.token_metadata_program.clone();
         solana_program::program::invoke(
             &mpl_token_metadata::instruction::create_metadata_accounts_v3(
                 *token_metadata_program.key,
-                *crate::properties::NautilusAccountInfo::key(&metadata),
-                *crate::properties::NautilusAccountInfo::key(&mint),
+                *metadata.key(),
+                *mint.key(),
                 *mint_authority.key(),
                 *payer.key(),
                 *update_authority.key(),

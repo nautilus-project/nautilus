@@ -27,8 +27,8 @@ pub trait NautilusAccountInfo<'a>:
     }
 }
 
-pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> {
-    fn transfer_lamports<T: NautilusAccountInfo<'a>>(
+pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> + 'a {
+    fn transfer_lamports<T: NautilusAccountInfo<'a> + 'a>(
         self,
         to: T,
         amount: u64,

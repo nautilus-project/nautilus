@@ -1,5 +1,3 @@
-use crate::properties::NautilusAccountInfo;
-
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct AssociatedTokenAccount<'a> {
     pub account_info: solana_program::account_info::AccountInfo<'a>,
@@ -50,6 +48,7 @@ impl<'a> crate::properties::NautilusCreateAssociatedTokenAccount<'a>
     for crate::properties::Create<'a, AssociatedTokenAccount<'a>>
 {
     fn create(&self, mint: crate::token::Mint<'a>) -> solana_program::entrypoint::ProgramResult {
+        use crate::properties::NautilusAccountInfo;
         let payer = self.fee_payer.clone();
         let system_program = self.system_program.clone();
         solana_program::program::invoke(
@@ -75,6 +74,7 @@ impl<'a> crate::properties::NautilusCreateAssociatedTokenAccount<'a>
         mint: crate::token::Mint<'a>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        use crate::properties::NautilusAccountInfo;
         let system_program = self.system_program.clone();
         solana_program::program::invoke(
             &spl_associated_token_account::instruction::create_associated_token_account(

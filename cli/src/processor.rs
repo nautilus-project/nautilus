@@ -24,8 +24,7 @@ fn os_command(cmd: &str) -> std::io::Result<()> {
 }
 
 fn build() -> std::io::Result<()> {
-    os_command("cargo build-bpf")?;
-    os_command("shank idl -p $(solana address --keypair target/deploy/*.json)")?;
+    os_command("cargo build-sbf")?;
     Ok(())
 }
 

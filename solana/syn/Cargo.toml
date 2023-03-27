@@ -17,6 +17,7 @@ convert_case = "0.6.0"
 nautilus-idl = { version = "0.0.1", path = "../idl" }
 proc-macro2 = "1.0"
 quote = "1.0"
+shank_idl = "0.0.12"
 shank_macro_impl = "0.0.12"
 solana-program = "1.15.0"
 syn = { version = "1.0", features = ["extra-traits", "full"] }

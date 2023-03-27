@@ -1,17 +1,9 @@
-//
-//
-// ----------------------------------------------------------------
-//                 Nautilus entrypoint token generation
-// ----------------------------------------------------------------
-//
-//
 pub mod entry_enum;
 pub mod entry_variant;
 pub mod required_account;
 
 #[derive(Debug)]
 pub struct NautilusEntrypoint {
-    pub mod_ident: syn::Ident,
     pub mod_content: Vec<syn::Item>,
     pub instruction_enum: proc_macro2::TokenStream,
     pub processor: proc_macro2::TokenStream,
@@ -19,15 +11,19 @@ pub struct NautilusEntrypoint {
 
 impl From<syn::ItemMod> for NautilusEntrypoint {
     fn from(value: syn::ItemMod) -> Self {
-        let mod_ident = value.ident;
-        let mod_content = value.content.unwrap().1;
+        let mod_content: Vec<syn::Item> = value
+            .content
+            .unwrap()
+            .1
+            .into_iter()
+            .filter(|item| !is_use_super_star(item))
+            .collect();
 
         let (crate_version, crate_name) = parse_manifest();
-        let (nautilus_object_names, idl_accounts, idl_types) = parse_crate_context();
+        let (nautilus_objects, idl_accounts, idl_types) = parse_crate_context();
 
         let nautilus_enum = &entry_enum::NautilusEntrypointEnum::new(
-            mod_ident.clone(),
-            nautilus_object_names,
+            nautilus_objects,
             mod_content.iter().filter_map(|item| {
                 if let syn::Item::Fn(item_fn) = item {
                     Some(item_fn.clone())
@@ -44,12 +40,11 @@ impl From<syn::ItemMod> for NautilusEntrypoint {
             idl_instructions,
             idl_accounts,
             idl_types,
-            nautilus_idl::IdlMetadata::new("TODO!"), // TODO: Get program ID
+            nautilus_idl::IdlMetadata::new_with_no_id(),
         )
         .write();
 
         Self {
-            mod_ident,
             mod_content,
             instruction_enum,
             processor,
@@ -71,22 +66,28 @@ impl quote::ToTokens for NautilusEntrypoint {
 
 impl From<&NautilusEntrypoint> for proc_macro2::TokenStream {
     fn from(ast: &NautilusEntrypoint) -> Self {
-        let mod_ident = &ast.mod_ident;
         let mod_content = &ast.mod_content;
         let instruction_enum = &ast.instruction_enum;
         let processor = &ast.processor;
 
         quote::quote! {
-            use #mod_ident::*;
             #instruction_enum
+            #(#mod_content)*
             #processor
-            pub mod #mod_ident {
-                use nautilus::*;
-                #(#mod_content)*
-            }
         }
         .into()
     }
+}
+
+fn is_use_super_star(item: &syn::Item) -> bool {
+    if let syn::Item::Use(use_item) = item {
+        if let syn::UseTree::Path(use_path) = &use_item.tree {
+            if let syn::UseTree::Glob(_) = &*use_path.tree {
+                return use_path.ident == syn::Ident::new("super", use_path.ident.span());
+            }
+        }
+    }
+    false
 }
 
 fn parse_manifest() -> (String, String) {
@@ -103,7 +104,7 @@ fn parse_manifest() -> (String, String) {
 }
 
 fn parse_crate_context() -> (
-    Vec<String>,
+    Vec<crate::object::NautilusObject>,
     Vec<nautilus_idl::IdlAccount>,
     Vec<nautilus_idl::IdlType>,
 ) {
@@ -115,9 +116,7 @@ fn parse_crate_context() -> (
     let mut idl_accounts: Vec<nautilus_idl::IdlAccount> = vec![];
     let mut idl_types: Vec<nautilus_idl::IdlType> = vec![];
 
-    // TODO: Enums & more
-
-    let mut nautilus_structs: Vec<String> = crate_context
+    let mut nautilus_objects: Vec<crate::object::NautilusObject> = crate_context
         .structs()
         .filter_map(|s| {
             if let Some(attr) = s.attrs.iter().find(|attr| attr.path.is_ident("derive")) {
@@ -143,7 +142,7 @@ fn parse_crate_context() -> (
                                     &s.attrs,
                                 ),
                             ));
-                            return Some(account_ident_string);
+                            return Some(s.clone().into());
                         }
                     }
                 }
@@ -151,9 +150,12 @@ fn parse_crate_context() -> (
             None
         })
         .collect();
-    nautilus_structs.extend(required_account::RequiredAccount::get_source_nautilus_structs());
+    nautilus_objects.extend(crate::object::NautilusObject::source_nautilus_objects());
 
-    (nautilus_structs, idl_accounts, idl_types)
+    // TODO: Enums
+    // crate_context.enums().iter().for_each(|e| idl_types.push(e.into()))
+
+    (nautilus_objects, idl_accounts, idl_types)
 }
 
 fn idl_account_type_from_struct_fields<'a>(

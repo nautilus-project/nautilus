@@ -6,8 +6,6 @@ pub use associated_token::*;
 pub use metadata::*;
 pub use mint::*;
 
-use crate::properties::{NautilusCreateMetadata, NautilusCreateMint};
-
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct Token<'a> {
     mint: Mint<'a>,
@@ -146,7 +144,7 @@ impl<'a> crate::properties::NautilusCreateToken<'a> for crate::properties::Creat
         mint_authority: T,
         freeze_authority: Option<T>,
     ) -> solana_program::entrypoint::ProgramResult {
-        self.create_mint(decimals, mint_authority, freeze_authority)
+        crate::NautilusCreateMint::create_mint(self, decimals, mint_authority, freeze_authority)
     }
 
     fn create_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
@@ -156,7 +154,13 @@ impl<'a> crate::properties::NautilusCreateToken<'a> for crate::properties::Creat
         freeze_authority: Option<T>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        self.create_mint_with_payer(decimals, mint_authority, freeze_authority, payer)
+        crate::NautilusCreateMint::create_mint_with_payer(
+            self,
+            decimals,
+            mint_authority,
+            freeze_authority,
+            payer,
+        )
     }
 
     fn create_with_metadata<T: crate::properties::NautilusAccountInfo<'a>>(
@@ -170,8 +174,21 @@ impl<'a> crate::properties::NautilusCreateToken<'a> for crate::properties::Creat
         update_authority: T,
     ) -> solana_program::entrypoint::ProgramResult {
         let mint = self.self_account.mint.to_owned();
-        self.create_mint(decimals, mint_authority.clone(), freeze_authority)?;
-        self.create_metadata(title, symbol, uri, mint, mint_authority, update_authority)?;
+        crate::NautilusCreateMint::create_mint(
+            self,
+            decimals,
+            mint_authority.clone(),
+            freeze_authority,
+        )?;
+        crate::NautilusCreateMetadata::create_metadata(
+            self,
+            title,
+            symbol,
+            uri,
+            mint,
+            mint_authority,
+            update_authority,
+        )?;
         Ok(())
     }
 
@@ -187,13 +204,15 @@ impl<'a> crate::properties::NautilusCreateToken<'a> for crate::properties::Creat
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
         let mint = self.self_account.mint.to_owned();
-        self.create_mint_with_payer(
+        crate::NautilusCreateMint::create_mint_with_payer(
+            self,
             decimals,
             mint_authority.clone(),
             freeze_authority,
             payer.clone(),
         )?;
-        self.create_metadata_with_payer(
+        crate::NautilusCreateMetadata::create_metadata_with_payer(
+            self,
             title,
             symbol,
             uri,

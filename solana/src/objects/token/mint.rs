@@ -50,7 +50,9 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         mint_authority: T,
         freeze_authority: Option<T>,
     ) -> solana_program::entrypoint::ProgramResult {
+        use crate::properties::NautilusAccountInfo;
         use solana_program::{program_pack::Pack, sysvar::Sysvar};
+
         let payer = self.fee_payer.clone();
         let rent = self.rent.clone();
         let system_program = self.system_program.clone();
@@ -58,7 +60,7 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         solana_program::program::invoke(
             &solana_program::system_instruction::create_account(
                 &self.fee_payer.key,
-                &crate::properties::NautilusAccountInfo::key(&self.self_account),
+                &self.self_account.key(),
                 (solana_program::rent::Rent::get()?).minimum_balance(spl_token::state::Mint::LEN),
                 spl_token::state::Mint::LEN as u64,
                 &token_program.key,
@@ -73,7 +75,7 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         solana_program::program::invoke(
             &spl_token::instruction::initialize_mint(
                 &token_program.key,
-                &crate::properties::NautilusAccountInfo::key(&self.self_account),
+                &self.self_account.key(),
                 &mint_authority.key(),
                 freeze_authority.map(|f| f.key()),
                 decimals,
@@ -95,14 +97,16 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         freeze_authority: Option<T>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        use crate::properties::NautilusAccountInfo;
         use solana_program::{program_pack::Pack, sysvar::Sysvar};
+
         let rent = self.rent.clone();
         let system_program = self.system_program.clone();
         let token_program = self.self_account.token_program.clone();
         solana_program::program::invoke(
             &solana_program::system_instruction::create_account(
                 &self.fee_payer.key,
-                &crate::properties::NautilusAccountInfo::key(&self.self_account),
+                &self.self_account.key(),
                 (solana_program::rent::Rent::get()?).minimum_balance(spl_token::state::Mint::LEN),
                 spl_token::state::Mint::LEN as u64,
                 &token_program.key,
@@ -117,7 +121,7 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         solana_program::program::invoke(
             &spl_token::instruction::initialize_mint(
                 &token_program.key,
-                &crate::properties::NautilusAccountInfo::key(&self.self_account),
+                &self.self_account.key(),
                 &mint_authority.key(),
                 freeze_authority.map(|f| f.key()),
                 decimals,

@@ -66,14 +66,20 @@ impl Idl {
 #[serde(rename_all = "camelCase")]
 pub struct IdlMetadata {
     origin: String,
-    address: String,
+    address: Option<String>,
 }
 
 impl IdlMetadata {
     pub fn new(address: &str) -> Self {
         Self {
             origin: "nautilus".to_string(),
-            address: address.to_string(),
+            address: Some(address.to_string()),
+        }
+    }
+    pub fn new_with_no_id() -> Self {
+        Self {
+            origin: "nautilus".to_string(),
+            address: None,
         }
     }
 }
