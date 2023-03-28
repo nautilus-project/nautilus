@@ -1,4 +1,5 @@
 use cargo_toml::Manifest;
+use convert_case::{Case::Pascal, Casing};
 use nautilus_idl::{
     IdlAccount, IdlAccountType, IdlAccountTypeField, IdlType, IdlTypeType, IdlTypeTypeField,
 };
@@ -13,7 +14,7 @@ use crate::object::{
     NautilusObject,
 };
 
-use crate::entry::call_context::CallContext;
+use super::entry_variant::CallContext;
 
 pub fn parse_manifest() -> (String, String) {
     let manifest = Manifest::from_path("Cargo.toml")
@@ -81,7 +82,7 @@ pub fn parse_function(
     function: ItemFn,
 ) -> (Ident, Vec<(Ident, Type)>, Ident, Vec<CallContext>) {
     let variant_ident = Ident::new(
-        &convert_case::Casing::to_case(&function.sig.ident.to_string(), convert_case::Case::Pascal),
+        &function.sig.ident.to_string().to_case(Pascal),
         Span::call_site(),
     );
     let call_ident = function.sig.ident.clone();

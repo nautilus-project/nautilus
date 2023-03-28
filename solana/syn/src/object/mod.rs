@@ -44,14 +44,13 @@ impl NautilusObject {
     }
 
     pub fn source_nautilus_objects() -> Vec<Self> {
-        let source = [
+        [
             "Wallet",
             "Token",
             "Mint",
             "Metadata",
             "AssociatedTokenAccount",
-        ];
-        source
+        ]
             .into_iter()
             .map(|s| Self::default(name_to_ident(s)))
             .collect()

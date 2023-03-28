@@ -1,9 +1,9 @@
 pub trait NautilusCreateAssociatedTokenAccount<'a> {
-    fn create(&self, mint: crate::token::Mint<'a>) -> solana_program::entrypoint::ProgramResult;
+    fn create(&self, mint: crate::mint::Mint<'a>) -> solana_program::entrypoint::ProgramResult;
 
     fn create_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
         &self,
-        mint: crate::token::Mint<'a>,
+        mint: crate::mint::Mint<'a>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult;
 }
@@ -31,7 +31,7 @@ pub trait NautilusCreateMetadata<'a> {
         title: String,
         symbol: String,
         uri: String,
-        mint: crate::token::Mint<'a>,
+        mint: crate::mint::Mint<'a>,
         mint_authority: T,
         update_authority: T,
     ) -> solana_program::entrypoint::ProgramResult;
@@ -41,7 +41,7 @@ pub trait NautilusCreateMetadata<'a> {
         title: String,
         symbol: String,
         uri: String,
-        mint: crate::token::Mint<'a>,
+        mint: crate::mint::Mint<'a>,
         mint_authority: T,
         update_authority: T,
         payer: T,

@@ -5,13 +5,15 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Ident, Type};
 
-use crate::entry::required_account::{
-    metadata_ident, mint_authority_ident, self_account_ident, Construct, RequiredAccountType,
-};
+use crate::object::NautilusObject;
 
 use super::{
-    call_context::CallContext, entry_enum::NautilusEntrypointEnum, parser::type_to_string,
-    required_account::RequiredAccount,
+    entry_enum::NautilusEntrypointEnum,
+    parser::type_to_string,
+    required_account::{
+        metadata_ident, mint_authority_ident, self_account_ident, Construct, RequiredAccount,
+        RequiredAccountType,
+    },
 };
 
 #[derive(Debug)]
@@ -22,6 +24,12 @@ pub struct NautilusEntrypointEnumVariant {
     pub required_accounts: Vec<RequiredAccount>,
     pub call_ident: Ident,
     pub call_context: Vec<CallContext>,
+}
+
+#[derive(Debug)]
+pub enum CallContext {
+    Nautilus(NautilusObject),
+    Arg(Ident),
 }
 
 impl NautilusEntrypointEnumVariant {

@@ -1,34 +1,34 @@
+use self::{metadata::Metadata, mint::Mint};
+
 pub mod associated_token;
 pub mod metadata;
 pub mod mint;
 
-pub use associated_token::*;
-pub use metadata::*;
-pub use mint::*;
-
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct Token<'a> {
-    mint: Mint<'a>,
-    metadata: Option<Metadata<'a>>,
+    pub mint: solana_program::account_info::AccountInfo<'a>,
+    pub metadata: solana_program::account_info::AccountInfo<'a>,
+    pub token_program: solana_program::account_info::AccountInfo<'a>,
+    pub token_metadata_program: solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Token<'a> {
     fn into_account_info(self) -> solana_program::account_info::AccountInfo<'a> {
-        self.mint.into_account_info()
+        self.mint
     }
 }
 
 impl<'a> crate::properties::NautilusAccountInfo<'a> for Token<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
-        self.mint.key()
+        self.mint.key
     }
 
     fn is_signer(&self) -> bool {
-        self.mint.is_signer()
+        self.mint.is_signer
     }
 
     fn is_writable(&self) -> bool {
-        self.mint.is_writable()
+        self.mint.is_writable
     }
 
     fn lamports(&self) -> u64 {
@@ -39,15 +39,15 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for Token<'a> {
         &self,
     ) -> Result<std::cell::RefMut<'_, &'a mut u64>, solana_program::program_error::ProgramError>
     {
-        self.mint.mut_lamports()
+        self.mint.try_borrow_mut_lamports()
     }
 
     fn owner(&self) -> &'a solana_program::pubkey::Pubkey {
-        self.mint.owner()
+        self.mint.owner
     }
 
     fn span(&self) -> usize {
-        self.mint.span()
+        self.mint.data_len()
     }
 }
 
@@ -58,12 +58,16 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         mint_authority: T,
         freeze_authority: Option<T>,
     ) -> solana_program::entrypoint::ProgramResult {
+        let mint = Mint {
+            account_info: self.self_account.mint.to_owned(),
+            token_program: self.self_account.token_program.to_owned(),
+        };
         let create_mint: crate::properties::Create<Mint> = crate::properties::Create {
             fee_payer: self.fee_payer.to_owned(),
             owner: self.owner.to_owned(),
             system_program: self.system_program.to_owned(),
             rent: self.rent.to_owned(),
-            self_account: self.self_account.mint.to_owned(),
+            self_account: mint.to_owned(),
         };
         create_mint.create_mint(decimals, mint_authority, freeze_authority)
     }
@@ -75,12 +79,16 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         freeze_authority: Option<T>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        let mint = Mint {
+            account_info: self.self_account.mint.to_owned(),
+            token_program: self.self_account.token_program.to_owned(),
+        };
         let create_mint: crate::properties::Create<Mint> = crate::properties::Create {
             fee_payer: self.fee_payer.to_owned(),
             owner: self.owner.to_owned(),
             system_program: self.system_program.to_owned(),
             rent: self.rent.to_owned(),
-            self_account: self.self_account.mint.to_owned(),
+            self_account: mint.to_owned(),
         };
         create_mint.create_mint_with_payer(decimals, mint_authority, freeze_authority, payer)
     }
@@ -98,12 +106,16 @@ impl<'a> crate::properties::NautilusCreateMetadata<'a>
         mint_authority: T,
         update_authority: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        let metadata = Metadata {
+            account_info: self.self_account.metadata.to_owned(),
+            token_metadata_program: self.self_account.token_metadata_program.to_owned(),
+        };
         let create_metadata: crate::properties::Create<Metadata> = crate::properties::Create {
             fee_payer: self.fee_payer.to_owned(),
             owner: self.owner.to_owned(),
             system_program: self.system_program.to_owned(),
             rent: self.rent.to_owned(),
-            self_account: self.self_account.metadata.to_owned().unwrap(),
+            self_account: metadata.to_owned(),
         };
         create_metadata.create_metadata(title, symbol, uri, mint, mint_authority, update_authority)
     }
@@ -118,12 +130,16 @@ impl<'a> crate::properties::NautilusCreateMetadata<'a>
         update_authority: T,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
+        let metadata = Metadata {
+            account_info: self.self_account.metadata.to_owned(),
+            token_metadata_program: self.self_account.token_metadata_program.to_owned(),
+        };
         let create_metadata: crate::properties::Create<Metadata> = crate::properties::Create {
             fee_payer: self.fee_payer.to_owned(),
             owner: self.owner.to_owned(),
             system_program: self.system_program.to_owned(),
             rent: self.rent.to_owned(),
-            self_account: self.self_account.metadata.to_owned().unwrap(),
+            self_account: metadata.to_owned(),
         };
         create_metadata.create_metadata_with_payer(
             title,
@@ -173,7 +189,10 @@ impl<'a> crate::properties::NautilusCreateToken<'a> for crate::properties::Creat
         uri: String,
         update_authority: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        let mint = self.self_account.mint.to_owned();
+        let mint = Mint {
+            account_info: self.self_account.mint.to_owned(),
+            token_program: self.self_account.token_program.to_owned(),
+        };
         crate::NautilusCreateMint::create_mint(
             self,
             decimals,
@@ -203,7 +222,10 @@ impl<'a> crate::properties::NautilusCreateToken<'a> for crate::properties::Creat
         update_authority: T,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        let mint = self.self_account.mint.to_owned();
+        let mint = Mint {
+            account_info: self.self_account.mint.to_owned(),
+            token_program: self.self_account.token_program.to_owned(),
+        };
         crate::NautilusCreateMint::create_mint_with_payer(
             self,
             decimals,

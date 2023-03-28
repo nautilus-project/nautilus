@@ -214,7 +214,7 @@ impl RequiredAccount {
             }
             ObjectType::Token(is_pda) => {
                 let metadata_name = obj_name.clone() + "Metadata";
-                let mint_authority_name = obj_name.clone() + "MintAuthority";
+                // let mint_authority_name = obj_name.clone() + "MintAuthority";
                 vec![
                     Construct::SelfAccount(
                         obj_name.clone(),
@@ -232,14 +232,14 @@ impl RequiredAccount {
                         object_type.clone(),
                     )
                     .resolve(),
-                    Construct::MintAuthority(
-                        mint_authority_name.clone(),
-                        mint_authority_name,
-                        is_mut,
-                        is_pda,
-                        object_type.clone(),
-                    )
-                    .resolve(),
+                    // Construct::MintAuthority(
+                    //     mint_authority_name.clone(),
+                    //     mint_authority_name,
+                    //     is_mut,
+                    //     is_pda,
+                    //     object_type.clone(),
+                    // )
+                    // .resolve(),
                     Construct::TokenProgram(object_type.clone()).resolve(),
                     Construct::TokenMetadataProgram(object_type).resolve(),
                 ]
@@ -280,6 +280,7 @@ impl RequiredAccount {
                         object_type.clone(),
                     )
                     .resolve(),
+                    Construct::TokenProgram(object_type.clone()).resolve(),
                     Construct::AssociatedTokenProgram(object_type).resolve(),
                 ]
             }
