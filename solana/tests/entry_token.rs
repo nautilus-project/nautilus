@@ -2,7 +2,6 @@ use nautilus::*;
 
 #[nautilus]
 pub mod my_mod {
-    use super::*;
     fn print_something(from: Token, to: Token) -> ProgramResult {
         println!("Something");
         println!("From: {}", from.key());
