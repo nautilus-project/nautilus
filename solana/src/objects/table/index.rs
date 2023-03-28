@@ -111,7 +111,7 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> crate::NautilusPda<'a> for NautilusIndex<'a> {
+impl<'a> crate::NautilusTable<'a> for NautilusIndex<'a> {
     fn primary_key(&self) -> &'a [u8] {
         crate::NautilusData::primary_key(&self.data)
     }
@@ -153,7 +153,7 @@ impl<'a> crate::properties::NautilusCreate<'a>
     for crate::properties::Create<'a, NautilusIndex<'a>>
 {
     fn create(&self) -> solana_program::entrypoint::ProgramResult {
-        use crate::{NautilusAccountInfo, NautilusData, NautilusPda};
+        use crate::{NautilusAccountInfo, NautilusData, NautilusTable};
 
         let payer = self.fee_payer.clone();
         let system_program = self.system_program.clone();
@@ -179,7 +179,7 @@ impl<'a> crate::properties::NautilusCreate<'a>
         &self,
         payer: U,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::{NautilusAccountInfo, NautilusData, NautilusPda};
+        use crate::{NautilusAccountInfo, NautilusData, NautilusTable};
 
         let system_program = self.system_program.clone();
         let (_, bump) = self.self_account.pda();

@@ -12,7 +12,7 @@ pub trait NautilusData: Clone + borsh::BorshDeserialize + borsh::BorshSerialize 
     fn count_authorities(&self) -> u8;
 }
 
-pub trait NautilusPda<'a>: super::NautilusAccountInfo<'a> {
+pub trait NautilusTable<'a>: super::NautilusAccountInfo<'a> {
     fn primary_key(&self) -> &'a [u8];
     fn seeds(&self) -> [&'a [u8]; 2];
     fn pda(&self) -> (solana_program::pubkey::Pubkey, u8);

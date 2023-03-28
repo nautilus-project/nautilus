@@ -1,19 +1,21 @@
 pub mod index;
 
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
-pub struct Pda<'a, T: crate::NautilusData> {
+pub struct Table<'a, T: crate::NautilusData> {
     pub program_id: &'a solana_program::pubkey::Pubkey,
     pub account_info: solana_program::account_info::AccountInfo<'a>,
     pub data: T,
 }
 
-impl<'a, T: crate::NautilusData> solana_program::account_info::IntoAccountInfo<'a> for Pda<'a, T> {
+impl<'a, T: crate::NautilusData> solana_program::account_info::IntoAccountInfo<'a>
+    for Table<'a, T>
+{
     fn into_account_info(self) -> solana_program::account_info::AccountInfo<'a> {
         self.account_info
     }
 }
 
-impl<'a, T: crate::NautilusData> crate::properties::NautilusAccountInfo<'a> for Pda<'a, T> {
+impl<'a, T: crate::NautilusData> crate::properties::NautilusAccountInfo<'a> for Table<'a, T> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -46,7 +48,7 @@ impl<'a, T: crate::NautilusData> crate::properties::NautilusAccountInfo<'a> for 
     }
 }
 
-impl<'a, T: crate::NautilusData> crate::NautilusPda<'a> for Pda<'a, T> {
+impl<'a, T: crate::NautilusData> crate::NautilusTable<'a> for Table<'a, T> {
     fn primary_key(&self) -> &'a [u8] {
         self.data.primary_key()
     }
@@ -72,7 +74,7 @@ impl<'a, T: crate::NautilusData> crate::NautilusPda<'a> for Pda<'a, T> {
 }
 
 impl<'a, T: crate::NautilusData + 'a> crate::properties::NautilusTransferLamports<'a>
-    for Pda<'a, T>
+    for Table<'a, T>
 {
     fn transfer_lamports<U: crate::properties::NautilusAccountInfo<'a>>(
         self,
@@ -87,10 +89,10 @@ impl<'a, T: crate::NautilusData + 'a> crate::properties::NautilusTransferLamport
 }
 
 impl<'a, T: crate::NautilusData> crate::properties::NautilusCreate<'a>
-    for crate::properties::Create<'a, Pda<'a, T>>
+    for crate::properties::Create<'a, Table<'a, T>>
 {
     fn create(&self) -> solana_program::entrypoint::ProgramResult {
-        use crate::{NautilusAccountInfo, NautilusPda};
+        use crate::{NautilusAccountInfo, NautilusTable};
 
         let payer = self.fee_payer.clone();
         let system_program = self.system_program.clone();
@@ -116,7 +118,7 @@ impl<'a, T: crate::NautilusData> crate::properties::NautilusCreate<'a>
         &self,
         payer: U,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::{NautilusAccountInfo, NautilusPda};
+        use crate::{NautilusAccountInfo, NautilusTable};
 
         let system_program = self.system_program.clone();
         let (_, bump) = self.self_account.pda();

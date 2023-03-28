@@ -25,7 +25,7 @@ pub enum RequiredAccountType {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ObjectType {
-    Pda(Vec<Construct>),
+    Table(Vec<Construct>),
     Wallet,
     Token(bool),
     Mint(bool),
@@ -186,14 +186,14 @@ impl RequiredAccount {
         } else if ty_name.eq("AssociatedTokenAccount") {
             ObjectType::AssociatedTokenAccount(false) // TODO: PDA Tokens not supported yet
         } else {
-            ObjectType::Pda(vec![]) // TODO: PDA authorities not supported yet
+            ObjectType::Table(vec![]) // TODO: PDA authorities not supported yet
         }
     }
 
     pub fn resolve_for_read(obj_name: String, object_type: ObjectType) -> Vec<Self> {
         let is_mut = false;
         match object_type {
-            ObjectType::Pda(_) => {
+            ObjectType::Table(_) => {
                 vec![
                     Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true, object_type)
                         .resolve(),
@@ -290,8 +290,8 @@ impl RequiredAccount {
     pub fn resolve_for_create(obj_name: String, object_type: ObjectType) -> Vec<Self> {
         let is_mut = true;
         match object_type {
-            ObjectType::Pda(authorities) => {
-                let this_object_type = ObjectType::Pda(vec![]);
+            ObjectType::Table(authorities) => {
+                let this_object_type = ObjectType::Table(vec![]);
                 let mut accounts = vec![
                     Construct::Index(is_mut, this_object_type.clone()).resolve(),
                     Construct::SelfAccount(
@@ -441,7 +441,7 @@ impl From<&RequiredAccount> for proc_macro2::TokenStream {
                 Construct::SelfAccount(..) => {
                     let ident = self_account_ident(&ast.ident);
                     match ast.object_type {
-                        ObjectType::Pda(_)
+                        ObjectType::Table(_)
                         | ObjectType::Wallet
                         | ObjectType::Mint(_)
                         | ObjectType::Metadata(_)
