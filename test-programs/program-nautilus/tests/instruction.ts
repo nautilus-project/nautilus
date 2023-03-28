@@ -5,204 +5,88 @@ import {
     SystemProgram, 
     TransactionInstruction 
 } from '@solana/web3.js'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata'
 
-enum MyInstruction {
-    CreateHero,
-    DeleteHero,
-    UpdateHero,
+export enum TestInstruction {
+    Wallets,
+    Mints,
+    Metadatas,
+    AssociatedTokens,
+    Tokens,
 }
 
-class CreateHero {
-    instruction: MyInstruction
-    id: number
-    name: string
-    authority: Uint8Array
+class TestInstructionData {
+    instruction: TestInstruction
     constructor(props: {
-        instruction: MyInstruction,
-        id: number,
-        name: string,
-        authority: PublicKey,
+        instruction: TestInstruction,
     }) {
         this.instruction = props.instruction;
-        this.id = props.id;
-        this.name = props.name;
-        this.authority = props.authority.toBytes();
     }
     toBuffer() { 
-        return Buffer.from(borsh.serialize(CreateHeroSchema, this)) 
+        return Buffer.from(borsh.serialize(TestInstructionDataSchema, this)) 
     }
 }
 
-const CreateHeroSchema = new Map([
-    [ CreateHero, { 
+const TestInstructionDataSchema = new Map([
+    [ TestInstructionData, { 
         kind: 'struct', 
         fields: [ 
             ['instruction', 'u8'],
-            ['id', 'u8'],
-            ['name', 'string'],
-            ['authority', [32]],
         ],
     }]
 ])
 
-export function createCreateHeroInstruction(
-    autoincrement: boolean,
+export function createTestInstruction(
     payer: PublicKey,
     programId: PublicKey,
-    id: number,
-    name: string,
-    authority: PublicKey,
+    instruction: TestInstruction,
 ): TransactionInstruction {
 
-    const autoincrementPublicKey = PublicKey.findProgramAddressSync(
-        [Buffer.from("hero_autoincrement")],
-        programId,
-    )[0];
-    console.log(`Autoincrement: ${autoincrementPublicKey}`);
+    const myInstructionObject = new TestInstructionData({instruction})
 
-    const newAccountPublicKey = PublicKey.findProgramAddressSync(
-        [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
-        programId,
-    )[0];
-    console.log(`Account: ${newAccountPublicKey}`);
+    function deriveKeys(instruction: TestInstruction) {
+        if (instruction === TestInstruction.Wallets) return [
+            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
+            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+        ]
+        else if (instruction === TestInstruction.Mints) return [
+            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ]
+        else if (instruction === TestInstruction.Metadatas) return [
+            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
+            {pubkey: TOKEN_METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ]
+        else if (instruction === TestInstruction.AssociatedTokens) return [
+            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ]
+        else return [
+            {pubkey: payer, isSigner: false, isWritable: false},    // To Mint (Self Account)
+            {pubkey: payer, isSigner: false, isWritable: false},    // To Metadata
+            {pubkey: payer, isSigner: false, isWritable: false},    // From Mint (Self Account)
+            {pubkey: payer, isSigner: false, isWritable: false},    // From Metadata
+            {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ]
+    }
 
-    const myInstructionObject = new CreateHero({
-        instruction: MyInstruction.CreateHero,
-        id,
-        name,
-        authority,
-    })
-
-    const keys = autoincrement ? [
-        {pubkey: autoincrementPublicKey, isSigner: false, isWritable: true},
-        {pubkey: newAccountPublicKey, isSigner: false, isWritable: true},
-        {pubkey: payer, isSigner: false, isWritable: false}, // Authority
-        {pubkey: payer, isSigner: true, isWritable: true},
-        {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
-    ]
-    :
-    [
-        {pubkey: newAccountPublicKey, isSigner: false, isWritable: true},
-        {pubkey: payer, isSigner: false, isWritable: false}, // Authority
-        {pubkey: payer, isSigner: true, isWritable: true},
-        {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
-    ]
+    const keys = deriveKeys(instruction)
 
     return new TransactionInstruction({
         keys,
-        programId: programId,
-        data: myInstructionObject.toBuffer(),
-    })
-}
-
-class UpdateHero {
-    instruction: MyInstruction
-    id: number
-    name: string
-    authority: Uint8Array
-    constructor(props: {
-        instruction: MyInstruction,
-        id: number,
-        name: string,
-        authority: PublicKey,
-    }) {
-        this.instruction = props.instruction;
-        this.id = props.id;
-        this.name = props.name;
-        this.authority = props.authority.toBytes();
-    }
-    toBuffer() { 
-        return Buffer.from(borsh.serialize(UpdateHeroSchema, this)) 
-    }
-}
-
-const UpdateHeroSchema = new Map([
-    [ UpdateHero, { 
-        kind: 'struct', 
-        fields: [ 
-            ['instruction', 'u8'],
-            ['id', 'u8'],
-            ['name', 'string'],
-            ['authority', [32]],
-        ],
-    }]
-])
-
-export function createUpdateHeroInstruction(
-    payer: PublicKey,
-    programId: PublicKey,
-    id: number,
-    name: string,
-    authority: PublicKey,
-): TransactionInstruction {
-
-    const targetAccountPublicKey = PublicKey.findProgramAddressSync(
-        [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
         programId,
-    )[0];
-
-    const myInstructionObject = new UpdateHero({
-        instruction: MyInstruction.UpdateHero,
-        id,
-        name,
-        authority,
-    })
-
-    return new TransactionInstruction({
-        keys: [
-            {pubkey: targetAccountPublicKey, isSigner: false, isWritable: true},
-            {pubkey: payer, isSigner: true, isWritable: false}, // Authority
-            {pubkey: payer, isSigner: true, isWritable: true},
-            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
-        ],
-        programId: programId,
-        data: myInstructionObject.toBuffer(),
-    })
-}
-
-class DeleteHero {
-    instruction: MyInstruction
-    constructor(props: {
-        instruction: MyInstruction,
-    }) {
-        this.instruction = props.instruction;
-    }
-    toBuffer() { 
-        return Buffer.from(borsh.serialize(DeleteHeroSchema, this)) 
-    }
-}
-
-const DeleteHeroSchema = new Map([
-    [ DeleteHero, { 
-        kind: 'struct', 
-        fields: [ 
-            ['instruction', 'u8'],
-        ],
-    }]
-])
-
-export function createDeleteHeroInstruction(
-    payer: PublicKey,
-    programId: PublicKey,
-    id: number,
-): TransactionInstruction {
-
-    const targetAccountPublicKey = PublicKey.findProgramAddressSync(
-        [Buffer.from("hero"), Buffer.from(Uint8Array.of(id))],
-        programId,
-    )[0];
-
-    const myInstructionObject = new DeleteHero({
-        instruction: MyInstruction.DeleteHero,
-    })
-
-    return new TransactionInstruction({
-        keys: [
-            {pubkey: targetAccountPublicKey, isSigner: false, isWritable: true},
-            {pubkey: payer, isSigner: true, isWritable: false}, // Authority
-            {pubkey: payer, isSigner: true, isWritable: true},
-        ],
-        programId: programId,
         data: myInstructionObject.toBuffer(),
     })
 }

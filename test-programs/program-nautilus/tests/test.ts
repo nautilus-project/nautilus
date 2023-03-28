@@ -8,12 +8,7 @@ import {
     sendAndConfirmTransaction,
     Transaction,
 } from '@solana/web3.js'
-import { createTestInstruction, TestInstruction } from './test-ix'
-// import { 
-//     createCreateHeroInstruction, 
-//     createDeleteHeroInstruction, 
-//     createUpdateHeroInstruction, 
-// } from './instruction'
+import { createTestInstruction, TestInstruction } from './instruction'
 
 
 function loadKeypairFromFile(path: string): Keypair {
@@ -22,73 +17,28 @@ function loadKeypairFromFile(path: string): Keypair {
     )
 }
 
-const AUTOINCREMENT: boolean = false
-const ID: number = 1
-
 describe("Nautilus Program Unit Tests", async () => {
 
     const connection = new Connection(`http://localhost:8899`, 'confirmed')
     const payer = loadKeypairFromFile(require('os').homedir() + '/.config/solana/id.json')
     const program = loadKeypairFromFile('./program/target/deploy/program_nautilus-keypair.json')
 
-    async function bs_test(instruction: TestInstruction) {
-        let ix = createTestInstruction(
-            payer.publicKey,
-            program.publicKey,
-            instruction,
-        )
+    async function test(instruction: TestInstruction) {
         await sendAndConfirmTransaction(
             connection, 
-            new Transaction().add(ix),
+            new Transaction().add(createTestInstruction(
+                payer.publicKey,
+                program.publicKey,
+                instruction,
+            )),
             [payer]
         )
     }
 
-    it("Try One", async () => await bs_test(TestInstruction.One))
-    it("Try Two", async () => await bs_test(TestInstruction.Two))
-  
-    // it("Try CreateHero", async () => {
-    //     let ix = createCreateHeroInstruction(
-    //         AUTOINCREMENT,
-    //         payer.publicKey,
-    //         program.publicKey,
-    //         ID,
-    //         "Hercules",
-    //         payer.publicKey,
-    //     )
-    //     await sendAndConfirmTransaction(
-    //         connection, 
-    //         new Transaction().add(ix),
-    //         [payer]
-    //     )
-    // })
-
-    // it("Try UpdateHero", async () => {
-    //     let ix = createUpdateHeroInstruction(
-    //         payer.publicKey,
-    //         program.publicKey,
-    //         ID,
-    //         "Hercules",
-    //         payer.publicKey,
-    //     )
-    //     await sendAndConfirmTransaction(
-    //         connection, 
-    //         new Transaction().add(ix),
-    //         [payer]
-    //     )
-    // })
-
-    // it("Try DeleteHero", async () => {
-    //     let ix = createDeleteHeroInstruction(
-    //         payer.publicKey,
-    //         program.publicKey,
-    //         ID,
-    //     )
-    //     await sendAndConfirmTransaction(
-    //         connection, 
-    //         new Transaction().add(ix),
-    //         [payer]
-    //     )
-    // })
+    it("Test Wallets", async () => test(TestInstruction.Wallets))
+    it("Test Mints", async () => test(TestInstruction.Mints))
+    it("Test Metadatas", async () => test(TestInstruction.Metadatas))
+    it("Test Associated Token Accounts", async () => test(TestInstruction.AssociatedTokens))
+    it("Test Tokens", async () => test(TestInstruction.Tokens))
   })
   
