@@ -1,28 +1,38 @@
+use nautilus_idl::{
+    IdlInstruction, IdlInstructionArg, IdlInstructionArgType, IdlInstructionDiscriminant,
+};
+use proc_macro2::TokenStream;
+use quote::quote;
+use syn::{Ident, Type};
+
+use crate::entry::required_account::{
+    metadata_ident, mint_authority_ident, self_account_ident, Construct, RequiredAccountType,
+};
+
+use super::{
+    call_context::CallContext, entry_enum::NautilusEntrypointEnum, parser::type_to_string,
+    required_account::RequiredAccount,
+};
+
 #[derive(Debug)]
 pub struct NautilusEntrypointEnumVariant {
     pub discriminant: u8,
-    pub variant_ident: syn::Ident,
-    pub variant_args: Vec<(syn::Ident, syn::Type)>,
-    pub required_accounts: Vec<super::required_account::RequiredAccount>,
-    pub call_ident: syn::Ident,
+    pub variant_ident: Ident,
+    pub variant_args: Vec<(Ident, Type)>,
+    pub required_accounts: Vec<RequiredAccount>,
+    pub call_ident: Ident,
     pub call_context: Vec<CallContext>,
-}
-
-#[derive(Debug)]
-pub enum CallContext {
-    Nautilus(crate::NautilusObject),
-    Arg(syn::Ident),
 }
 
 impl NautilusEntrypointEnumVariant {
     pub fn new(
         discriminant: u8,
-        variant_ident: syn::Ident,
-        variant_args: Vec<(syn::Ident, syn::Type)>,
-        call_ident: syn::Ident,
+        variant_ident: Ident,
+        variant_args: Vec<(Ident, Type)>,
+        call_ident: Ident,
         call_context: Vec<CallContext>,
     ) -> Self {
-        let required_accounts = crate::required_account::RequiredAccount::condense(
+        let required_accounts = RequiredAccount::condense(
             call_context
                 .iter()
                 .filter_map(|ctx| match ctx {
@@ -41,20 +51,17 @@ impl NautilusEntrypointEnumVariant {
         }
     }
 
-    fn build_match_arm_logic(&self) -> proc_macro2::TokenStream {
-        use crate::required_account::{Construct, RequiredAccountType};
+    fn build_match_arm_logic(&self) -> TokenStream {
         let all_accounts = self.required_accounts.iter().map(|r| {
             let ident = match &r.account_type {
                 RequiredAccountType::Account => match &r.construct {
-                    Construct::Metadata(..) => crate::required_account::metadata_ident(&r.ident),
-                    Construct::MintAuthority(..) => {
-                        crate::required_account::mint_authority_ident(&r.ident)
-                    }
-                    _ => crate::required_account::self_account_ident(&r.ident),
+                    Construct::Metadata(..) => metadata_ident(&r.ident),
+                    Construct::MintAuthority(..) => mint_authority_ident(&r.ident),
+                    _ => self_account_ident(&r.ident),
                 },
                 _ => r.ident.clone(),
             };
-            quote::quote! { let #ident = next_account_info(accounts_iter)?; }
+            quote! { let #ident = next_account_info(accounts_iter)?; }
         });
         let mut object_inits = vec![];
         let mut call_args = vec![];
@@ -66,18 +73,17 @@ impl NautilusEntrypointEnumVariant {
                             let obj_type = &obj.ident;
                             let required_accounts_for_obj = obj.get_required_accounts();
                             let initializers = required_accounts_for_obj.iter().map(|r| {
-                                let t: proc_macro2::TokenStream = r.into();
+                                let t: TokenStream = r.into();
                                 t
                             });
-                            object_inits
-                                .push(quote::quote! { let #arg = #obj_type{#(#initializers,)*}; });
-                            call_args.push(quote::quote! { #arg })
+                            object_inits.push(quote! { let #arg = #obj_type{#(#initializers,)*}; });
+                            call_args.push(quote! { #arg })
                         }
                         None => {
                             panic!("Error processing entrypoint: `arg_ident` not set.")
                         }
                     },
-                    CallContext::Arg(arg) => call_args.push(quote::quote! { #arg }),
+                    CallContext::Arg(arg) => call_args.push(quote! { #arg }),
                 };
             });
         }
@@ -92,10 +98,10 @@ impl NautilusEntrypointEnumVariant {
         }
     }
 
-    pub fn to_idl_instruction(&self) -> nautilus_idl::IdlInstruction {
+    pub fn to_idl_instruction(&self) -> IdlInstruction {
         let mut name = self.variant_ident.to_string();
         name.replace_range(..1, &name[..1].to_lowercase());
-        nautilus_idl::IdlInstruction {
+        IdlInstruction {
             name,
             accounts: self
                 .required_accounts
@@ -106,35 +112,27 @@ impl NautilusEntrypointEnumVariant {
                 .variant_args
                 .iter()
                 .map(|(ident, ty)| {
-                    nautilus_idl::IdlInstructionArg::new(
+                    IdlInstructionArg::new(
                         &ident.to_string(),
-                        nautilus_idl::IdlInstructionArgType::new(
-                            &crate::util::type_to_string(&ty).unwrap(),
-                        ),
+                        IdlInstructionArgType::new(&type_to_string(&ty).unwrap()),
                     )
                 })
                 .collect(),
-            discriminant: nautilus_idl::IdlInstructionDiscriminant::new(self.discriminant),
+            discriminant: IdlInstructionDiscriminant::new(self.discriminant),
         }
     }
 }
 
-impl From<&NautilusEntrypointEnumVariant>
-    for (
-        proc_macro2::TokenStream,
-        proc_macro2::TokenStream,
-        nautilus_idl::IdlInstruction,
-    )
-{
+impl From<&NautilusEntrypointEnumVariant> for (TokenStream, TokenStream, IdlInstruction) {
     fn from(value: &NautilusEntrypointEnumVariant) -> Self {
         let variant_ident = &value.variant_ident;
-        let enum_ident = super::entry_enum::NautilusEntrypointEnum::enum_ident();
-        let (arg_names, arg_types): (Vec<syn::Ident>, Vec<syn::Type>) =
+        let enum_ident = NautilusEntrypointEnum::enum_ident();
+        let (arg_names, arg_types): (Vec<Ident>, Vec<Type>) =
             value.variant_args.clone().into_iter().unzip();
         let match_arm_logic = value.build_match_arm_logic();
         (
-            quote::quote! { #variant_ident(#(#arg_types,)*), },
-            quote::quote! { #enum_ident::#variant_ident(#(#arg_names,)*) => #match_arm_logic, },
+            quote! { #variant_ident(#(#arg_types,)*), },
+            quote! { #enum_ident::#variant_ident(#(#arg_names,)*) => #match_arm_logic, },
             value.to_idl_instruction(),
         )
     }

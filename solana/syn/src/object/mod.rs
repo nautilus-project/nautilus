@@ -3,10 +3,22 @@ pub mod create;
 pub mod data;
 pub mod parser;
 
+use nautilus_idl::IdlTypeType;
+use proc_macro2::{Span, TokenStream};
+use quote::{quote, ToTokens};
+use syn::{
+    parse::{Parse, ParseStream},
+    Fields, Ident, ItemStruct, Type,
+};
+
+use crate::entry::required_account::{name_to_ident, RequiredAccount};
+
+use self::parser::parse_field_attributes;
+
 #[derive(Clone, Debug)]
 pub struct NautilusObject {
-    pub ident: syn::Ident,
-    pub arg_ident: Option<syn::Ident>,
+    pub ident: Ident,
+    pub arg_ident: Option<Ident>,
     pub config: Option<NautilusConfig>,
 }
 
@@ -14,20 +26,16 @@ pub struct NautilusObject {
 pub struct NautilusConfig {
     pub autoincrement_enabled: bool,
     pub table_name: String,
-    pub fields: syn::Fields,
-    pub ident_optionized_struct_name: syn::Ident,
-    pub ident_primary_key: syn::Ident,
-    pub idents_authorities: Vec<syn::Ident>,
-    pub optionized_struct_fields: Vec<(
-        syn::Ident,
-        proc_macro2::TokenStream,
-        proc_macro2::TokenStream,
-    )>,
-    pub ty_primary_key: syn::Type,
+    pub fields: Fields,
+    pub ident_optionized_struct_name: Ident,
+    pub ident_primary_key: Ident,
+    pub idents_authorities: Vec<Ident>,
+    pub optionized_struct_fields: Vec<(Ident, TokenStream, TokenStream)>,
+    pub ty_primary_key: Type,
 }
 
-impl crate::NautilusObject {
-    pub fn default(ident: syn::Ident) -> Self {
+impl NautilusObject {
+    pub fn default(ident: Ident) -> Self {
         Self {
             ident,
             arg_ident: None,
@@ -45,49 +53,41 @@ impl crate::NautilusObject {
         ];
         source
             .into_iter()
-            .map(|s| Self::default(crate::required_account::name_to_ident(s)))
+            .map(|s| Self::default(name_to_ident(s)))
             .collect()
     }
 
-    pub fn get_required_accounts(&self) -> Vec<crate::required_account::RequiredAccount> {
-        use crate::required_account::RequiredAccount;
-
+    pub fn get_required_accounts(&self) -> Vec<RequiredAccount> {
         match &self.arg_ident {
             Some(arg) => RequiredAccount::resolve_for_read(arg.to_string(), RequiredAccount::derive_object_type(&self.ident.to_string())),
             None => panic!("Error: `get_required_accounts` was invoked before setting the value for `arg_ident`!"),
         }
     }
 
-    pub fn to_idl_type(&self) -> nautilus_idl::IdlTypeType {
+    pub fn to_idl_type(&self) -> IdlTypeType {
         todo!()
     }
 }
 
-impl From<syn::ItemStruct> for NautilusObject {
-    fn from(value: syn::ItemStruct) -> Self {
-        let mut primary_key_ident_opt: Option<(syn::Ident, syn::Type)> = None;
+impl From<ItemStruct> for NautilusObject {
+    fn from(value: ItemStruct) -> Self {
+        let mut primary_key_ident_opt: Option<(Ident, Type)> = None;
         let mut autoincrement_enabled: bool = true;
-        let mut idents_authorities: Vec<syn::Ident> = vec![];
+        let mut idents_authorities: Vec<Ident> = vec![];
 
         let ident = value.ident.clone();
         let ident_string = ident.to_string();
-        let ident_optionized_struct_name = syn::Ident::new(
-            &(ident_string.clone() + "Optionized"),
-            proc_macro2::Span::call_site(),
-        );
+        let ident_optionized_struct_name =
+            Ident::new(&(ident_string.clone() + "Optionized"), Span::call_site());
 
         let table_name = ident_string.clone().to_lowercase();
 
-        let mut optionized_struct_fields: Vec<(
-            syn::Ident,
-            proc_macro2::TokenStream,
-            proc_macro2::TokenStream,
-        )> = vec![];
+        let mut optionized_struct_fields: Vec<(Ident, TokenStream, TokenStream)> = vec![];
 
         let fields = value.fields;
 
         for f in fields.iter() {
-            let parsed_attributes = super::parser::parse_field_attributes(&f);
+            let parsed_attributes = parse_field_attributes(&f);
             if !parsed_attributes.autoincrement_enabled {
                 autoincrement_enabled = parsed_attributes.autoincrement_enabled;
             }
@@ -103,13 +103,13 @@ impl From<syn::ItemStruct> for NautilusObject {
             optionized_struct_fields.push(match parsed_attributes.is_primary_key {
                 true => (
                     field_name.clone().unwrap(),
-                    quote::quote! { #field_ty },
-                    quote::quote! { #field_name: #field_ty },
+                    quote! { #field_ty },
+                    quote! { #field_name: #field_ty },
                 ),
                 false => (
                     field_name.clone().unwrap(),
-                    quote::quote! { std::option::Option<#field_ty> },
-                    quote::quote! { #field_name: std::option::Option<#field_ty> },
+                    quote! { std::option::Option<#field_ty> },
+                    quote! { #field_name: std::option::Option<#field_ty> },
                 ),
             });
         }
@@ -138,19 +138,19 @@ impl From<syn::ItemStruct> for NautilusObject {
     }
 }
 
-impl syn::parse::Parse for NautilusObject {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(syn::ItemStruct::parse(input)?.into())
+impl Parse for NautilusObject {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(ItemStruct::parse(input)?.into())
     }
 }
 
-impl quote::ToTokens for NautilusObject {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        tokens.extend::<proc_macro2::TokenStream>(self.into());
+impl ToTokens for NautilusObject {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend::<TokenStream>(self.into());
     }
 }
 
-impl From<&NautilusObject> for proc_macro2::TokenStream {
+impl From<&NautilusObject> for TokenStream {
     fn from(_ast: &NautilusObject) -> Self {
         todo!()
     }
