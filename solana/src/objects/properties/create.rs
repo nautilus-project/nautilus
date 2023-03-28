@@ -9,7 +9,7 @@ pub struct Create<'a, T: super::NautilusAccountInfo<'a>> {
 
 pub trait NautilusCreate<'a> {
     fn create(&self) -> solana_program::entrypoint::ProgramResult;
-    fn create_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
+    fn create_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult;
@@ -56,8 +56,8 @@ impl<'a, T: super::NautilusAccountInfo<'a>> super::NautilusAccountInfo<'a> for C
     }
 }
 
-impl<'a, T: super::NautilusTransferLamports<'a>> crate::properties::NautilusTransferLamports<'a>
-    for Create<'a, T>
+impl<'a, T: super::NautilusTransferLamports<'a>>
+    crate::objects::properties::NautilusTransferLamports<'a> for Create<'a, T>
 {
     fn transfer_lamports<U: super::NautilusAccountInfo<'a> + 'a>(
         self,

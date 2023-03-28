@@ -10,7 +10,7 @@ impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Mint<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusAccountInfo<'a> for Mint<'a> {
+impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for Mint<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -43,14 +43,16 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for Mint<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create<'a, Mint<'a>> {
-    fn create_mint<T: crate::properties::NautilusAccountInfo<'a>>(
+impl<'a> crate::objects::properties::tokens::NautilusCreateMint<'a>
+    for crate::objects::properties::create::Create<'a, Mint<'a>>
+{
+    fn create_mint<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
         decimals: u8,
         mint_authority: T,
         freeze_authority: Option<T>,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
         use solana_program::{program_pack::Pack, sysvar::Sysvar};
 
         let payer = self.fee_payer.clone();
@@ -90,14 +92,14 @@ impl<'a> crate::properties::NautilusCreateMint<'a> for crate::properties::Create
         Ok(())
     }
 
-    fn create_mint_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
+    fn create_mint_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
         decimals: u8,
         mint_authority: T,
         freeze_authority: Option<T>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
         use solana_program::{program_pack::Pack, sysvar::Sysvar};
 
         let rent = self.rent.clone();

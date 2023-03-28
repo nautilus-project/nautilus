@@ -10,7 +10,7 @@ impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusAccountInfo<'a> for Metadata<'a> {
+impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for Metadata<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -43,19 +43,19 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusCreateMetadata<'a>
-    for crate::properties::Create<'a, Metadata<'a>>
+impl<'a> crate::objects::properties::tokens::NautilusCreateMetadata<'a>
+    for crate::objects::properties::create::Create<'a, Metadata<'a>>
 {
-    fn create_metadata<T: crate::properties::NautilusAccountInfo<'a>>(
+    fn create_metadata<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
         title: String,
         symbol: String,
         uri: String,
-        mint: crate::token::Mint<'a>,
+        mint: super::mint::Mint<'a>,
         mint_authority: T,
         update_authority: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
 
         let metadata = self.self_account.clone();
         let payer = self.fee_payer.clone();
@@ -91,17 +91,17 @@ impl<'a> crate::properties::NautilusCreateMetadata<'a>
         )
     }
 
-    fn create_metadata_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
+    fn create_metadata_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
         title: String,
         symbol: String,
         uri: String,
-        mint: crate::token::Mint<'a>,
+        mint: super::mint::Mint<'a>,
         mint_authority: T,
         update_authority: T,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
 
         let metadata = self.self_account.clone();
         let rent = self.rent.clone();

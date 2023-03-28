@@ -11,7 +11,7 @@ impl<'a> solana_program::account_info::IntoAccountInfo<'a> for AssociatedTokenAc
     }
 }
 
-impl<'a> crate::properties::NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
+impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -44,11 +44,11 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for AssociatedTokenAccount<'
     }
 }
 
-impl<'a> crate::properties::NautilusCreateAssociatedTokenAccount<'a>
-    for crate::properties::Create<'a, AssociatedTokenAccount<'a>>
+impl<'a> crate::objects::properties::tokens::NautilusCreateAssociatedTokenAccount<'a>
+    for crate::objects::properties::create::Create<'a, AssociatedTokenAccount<'a>>
 {
-    fn create(&self, mint: crate::token::Mint<'a>) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+    fn create(&self, mint: super::mint::Mint<'a>) -> solana_program::entrypoint::ProgramResult {
+        use crate::objects::properties::NautilusAccountInfo;
         let payer = self.fee_payer.clone();
         let system_program = self.system_program.clone();
         solana_program::program::invoke(
@@ -69,12 +69,12 @@ impl<'a> crate::properties::NautilusCreateAssociatedTokenAccount<'a>
         )
     }
 
-    fn create_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
+    fn create_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
-        mint: crate::token::Mint<'a>,
+        mint: super::mint::Mint<'a>,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
         let system_program = self.system_program.clone();
         solana_program::program::invoke(
             &spl_associated_token_account::instruction::create_associated_token_account(

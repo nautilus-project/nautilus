@@ -10,7 +10,7 @@ impl<'a> solana_program::account_info::IntoAccountInfo<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusAccountInfo<'a> for Wallet<'a> {
+impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for Wallet<'a> {
     fn key(&self) -> &'a solana_program::pubkey::Pubkey {
         self.account_info.key
     }
@@ -43,8 +43,8 @@ impl<'a> crate::properties::NautilusAccountInfo<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusTransferLamports<'a> for Wallet<'a> {
-    fn transfer_lamports<T: crate::properties::NautilusAccountInfo<'a> + 'a>(
+impl<'a> crate::objects::properties::NautilusTransferLamports<'a> for Wallet<'a> {
+    fn transfer_lamports<T: crate::objects::properties::NautilusAccountInfo<'a> + 'a>(
         self,
         to: T,
         amount: u64,
@@ -58,9 +58,11 @@ impl<'a> crate::properties::NautilusTransferLamports<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> crate::properties::NautilusCreate<'a> for crate::properties::Create<'a, Wallet<'a>> {
+impl<'a> crate::objects::properties::create::NautilusCreate<'a>
+    for crate::objects::properties::create::Create<'a, Wallet<'a>>
+{
     fn create(&self) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
 
         let payer = self.fee_payer.clone();
         let system_program = self.system_program.clone();
@@ -80,11 +82,11 @@ impl<'a> crate::properties::NautilusCreate<'a> for crate::properties::Create<'a,
         )
     }
 
-    fn create_with_payer<T: crate::properties::NautilusAccountInfo<'a>>(
+    fn create_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
         &self,
         payer: T,
     ) -> solana_program::entrypoint::ProgramResult {
-        use crate::properties::NautilusAccountInfo;
+        use crate::objects::properties::NautilusAccountInfo;
 
         let system_program = self.system_program.clone();
         solana_program::program::invoke(

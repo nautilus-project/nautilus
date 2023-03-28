@@ -7,7 +7,6 @@
 //
 extern crate self as nautilus;
 
-pub mod entry;
 pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
@@ -23,5 +22,9 @@ pub use solana_program::{
     system_instruction, system_program, sysvar,
 };
 
-pub use crate::entry::*;
-pub use crate::objects::*;
+pub use objects::{
+    properties::{create::*, table::*, tokens::*, *},
+    table::{index::*, *},
+    token::{associated_token::*, metadata::*, mint::*, *},
+    wallet::*,
+};

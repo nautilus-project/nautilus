@@ -1,10 +1,6 @@
 pub mod create;
-pub mod data;
+pub mod table;
 pub mod tokens;
-
-pub use create::*;
-pub use data::*;
-pub use tokens::*;
 
 pub trait NautilusAccountInfo<'a>:
     solana_program::account_info::IntoAccountInfo<'a> + Sized + Clone
