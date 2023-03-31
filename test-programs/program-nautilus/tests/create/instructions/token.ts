@@ -72,8 +72,8 @@ function createInstruction(
     function deriveKeys(instruction: MyInstructions) {
         if (instruction === MyInstructions.CreateToken) return [
             {pubkey: payer, isSigner: true, isWritable: true},
-            {pubkey: newMint, isSigner: false, isWritable: false},
-            {pubkey: newMetadata, isSigner: true, isWritable: true},
+            {pubkey: newMint, isSigner: true, isWritable: true},
+            {pubkey: newMetadata, isSigner: false, isWritable: true},
             {pubkey: payer, isSigner: true, isWritable: true},
             {pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false},
             {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
@@ -82,8 +82,8 @@ function createInstruction(
         ]
         else if (instruction === MyInstructions.CreateTokenWithPayer) return [
             {pubkey: payer, isSigner: true, isWritable: true},
-            {pubkey: newMint, isSigner: false, isWritable: false},
-            {pubkey: newMetadata, isSigner: true, isWritable: true},
+            {pubkey: newMint, isSigner: true, isWritable: true},
+            {pubkey: newMetadata, isSigner: false, isWritable: true},
             {pubkey: payer, isSigner: true, isWritable: true},
             {pubkey: payer, isSigner: true, isWritable: true},
             {pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false},

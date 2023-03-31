@@ -68,7 +68,7 @@ function createInstruction(
         if (instruction === MyInstructions.CreateMetadata) return [
             {pubkey: mint, isSigner: false, isWritable: false},
             {pubkey: payer, isSigner: true, isWritable: true},
-            {pubkey: newMetadata, isSigner: true, isWritable: true},
+            {pubkey: newMetadata, isSigner: false, isWritable: true},
             {pubkey: payer, isSigner: true, isWritable: true},
             {pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false},
             {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
@@ -78,7 +78,7 @@ function createInstruction(
         else if (instruction === MyInstructions.CreateMetadataWithPayer) return [
             {pubkey: mint, isSigner: false, isWritable: false},
             {pubkey: payer, isSigner: true, isWritable: true},
-            {pubkey: newMetadata, isSigner: true, isWritable: true},
+            {pubkey: newMetadata, isSigner: false, isWritable: true},
             {pubkey: payer, isSigner: true, isWritable: true},
             {pubkey: payer, isSigner: true, isWritable: true},
             {pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false},
