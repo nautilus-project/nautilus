@@ -106,12 +106,12 @@ describe("Nautilus Unit Tests: Create", async () => {
     ))
 
     it("Create Token", async () => test(
-        createCreateTokenInstruction(newMint.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
+        createCreateTokenInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
         [payer, newTokenMint],
     ))
 
     it("Create Token with Payer", async () => test(
-        createCreateTokenWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
+        createCreateTokenWithPayerInstruction(newTokenMintWithPayer.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
         [payer, newTokenMintWithPayer],
     ))
   })
