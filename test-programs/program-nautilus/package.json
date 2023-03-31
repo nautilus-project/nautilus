@@ -19,6 +19,8 @@
     "@solana/web3.js": "^1.73.2"
   },
   "scripts": {
-    "test": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/test.ts"
+    "test-basic": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/basic/test.ts",
+    "test-create": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/create/test.ts",
+    "all": "sh ./tests/all-tests.sh"
   }
 }

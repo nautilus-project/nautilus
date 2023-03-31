@@ -38,6 +38,8 @@ const TestInstructionDataSchema = new Map([
 ])
 
 export function createTestInstruction(
+    from: PublicKey,
+    to: PublicKey,
     payer: PublicKey,
     programId: PublicKey,
     instruction: TestInstruction,
@@ -47,35 +49,35 @@ export function createTestInstruction(
 
     function deriveKeys(instruction: TestInstruction) {
         if (instruction === TestInstruction.Wallets) return [
-            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
-            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: from, isSigner: false, isWritable: false},     // From Self Account
+            {pubkey: to, isSigner: false, isWritable: false},       // To Self Account
             {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
             {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
         ]
         else if (instruction === TestInstruction.Mints) return [
-            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
-            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: from, isSigner: false, isWritable: false},     // From Self Account
+            {pubkey: to, isSigner: false, isWritable: false},       // To Self Account
             {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
             {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
         ]
         else if (instruction === TestInstruction.Metadatas) return [
-            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
-            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: from, isSigner: false, isWritable: false},     // From Self Account
+            {pubkey: to, isSigner: false, isWritable: false},       // To Self Account
             {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
             {pubkey: TOKEN_METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
         ]
         else if (instruction === TestInstruction.AssociatedTokens) return [
-            {pubkey: payer, isSigner: false, isWritable: false},    // To Self Account
-            {pubkey: payer, isSigner: false, isWritable: false},    // From Self Account
+            {pubkey: from, isSigner: false, isWritable: false},     // From Self Account
+            {pubkey: to, isSigner: false, isWritable: false},       // To Self Account
             {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
             {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
             {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
         ]
         else return [
-            {pubkey: payer, isSigner: false, isWritable: false},    // To Mint (Self Account)
-            {pubkey: payer, isSigner: false, isWritable: false},    // To Metadata
-            {pubkey: payer, isSigner: false, isWritable: false},    // From Mint (Self Account)
-            {pubkey: payer, isSigner: false, isWritable: false},    // From Metadata
+            {pubkey: from, isSigner: false, isWritable: false},     // From Mint (Self Account)
+            {pubkey: from, isSigner: false, isWritable: false},     // From Metadata
+            {pubkey: to, isSigner: false, isWritable: false},       // To Mint (Self Account)
+            {pubkey: to, isSigner: false, isWritable: false},       // To Metadata
             {pubkey: payer, isSigner: false, isWritable: false},    // Fee Payer
             {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
             {pubkey: TOKEN_METADATA_PROGRAM_ID, isSigner: false, isWritable: false},

@@ -197,7 +197,7 @@ impl RequiredAccount {
         } else if ty_name.eq("Metadata") {
             ObjectType::Metadata(false) // TODO: PDA Tokens not supported yet
         } else if ty_name.eq("AssociatedTokenAccount") {
-            ObjectType::AssociatedTokenAccount(false) // TODO: PDA Tokens not supported yet
+            ObjectType::AssociatedTokenAccount(true)
         } else {
             ObjectType::Table(vec![]) // TODO: PDA authorities not supported yet
         }
