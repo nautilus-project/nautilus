@@ -1,18 +1,19 @@
-pub mod create;
-pub mod table;
-pub mod tokens;
+use solana_program::{
+    account_info::IntoAccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
+    pubkey::Pubkey,
+};
 
-pub trait NautilusAccountInfo<'a>:
-    solana_program::account_info::IntoAccountInfo<'a> + Sized + Clone
-{
-    fn key(&self) -> &'a solana_program::pubkey::Pubkey;
+pub mod create;
+pub mod signer;
+pub mod table;
+
+pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
+    fn key(&self) -> &'a Pubkey;
     fn is_signer(&self) -> bool;
     fn is_writable(&self) -> bool;
     fn lamports(&self) -> u64;
-    fn mut_lamports(
-        &self,
-    ) -> Result<std::cell::RefMut<'_, &'a mut u64>, solana_program::program_error::ProgramError>;
-    fn owner(&self) -> &'a solana_program::pubkey::Pubkey;
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError>;
+    fn owner(&self) -> &'a Pubkey;
     fn span(&self) -> usize;
     fn size(&self) -> u64 {
         self.span().try_into().unwrap()
@@ -24,9 +25,5 @@ pub trait NautilusAccountInfo<'a>:
 }
 
 pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> + 'a {
-    fn transfer_lamports<T: NautilusAccountInfo<'a> + 'a>(
-        self,
-        to: T,
-        amount: u64,
-    ) -> solana_program::entrypoint::ProgramResult;
+    fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult;
 }

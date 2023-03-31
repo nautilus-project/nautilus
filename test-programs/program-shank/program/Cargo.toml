@@ -10,4 +10,4 @@ crate-type = ["cdylib", "lib"]
 borsh = "0.9.3"
 borsh-derive = "0.9.3"
 shank = "0.0.12"
-solana-program = "1.15.0"
+solana-program = "1.15.2"

@@ -101,6 +101,7 @@ pub struct IdlAccountNautilusDefaultInstruction {
     pub instruction: String,
 }
 
+#[derive(Clone, Debug)]
 pub enum IdlAccountNautilusDefaultInstructionType {
     Create(String),
     Delete(String),

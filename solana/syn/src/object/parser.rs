@@ -1,7 +1,86 @@
+use nautilus_idl::IdlAccountNautilusDefaultInstructionType;
+use proc_macro2::{Span, TokenStream};
+// use quote::quote;
+use syn::{Fields, Ident, ItemStruct, Type};
+
+#[derive(Clone, Debug)]
+pub struct NautilusObjectConfig {
+    pub table_name: String,
+    pub data_fields: Fields,
+    pub autoincrement_enabled: bool,
+    pub primary_key: Ident,
+    pub authorities: Vec<Ident>,
+    pub default_instructions: Vec<IdlAccountNautilusDefaultInstructionType>,
+}
+
 pub struct NautilusAccountFieldAttributes {
     pub is_primary_key: bool,
     pub autoincrement_enabled: bool,
     pub is_authority: bool,
+}
+
+pub enum DefaultInstructions {
+    Create,
+    Delete,
+    Update,
+}
+
+pub fn parse_item_struct(item_struct: ItemStruct) -> NautilusObjectConfig {
+    let ident_string = item_struct.ident.to_string();
+    let _ident_optionized_struct_name =
+        Ident::new(&(ident_string.clone() + "Optionized"), Span::call_site());
+
+    let table_name = ident_string.clone().to_lowercase();
+    let default_instructions = parse_top_level_attributes(&ident_string, &item_struct.attrs);
+
+    let data_fields = item_struct.fields;
+
+    let mut primary_key_ident_opt: Option<(Ident, Type)> = None;
+    let mut autoincrement_enabled: bool = true;
+    let mut authorities: Vec<Ident> = vec![];
+    let mut _optionized_struct_fields: Vec<(Ident, TokenStream, TokenStream)> = vec![];
+
+    for f in data_fields.iter() {
+        let parsed_attributes = parse_field_attributes(&f);
+        if !parsed_attributes.autoincrement_enabled {
+            autoincrement_enabled = parsed_attributes.autoincrement_enabled;
+        }
+        if parsed_attributes.is_primary_key {
+            primary_key_ident_opt = Some((f.ident.clone().unwrap(), f.ty.clone()));
+        }
+        if parsed_attributes.is_authority {
+            authorities.push(f.ident.clone().unwrap());
+        }
+
+        // let field_name = &f.ident;
+        // let field_ty = &f.ty;
+        // optionized_struct_fields.push(match parsed_attributes.is_primary_key {
+        //     true => (
+        //         field_name.clone().unwrap(),
+        //         quote! { #field_ty },
+        //         quote! { #field_name: #field_ty },
+        //     ),
+        //     false => (
+        //         field_name.clone().unwrap(),
+        //         quote! { std::option::Option<#field_ty> },
+        //         quote! { #field_name: std::option::Option<#field_ty> },
+        //     ),
+        // });
+    }
+
+    let (primary_key, _) = match primary_key_ident_opt {
+        Some((ident, ty)) => (ident, ty),
+        None => todo!("Throw an error on None value"),
+    };
+
+    NautilusObjectConfig {
+        table_name,
+        data_fields,
+        autoincrement_enabled,
+        primary_key,
+        authorities,
+        default_instructions,
+    }
 }
 
 pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttributes {
@@ -35,12 +114,6 @@ pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttribu
         autoincrement_enabled,
         is_authority,
     }
-}
-
-pub enum DefaultInstructions {
-    Create,
-    Delete,
-    Update,
 }
 
 pub fn parse_top_level_attributes(

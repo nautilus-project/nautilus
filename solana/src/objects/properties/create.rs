@@ -1,30 +1,28 @@
+use solana_program::{
+    account_info::{AccountInfo, IntoAccountInfo},
+    entrypoint::ProgramResult,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+};
+
+use crate::{Mint, NautilusAccountInfo, NautilusSigner};
+
 #[derive(Clone)]
-pub struct Create<'a, T: super::NautilusAccountInfo<'a>> {
-    pub fee_payer: solana_program::account_info::AccountInfo<'a>,
-    pub owner: solana_program::account_info::AccountInfo<'a>,
-    pub system_program: solana_program::account_info::AccountInfo<'a>,
-    pub rent: solana_program::account_info::AccountInfo<'a>,
+pub struct Create<'a, T: NautilusAccountInfo<'a> + 'a> {
+    pub fee_payer: AccountInfo<'a>,
+    pub system_program: AccountInfo<'a>,
+    pub rent: AccountInfo<'a>,
     pub self_account: T,
 }
 
-pub trait NautilusCreate<'a> {
-    fn create(&self) -> solana_program::entrypoint::ProgramResult;
-    fn create_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
-        &self,
-        payer: T,
-    ) -> solana_program::entrypoint::ProgramResult;
-}
-
-impl<'a, T: super::NautilusAccountInfo<'a>> solana_program::account_info::IntoAccountInfo<'a>
-    for Create<'a, T>
-{
-    fn into_account_info(self) -> solana_program::account_info::AccountInfo<'a> {
+impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Create<'a, T> {
+    fn into_account_info(self) -> AccountInfo<'a> {
         self.self_account.into_account_info()
     }
 }
 
-impl<'a, T: super::NautilusAccountInfo<'a>> super::NautilusAccountInfo<'a> for Create<'a, T> {
-    fn key(&self) -> &'a solana_program::pubkey::Pubkey {
+impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
+    fn key(&self) -> &'a Pubkey {
         self.self_account.key()
     }
 
@@ -40,14 +38,11 @@ impl<'a, T: super::NautilusAccountInfo<'a>> super::NautilusAccountInfo<'a> for C
         self.self_account.lamports()
     }
 
-    fn mut_lamports(
-        &self,
-    ) -> Result<std::cell::RefMut<'_, &'a mut u64>, solana_program::program_error::ProgramError>
-    {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
         self.self_account.mut_lamports()
     }
 
-    fn owner(&self) -> &'a solana_program::pubkey::Pubkey {
+    fn owner(&self) -> &'a Pubkey {
         self.self_account.owner()
     }
 
@@ -56,14 +51,85 @@ impl<'a, T: super::NautilusAccountInfo<'a>> super::NautilusAccountInfo<'a> for C
     }
 }
 
-impl<'a, T: super::NautilusTransferLamports<'a>>
-    crate::objects::properties::NautilusTransferLamports<'a> for Create<'a, T>
-{
-    fn transfer_lamports<U: super::NautilusAccountInfo<'a> + 'a>(
-        self,
-        to: U,
-        amount: u64,
-    ) -> solana_program::entrypoint::ProgramResult {
-        self.self_account.transfer_lamports(to, amount)
-    }
+impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusSigner<'a> for Create<'a, T> {}
+
+pub trait NautilusCreate<'a> {
+    fn create(&self) -> ProgramResult;
+    fn create_with_payer(&self, payer: impl NautilusSigner<'a>) -> ProgramResult;
+}
+
+pub trait NautilusCreateAssociatedTokenAccount<'a> {
+    fn create(&self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
+
+    fn create_with_payer(
+        &self,
+        mint: Mint<'a>,
+        owner: impl NautilusAccountInfo<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+pub trait NautilusCreateMint<'a> {
+    fn create(
+        &self,
+        decimals: u8,
+        mint_authority: impl NautilusSigner<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+    ) -> ProgramResult;
+
+    fn create_with_payer(
+        &self,
+        decimals: u8,
+        mint_authority: impl NautilusSigner<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+pub trait NautilusCreateMetadata<'a> {
+    fn create(
+        &self,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint: Mint<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+    ) -> ProgramResult;
+
+    fn create_with_payer(
+        &self,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint: Mint<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+pub trait NautilusCreateToken<'a> {
+    fn create(
+        &self,
+        decimals: u8,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+    ) -> ProgramResult;
+
+    fn create_with_payer(
+        &self,
+        decimals: u8,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
 }

@@ -6,9 +6,13 @@ use nautilus_idl::{
 use proc_macro2::Span;
 use quote::quote;
 use shank_macro_impl::krate::CrateContext;
-use syn::{Fields, FnArg, Ident, Item, ItemFn, Pat, Type, UseTree};
+use syn::{
+    AngleBracketedGenericArguments, Fields, FnArg, Ident, Item, ItemFn, Pat, PathArguments, Type,
+    TypePath, UseTree,
+};
 use syn::{Meta, NestedMeta};
 
+use crate::object::ObjectEntryConfig;
 use crate::object::{
     parser::{parse_field_attributes, parse_top_level_attributes},
     NautilusObject,
@@ -80,32 +84,41 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlAccount>, Vec<IdlTy
 pub fn parse_function(
     nautilus_objects: &Vec<NautilusObject>,
     function: ItemFn,
-) -> (Ident, Vec<(Ident, Type)>, Ident, Vec<CallContext>) {
+) -> (Ident, Vec<(Ident, Type)>, Ident, Vec<CallContext>, ItemFn) {
+    let mut modified_fn = function.clone();
+    let mut new_inputs = Vec::new();
     let variant_ident = Ident::new(
         &function.sig.ident.to_string().to_case(Pascal),
         Span::call_site(),
     );
     let call_ident = function.sig.ident.clone();
     let mut variant_args = vec![];
+
     let call_context = function
         .sig
         .inputs
         .into_iter()
         .map(|input| match input {
-            FnArg::Typed(pat_type) => match *pat_type.pat {
+            FnArg::Typed(arg) => match *arg.pat {
                 Pat::Ident(ref pat_ident) => {
+                    let (type_string, is_create, is_signer, ty_with_lifetimes) =
+                        parse_type(&arg.ty);
                     for obj in nautilus_objects {
-                        if obj
-                            .ident
-                            .to_string()
-                            .eq(&type_to_string(&pat_type.ty).unwrap())
-                        {
+                        if obj.ident == &type_string {
                             let mut nautilus_obj = obj.clone();
-                            nautilus_obj.arg_ident = Some(pat_ident.ident.clone());
+                            nautilus_obj.entry_config = Some(ObjectEntryConfig {
+                                arg_ident: pat_ident.ident.clone(),
+                                is_create,
+                                is_signer,
+                            });
+                            let mut new_arg = arg.clone();
+                            new_arg.ty = Box::new(ty_with_lifetimes);
+                            new_inputs.push(FnArg::Typed(new_arg));
                             return CallContext::Nautilus(nautilus_obj);
                         }
                     }
-                    variant_args.push((pat_ident.ident.clone(), *pat_type.ty.clone()));
+                    variant_args.push((pat_ident.ident.clone(), *arg.ty.clone()));
+                    new_inputs.push(FnArg::Typed(arg.clone()));
                     return CallContext::Arg(pat_ident.ident.clone());
                 }
                 _ => panic!("Error parsing function."),
@@ -113,7 +126,117 @@ pub fn parse_function(
             _ => panic!("Error parsing function."),
         })
         .collect();
-    (variant_ident, variant_args, call_ident, call_context)
+
+    modified_fn.sig.inputs = syn::punctuated::Punctuated::from_iter(new_inputs.into_iter());
+    modified_fn
+        .sig
+        .generics
+        .params
+        .push(syn::parse_quote! { 'a });
+
+    (
+        variant_ident,
+        variant_args,
+        call_ident,
+        call_context,
+        modified_fn,
+    )
+}
+
+pub fn parse_type(ty: &Type) -> (String, bool, bool, Type) {
+    let mut is_create = false;
+    let mut is_signer = false;
+    let mut child_type = None;
+
+    if let Type::Path(TypePath { path, .. }) = &ty {
+        if let Some(segment) = path.segments.first() {
+            if segment.ident == "Create" {
+                is_create = true;
+                child_type = derive_child_type(&segment.arguments)
+            } else if segment.ident == "Signer" {
+                is_signer = true;
+                child_type = derive_child_type(&segment.arguments)
+            }
+        }
+    }
+
+    let type_name = if is_create || is_signer {
+        if let Some(t) = &child_type {
+            format!("{}", quote! { #t })
+        } else {
+            panic!("Could not parse provided type: {:#?}", ty);
+        }
+    } else {
+        format!("{}", quote! { #ty })
+    };
+
+    let mut ty_with_lifetimes = ty.clone();
+    if let Type::Path(ref mut type_path) = ty_with_lifetimes {
+        if let Some(ref mut segment) = type_path.path.segments.first_mut() {
+            let lifetime = syn::Lifetime::new("'a", proc_macro2::Span::call_site());
+            if (is_create || is_signer) && child_type.is_some() {
+                let mut child_ty_with_lifetime = child_type.unwrap();
+                if let Type::Path(ref mut type_path) = child_ty_with_lifetime {
+                    if let Some(ref mut child_segment) = type_path.path.segments.first_mut() {
+                        if let PathArguments::AngleBracketed(ref mut args) = child_segment.arguments
+                        {
+                            insert_lifetime_first(args, &lifetime);
+                        } else {
+                            child_segment.arguments = new_angle_bracketed_args(lifetime.clone())
+                        }
+                    }
+                }
+                segment.arguments =
+                    PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
+                        colon2_token: None,
+                        lt_token: Default::default(),
+                        args: vec![
+                            syn::GenericArgument::Lifetime(lifetime),
+                            syn::GenericArgument::Type(child_ty_with_lifetime),
+                        ]
+                        .into_iter()
+                        .collect(),
+                        gt_token: Default::default(),
+                    });
+            } else {
+                match &mut segment.arguments {
+                    PathArguments::AngleBracketed(args) => {
+                        insert_lifetime_first(args, &lifetime);
+                    }
+                    _ => segment.arguments = new_angle_bracketed_args(lifetime),
+                };
+            }
+        }
+    }
+
+    (type_name, is_create, is_signer, ty_with_lifetimes)
+}
+
+fn derive_child_type(arguments: &PathArguments) -> Option<Type> {
+    if let PathArguments::AngleBracketed(args) = arguments {
+        if let Some(first_arg) = args.args.first() {
+            if let syn::GenericArgument::Type(t) = first_arg {
+                return Some(t.clone());
+            }
+        }
+    }
+    None
+}
+
+fn new_angle_bracketed_args(lifetime: syn::Lifetime) -> PathArguments {
+    PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
+        colon2_token: None,
+        lt_token: Default::default(),
+        args: vec![syn::GenericArgument::Lifetime(lifetime)]
+            .into_iter()
+            .collect(),
+        gt_token: Default::default(),
+    })
+}
+
+fn insert_lifetime_first(args: &mut AngleBracketedGenericArguments, lifetime: &syn::Lifetime) {
+    args.args
+        .insert(0, syn::GenericArgument::Lifetime(lifetime.clone()));
 }
 
 pub fn is_use_super_star(item: &Item) -> bool {

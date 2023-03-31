@@ -1,0 +1,652 @@
+{
+    "version": "0.1.0",
+    "name": "program-nautilus",
+    "instructions": [
+        {
+            "name": "createWallet",
+            "accounts": [
+                {
+                    "name": "new_wallet",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_wallet"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [],
+            "discriminant": {
+                "type": "u8",
+                "value": 0
+            }
+        },
+        {
+            "name": "createWalletWithPayer",
+            "accounts": [
+                {
+                    "name": "new_wallet",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_wallet"
+                },
+                {
+                    "name": "rent_payer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "rent_payer"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                }
+            ],
+            "args": [],
+            "discriminant": {
+                "type": "u8",
+                "value": 1
+            }
+        },
+        {
+            "name": "createMint",
+            "accounts": [
+                {
+                    "name": "mint_authority",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "mint_authority"
+                },
+                {
+                    "name": "new_mint",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_mint"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "decimals",
+                    "type": {
+                        "defined": "u8"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 2
+            }
+        },
+        {
+            "name": "createMintWithPayer",
+            "accounts": [
+                {
+                    "name": "mint_authority",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "mint_authority"
+                },
+                {
+                    "name": "new_mint",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_mint"
+                },
+                {
+                    "name": "rent_payer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "rent_payer"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "decimals",
+                    "type": {
+                        "defined": "u8"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 3
+            }
+        },
+        {
+            "name": "createMetadata",
+            "accounts": [
+                {
+                    "name": "mint",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "mint"
+                },
+                {
+                    "name": "mint_authority",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "mint_authority"
+                },
+                {
+                    "name": "new_metadata",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_metadata"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                },
+                {
+                    "name": "tokenMetadataProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Metadata Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "title",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "symbol",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "uri",
+                    "type": {
+                        "defined": "String"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 4
+            }
+        },
+        {
+            "name": "createMetadataWithPayer",
+            "accounts": [
+                {
+                    "name": "mint",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "mint"
+                },
+                {
+                    "name": "mint_authority",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "mint_authority"
+                },
+                {
+                    "name": "new_metadata",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_metadata"
+                },
+                {
+                    "name": "rent_payer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "rent_payer"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                },
+                {
+                    "name": "tokenMetadataProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Metadata Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "title",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "symbol",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "uri",
+                    "type": {
+                        "defined": "String"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 5
+            }
+        },
+        {
+            "name": "createAssociatedToken",
+            "accounts": [
+                {
+                    "name": "mint",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "mint"
+                },
+                {
+                    "name": "new_associated_token",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_associated_token"
+                },
+                {
+                    "name": "owner",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "owner"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                },
+                {
+                    "name": "associatedTokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Associated Token Program"
+                }
+            ],
+            "args": [],
+            "discriminant": {
+                "type": "u8",
+                "value": 6
+            }
+        },
+        {
+            "name": "createAssociatedTokenWithPayer",
+            "accounts": [
+                {
+                    "name": "mint",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "mint"
+                },
+                {
+                    "name": "new_associated_token",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_associated_token"
+                },
+                {
+                    "name": "owner",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "owner"
+                },
+                {
+                    "name": "rent_payer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "rent_payer"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                },
+                {
+                    "name": "associatedTokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Associated Token Program"
+                }
+            ],
+            "args": [],
+            "discriminant": {
+                "type": "u8",
+                "value": 7
+            }
+        },
+        {
+            "name": "createToken",
+            "accounts": [
+                {
+                    "name": "mint_authority",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "mint_authority"
+                },
+                {
+                    "name": "new_token",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_token"
+                },
+                {
+                    "name": "new_tokenMetadata",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_tokenMetadata"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                },
+                {
+                    "name": "tokenMetadataProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Metadata Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "decimals",
+                    "type": {
+                        "defined": "u8"
+                    }
+                },
+                {
+                    "name": "title",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "symbol",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "uri",
+                    "type": {
+                        "defined": "String"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 8
+            }
+        },
+        {
+            "name": "createTokenWithPayer",
+            "accounts": [
+                {
+                    "name": "mint_authority",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "mint_authority"
+                },
+                {
+                    "name": "new_token",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_token"
+                },
+                {
+                    "name": "rent_payer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "rent_payer"
+                },
+                {
+                    "name": "new_tokenMetadata",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "new_tokenMetadata"
+                },
+                {
+                    "name": "feePayer",
+                    "isMut": true,
+                    "isSigner": true,
+                    "desc": "The transaction fee payer"
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Sysvar: Rent"
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The System Program"
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Program"
+                },
+                {
+                    "name": "tokenMetadataProgram",
+                    "isMut": false,
+                    "isSigner": false,
+                    "desc": "The Token Metadata Program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "decimals",
+                    "type": {
+                        "defined": "u8"
+                    }
+                },
+                {
+                    "name": "title",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "symbol",
+                    "type": {
+                        "defined": "String"
+                    }
+                },
+                {
+                    "name": "uri",
+                    "type": {
+                        "defined": "String"
+                    }
+                }
+            ],
+            "discriminant": {
+                "type": "u8",
+                "value": 9
+            }
+        }
+    ],
+    "accounts": [],
+    "types": [],
+    "metadata": {
+        "origin": "nautilus",
+        "address": null
+    }
+}

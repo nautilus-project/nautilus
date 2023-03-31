@@ -1,18 +1,30 @@
+use solana_program::{
+    account_info::{AccountInfo, IntoAccountInfo},
+    entrypoint::ProgramResult,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+};
+
+use crate::{
+    create_associated_token_account, Create, Mint, NautilusAccountInfo,
+    NautilusCreateAssociatedTokenAccount, NautilusSigner, Signer, Wallet,
+};
+
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct AssociatedTokenAccount<'a> {
-    pub account_info: solana_program::account_info::AccountInfo<'a>,
-    pub token_program: solana_program::account_info::AccountInfo<'a>,
-    pub associated_token_program: solana_program::account_info::AccountInfo<'a>,
+    pub account_info: AccountInfo<'a>,
+    pub token_program: AccountInfo<'a>,
+    pub associated_token_program: AccountInfo<'a>,
 }
 
-impl<'a> solana_program::account_info::IntoAccountInfo<'a> for AssociatedTokenAccount<'a> {
-    fn into_account_info(self) -> solana_program::account_info::AccountInfo<'a> {
+impl<'a> IntoAccountInfo<'a> for AssociatedTokenAccount<'a> {
+    fn into_account_info(self) -> AccountInfo<'a> {
         self.account_info
     }
 }
 
-impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
-    fn key(&self) -> &'a solana_program::pubkey::Pubkey {
+impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
+    fn key(&self) -> &'a Pubkey {
         self.account_info.key
     }
 
@@ -28,14 +40,11 @@ impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for AssociatedToken
         self.account_info.lamports()
     }
 
-    fn mut_lamports(
-        &self,
-    ) -> Result<std::cell::RefMut<'_, &'a mut u64>, solana_program::program_error::ProgramError>
-    {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
         self.account_info.try_borrow_mut_lamports()
     }
 
-    fn owner(&self) -> &'a solana_program::pubkey::Pubkey {
+    fn owner(&self) -> &'a Pubkey {
         self.account_info.owner
     }
 
@@ -44,53 +53,37 @@ impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for AssociatedToken
     }
 }
 
-impl<'a> crate::objects::properties::tokens::NautilusCreateAssociatedTokenAccount<'a>
-    for crate::objects::properties::create::Create<'a, AssociatedTokenAccount<'a>>
-{
-    fn create(&self, mint: super::mint::Mint<'a>) -> solana_program::entrypoint::ProgramResult {
-        use crate::objects::properties::NautilusAccountInfo;
-        let payer = self.fee_payer.clone();
-        let system_program = self.system_program.clone();
-        solana_program::program::invoke(
-            &spl_associated_token_account::instruction::create_associated_token_account(
-                payer.key,
-                self.key(),
-                mint.key(),
-                self.self_account.token_program.key,
-            ),
-            &[
-                mint.into(),
-                self.self_account.account_info.clone(),
-                payer,
-                system_program,
-                self.self_account.token_program.clone(),
-                self.self_account.associated_token_program.clone(),
-            ],
+impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedTokenAccount<'a>> {
+    fn create(&self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
+        let payer = Signer::new(Wallet {
+            account_info: self.fee_payer.to_owned(),
+            system_program: self.system_program.to_owned(),
+        });
+        create_associated_token_account(
+            self.self_account.clone(),
+            mint,
+            owner,
+            payer,
+            self.system_program.to_owned(),
+            self.self_account.token_program.to_owned(),
+            self.self_account.associated_token_program.to_owned(),
         )
     }
 
-    fn create_with_payer<T: crate::objects::properties::NautilusAccountInfo<'a>>(
+    fn create_with_payer(
         &self,
-        mint: super::mint::Mint<'a>,
-        payer: T,
-    ) -> solana_program::entrypoint::ProgramResult {
-        use crate::objects::properties::NautilusAccountInfo;
-        let system_program = self.system_program.clone();
-        solana_program::program::invoke(
-            &spl_associated_token_account::instruction::create_associated_token_account(
-                payer.key(),
-                self.key(),
-                mint.key(),
-                self.self_account.token_program.key,
-            ),
-            &[
-                mint.into(),
-                self.self_account.account_info.clone(),
-                payer.into(),
-                system_program,
-                self.self_account.token_program.clone(),
-                self.self_account.associated_token_program.clone(),
-            ],
+        mint: Mint<'a>,
+        owner: impl NautilusAccountInfo<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
+        create_associated_token_account(
+            self.self_account.clone(),
+            mint,
+            owner,
+            payer,
+            self.system_program.to_owned(),
+            self.self_account.token_program.to_owned(),
+            self.self_account.associated_token_program.to_owned(),
         )
     }
 }

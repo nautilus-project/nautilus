@@ -7,10 +7,11 @@
 //
 extern crate self as nautilus;
 
+pub mod cpi;
 pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
-pub use nautilus_derive::{nautilus, Nautilus};
+pub use nautilus_derive::nautilus;
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo, IntoAccountInfo},
     declare_id, entrypoint,
@@ -22,8 +23,9 @@ pub use solana_program::{
     system_instruction, system_program, sysvar,
 };
 
+pub use cpi::*;
 pub use objects::{
-    properties::{create::*, table::*, tokens::*, *},
+    properties::{create::*, signer::*, table::*, *},
     table::{index::*, *},
     token::{associated_token::*, metadata::*, mint::*, *},
     wallet::*,

@@ -1,3 +1,15 @@
+use solana_program::{
+    account_info::{AccountInfo, IntoAccountInfo},
+    entrypoint::ProgramResult,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+};
+
+use crate::{
+    create_pda, Create, NautilusAccountInfo, NautilusCreate, NautilusData, NautilusSigner,
+    NautilusTable, NautilusTransferLamports, Signer, Wallet,
+};
+
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct NautilusIndexData {
     pub index: std::collections::HashMap<String, u32>,
@@ -37,7 +49,7 @@ impl std::fmt::Display for InsertRecordError {
     }
 }
 
-impl crate::objects::properties::table::NautilusData for NautilusIndexData {
+impl NautilusData for NautilusIndexData {
     fn primary_key<'a>(&self) -> &'a [u8] {
         &[0]
     }
@@ -46,17 +58,11 @@ impl crate::objects::properties::table::NautilusData for NautilusIndexData {
         [Self::SEED_PREFIX.as_bytes(), &[0]]
     }
 
-    fn pda<'a>(
-        &self,
-        program_id: &'a solana_program::pubkey::Pubkey,
-    ) -> (solana_program::pubkey::Pubkey, u8) {
-        solana_program::pubkey::Pubkey::find_program_address(&self.seeds(), program_id)
+    fn pda<'a>(&self, program_id: &'a Pubkey) -> (Pubkey, u8) {
+        Pubkey::find_program_address(&self.seeds(), program_id)
     }
 
-    fn check_authorities(
-        &self,
-        _accounts: Vec<solana_program::account_info::AccountInfo>,
-    ) -> Result<(), solana_program::program_error::ProgramError> {
+    fn check_authorities(&self, _accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
         Ok(())
     }
 
@@ -67,19 +73,19 @@ impl crate::objects::properties::table::NautilusData for NautilusIndexData {
 
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct NautilusIndex<'a> {
-    pub program_id: &'a solana_program::pubkey::Pubkey,
-    pub account_info: solana_program::account_info::AccountInfo<'a>,
+    pub program_id: &'a Pubkey,
+    pub account_info: AccountInfo<'a>,
     pub data: NautilusIndexData,
 }
 
-impl<'a> solana_program::account_info::IntoAccountInfo<'a> for NautilusIndex<'a> {
-    fn into_account_info(self) -> solana_program::account_info::AccountInfo<'a> {
+impl<'a> IntoAccountInfo<'a> for NautilusIndex<'a> {
+    fn into_account_info(self) -> AccountInfo<'a> {
         self.account_info
     }
 }
 
-impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for NautilusIndex<'a> {
-    fn key(&self) -> &'a solana_program::pubkey::Pubkey {
+impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
+    fn key(&self) -> &'a Pubkey {
         self.account_info.key
     }
 
@@ -95,14 +101,11 @@ impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for NautilusIndex<'
         self.account_info.lamports()
     }
 
-    fn mut_lamports(
-        &self,
-    ) -> Result<std::cell::RefMut<'_, &'a mut u64>, solana_program::program_error::ProgramError>
-    {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
         self.account_info.try_borrow_mut_lamports()
     }
 
-    fn owner(&self) -> &'a solana_program::pubkey::Pubkey {
+    fn owner(&self) -> &'a Pubkey {
         self.account_info.owner
     }
 
@@ -111,37 +114,30 @@ impl<'a> crate::objects::properties::NautilusAccountInfo<'a> for NautilusIndex<'
     }
 }
 
-impl<'a> crate::objects::properties::table::NautilusTable<'a> for NautilusIndex<'a> {
+impl<'a> NautilusTable<'a> for NautilusIndex<'a> {
     fn primary_key(&self) -> &'a [u8] {
-        crate::objects::properties::table::NautilusData::primary_key(&self.data)
+        self.data.primary_key()
     }
 
     fn seeds(&self) -> [&'a [u8]; 2] {
-        crate::objects::properties::table::NautilusData::seeds(&self.data)
+        self.data.seeds()
     }
 
-    fn pda(&self) -> (solana_program::pubkey::Pubkey, u8) {
-        crate::objects::properties::table::NautilusData::pda(&self.data, self.program_id)
+    fn pda(&self) -> (Pubkey, u8) {
+        self.data.pda(self.program_id)
     }
 
-    fn check_authorities(
-        &self,
-        accounts: Vec<solana_program::account_info::AccountInfo>,
-    ) -> Result<(), solana_program::program_error::ProgramError> {
-        crate::objects::properties::table::NautilusData::check_authorities(&self.data, accounts)
+    fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
+        self.data.check_authorities(accounts)
     }
 
     fn count_authorities(&self) -> u8 {
-        crate::objects::properties::table::NautilusData::count_authorities(&self.data)
+        self.data.count_authorities()
     }
 }
 
-impl<'a> crate::objects::properties::NautilusTransferLamports<'a> for NautilusIndex<'a> {
-    fn transfer_lamports<U: crate::objects::properties::NautilusAccountInfo<'a>>(
-        self,
-        to: U,
-        amount: u64,
-    ) -> solana_program::entrypoint::ProgramResult {
+impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
+    fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult {
         let from = self.account_info;
         **from.try_borrow_mut_lamports()? -= amount;
         **to.mut_lamports()? += amount;
@@ -149,60 +145,26 @@ impl<'a> crate::objects::properties::NautilusTransferLamports<'a> for NautilusIn
     }
 }
 
-impl<'a> crate::objects::properties::create::NautilusCreate<'a>
-    for crate::objects::properties::create::Create<'a, NautilusIndex<'a>>
-{
-    fn create(&self) -> solana_program::entrypoint::ProgramResult {
-        use crate::objects::properties::{
-            table::{NautilusData, NautilusTable},
-            NautilusAccountInfo,
-        };
-
-        let payer = self.fee_payer.clone();
-        let system_program = self.system_program.clone();
-        let (_, bump) = self.self_account.pda();
-        solana_program::program::invoke_signed(
-            &solana_program::system_instruction::create_account(
-                payer.key,
-                self.self_account.key(),
-                self.self_account.required_rent()?,
-                self.self_account.size(),
-                system_program.key,
-            ),
-            &[
-                payer,
-                self.self_account.account_info.clone(),
-                system_program,
-            ],
-            &[&self.self_account.data.seeds(), &[&[bump]]],
+impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
+    fn create(&self) -> ProgramResult {
+        let payer = Signer::new(Wallet {
+            account_info: self.fee_payer.to_owned(),
+            system_program: self.system_program.to_owned(),
+        });
+        create_pda(
+            self.self_account.clone(),
+            self.self_account.program_id,
+            payer,
+            self.system_program.to_owned(),
         )
     }
 
-    fn create_with_payer<U: crate::objects::properties::NautilusAccountInfo<'a>>(
-        &self,
-        payer: U,
-    ) -> solana_program::entrypoint::ProgramResult {
-        use crate::objects::properties::{
-            table::{NautilusData, NautilusTable},
-            NautilusAccountInfo,
-        };
-
-        let system_program = self.system_program.clone();
-        let (_, bump) = self.self_account.pda();
-        solana_program::program::invoke_signed(
-            &solana_program::system_instruction::create_account(
-                payer.key(),
-                self.self_account.key(),
-                self.self_account.required_rent()?,
-                self.self_account.size(),
-                system_program.key,
-            ),
-            &[
-                payer.into(),
-                self.self_account.account_info.clone(),
-                system_program,
-            ],
-            &[&self.self_account.data.seeds(), &[&[bump]]],
+    fn create_with_payer(&self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+        create_pda(
+            self.self_account.clone(),
+            self.self_account.program_id,
+            payer,
+            self.system_program.to_owned(),
         )
     }
 }
