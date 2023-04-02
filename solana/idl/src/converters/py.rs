@@ -71,32 +71,7 @@ impl PythonConverter for IdlTypeDef {
 
                 format!("class {}:\n{}\n", self.name, fields_str)
             }
-            IdlTypeDefType::Enum { variants } => {
-                let variants_str = variants
-                    .iter()
-                    .map(|variant| {
-                        let fields_str = match &variant.fields {
-                            Some(IdlTypeEnumFields::Named(fields)) => fields
-                                .iter()
-                                .map(|field| {
-                                    format!(
-                                        "   {}: {}",
-                                        field.name,
-                                        field.field_data_type.to_python_string()
-                                    )
-                                })
-                                .collect::<Vec<String>>()
-                                .join(", "),
-                            None => String::new(),
-                        };
-
-                        format!("{} = {{ {} }}", variant.name, fields_str)
-                    })
-                    .collect::<Vec<String>>()
-                    .join(" | ");
-
-                format!("class{}(Enum):\n{}", self.name, variants_str)
-            }
+            IdlTypeDefType::Enum { .. } => String::new(), // TODO: Python enums not supported yet
         }
     }
 }
