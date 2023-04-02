@@ -7,7 +7,7 @@ use std::{
 use crate::{
     idl_instruction::IdlInstruction,
     idl_type::IdlType,
-    idl_type_def::{IdlTypeDef, IdlTypeDefType, IdlTypeEnumFields},
+    idl_type_def::{IdlTypeDef, IdlTypeDefType},
     Idl,
 };
 

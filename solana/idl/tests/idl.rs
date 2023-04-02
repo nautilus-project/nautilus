@@ -208,5 +208,5 @@ fn idl() {
 
     let idl = Idl::new(&version, &name, instructions, accounts, types, metadata);
 
-    idl.write();
+    idl.write_to_json("./target/idl");
 }
