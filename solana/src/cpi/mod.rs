@@ -7,13 +7,13 @@ use solana_program::{
 };
 
 use crate::{
-    AssociatedTokenAccount, Create, Metadata, Mint, NautilusAccountInfo, NautilusSigner,
-    NautilusTable,
+    mutable::NautilusMut, AssociatedTokenAccount, Create, Metadata, Mint, NautilusAccountInfo,
+    NautilusSigner, NautilusTable,
 };
 
 pub fn transfer_lamports<'a>(
     from: impl NautilusSigner<'a>,
-    to: impl NautilusAccountInfo<'a>,
+    to: impl NautilusMut<'a>,
     amount: u64,
     system_program: AccountInfo<'a>,
 ) -> ProgramResult {

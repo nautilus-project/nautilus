@@ -146,4 +146,14 @@ mod program_nautilus {
             rent_payer,
         )
     }
+
+    fn transfer_wallet(from: Signer<Wallet>, to: Mut<Wallet>, amount: u64) -> ProgramResult {
+        msg!(
+            "Transferring {} From: {} to: {}",
+            amount,
+            from.key(),
+            to.key()
+        );
+        from.transfer_lamports(to, amount)
+    }
 }

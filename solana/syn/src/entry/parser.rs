@@ -30,6 +30,8 @@ pub fn parse_manifest() -> (String, String) {
         .version
         .get()
         .expect("Failed to parse crate version from `Cargo.toml`. Did you provide one ?");
+    let nautilus_config = package.keywords();
+    println!("NAUTLUS KEYWORD: {:#?}", nautilus_config);
     (String::from(crate_version), package.name)
 }
 
@@ -101,7 +103,7 @@ pub fn parse_function(
         .map(|input| match input {
             FnArg::Typed(arg) => match *arg.pat {
                 Pat::Ident(ref pat_ident) => {
-                    let (type_string, is_create, is_signer, ty_with_lifetimes) =
+                    let (type_string, is_create, is_signer, is_mut, ty_with_lifetimes) =
                         parse_type(&arg.ty);
                     for obj in nautilus_objects {
                         if obj.ident == &type_string {
@@ -110,6 +112,7 @@ pub fn parse_function(
                                 arg_ident: pat_ident.ident.clone(),
                                 is_create,
                                 is_signer,
+                                is_mut,
                             });
                             let mut new_arg = arg.clone();
                             new_arg.ty = Box::new(ty_with_lifetimes);
@@ -143,9 +146,10 @@ pub fn parse_function(
     )
 }
 
-pub fn parse_type(ty: &Type) -> (String, bool, bool, Type) {
+pub fn parse_type(ty: &Type) -> (String, bool, bool, bool, Type) {
     let mut is_create = false;
     let mut is_signer = false;
+    let mut is_mut = false;
     let mut child_type = None;
 
     if let Type::Path(TypePath { path, .. }) = &ty {
@@ -156,11 +160,15 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, Type) {
             } else if segment.ident == "Signer" {
                 is_signer = true;
                 child_type = derive_child_type(&segment.arguments)
+            } else if segment.ident == "Mut" {
+                is_mut = true;
+                child_type = derive_child_type(&segment.arguments)
             }
         }
     }
+    is_mut = is_create || is_signer || is_mut;
 
-    let type_name = if is_create || is_signer {
+    let type_name = if is_create || is_signer || is_mut {
         if let Some(t) = &child_type {
             format!("{}", quote! { #t })
         } else {
@@ -174,7 +182,7 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, Type) {
     if let Type::Path(ref mut type_path) = ty_with_lifetimes {
         if let Some(ref mut segment) = type_path.path.segments.first_mut() {
             let lifetime = syn::Lifetime::new("'a", proc_macro2::Span::call_site());
-            if (is_create || is_signer) && child_type.is_some() {
+            if (is_create || is_signer || is_mut) && child_type.is_some() {
                 let mut child_ty_with_lifetime = child_type.unwrap();
                 if let Type::Path(ref mut type_path) = child_ty_with_lifetime {
                     if let Some(ref mut child_segment) = type_path.path.segments.first_mut() {
@@ -209,7 +217,7 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, Type) {
         }
     }
 
-    (type_name, is_create, is_signer, ty_with_lifetimes)
+    (type_name, is_create, is_signer, is_mut, ty_with_lifetimes)
 }
 
 fn derive_child_type(arguments: &PathArguments) -> Option<Type> {

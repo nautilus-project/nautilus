@@ -6,11 +6,11 @@ use solana_program::{
 };
 
 use crate::{
-    create_account, transfer_lamports, Create, NautilusAccountInfo, NautilusCreate, NautilusSigner,
-    NautilusTransferLamports, Signer,
+    create_account, mutable::NautilusMut, transfer_lamports, Create, NautilusAccountInfo,
+    NautilusCreate, NautilusSigner, NautilusTransferLamports, Signer,
 };
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct Wallet<'a> {
     pub account_info: AccountInfo<'a>,
     pub system_program: AccountInfo<'a>,
@@ -53,7 +53,7 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
 }
 
 impl<'a> NautilusTransferLamports<'a> for Signer<'a, Wallet<'a>> {
-    fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult {
+    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
         let system_program = self.self_account.system_program.clone();
         transfer_lamports(self, to, amount, system_program)
     }

@@ -14,7 +14,7 @@ pub mod associated_token;
 pub mod metadata;
 pub mod mint;
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct Token<'a> {
     pub account_info: AccountInfo<'a>,
     pub metadata: AccountInfo<'a>,

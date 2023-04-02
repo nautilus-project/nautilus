@@ -22,6 +22,7 @@ pub struct ObjectEntryConfig {
     pub arg_ident: Ident,
     pub is_create: bool,
     pub is_signer: bool,
+    pub is_mut: bool,
 }
 
 impl NautilusObject {
@@ -53,6 +54,7 @@ impl NautilusObject {
                 RequiredAccount::derive_object_type(&self.ident.to_string()), 
                 config.is_create,
                 config.is_signer,
+                config.is_mut,
             ),
             None => panic!("Error: `get_required_accounts` was invoked before setting the value for `entry_config`!"),
         }

@@ -10,7 +10,7 @@ use crate::{
     Signer, Wallet,
 };
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct Metadata<'a> {
     pub account_info: AccountInfo<'a>,
     pub token_metadata_program: AccountInfo<'a>,

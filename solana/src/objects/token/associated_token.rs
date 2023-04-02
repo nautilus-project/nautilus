@@ -10,7 +10,7 @@ use crate::{
     NautilusCreateAssociatedTokenAccount, NautilusSigner, Signer, Wallet,
 };
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct AssociatedTokenAccount<'a> {
     pub account_info: AccountInfo<'a>,
     pub token_program: AccountInfo<'a>,

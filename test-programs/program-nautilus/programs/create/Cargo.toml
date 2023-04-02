@@ -8,3 +8,8 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 nautilus = { path = "../../../../solana", version = "0.0.1" }
+
+[nautilus]
+idl-dir = "./target/idl"
+py-dir = "./target/idl/py"
+ts-dir = "./target/idl/ts"

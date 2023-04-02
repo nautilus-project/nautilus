@@ -12,7 +12,7 @@ use crate::{
 
 pub mod index;
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct Table<'a, T: NautilusData + 'a> {
     pub program_id: &'a Pubkey,
     pub account_info: AccountInfo<'a>,

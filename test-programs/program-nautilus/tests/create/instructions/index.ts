@@ -15,4 +15,5 @@ export enum MyInstructions {
     CreateAssociatedTokenWithPayer,
     CreateToken,
     CreateTokenWithPayer,
+    TransferWallet,
 }

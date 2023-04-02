@@ -25,7 +25,7 @@ pub use solana_program::{
 
 pub use cpi::*;
 pub use objects::{
-    properties::{create::*, signer::*, table::*, *},
+    properties::{create::*, mutable::*, signer::*, table::*, *},
     table::{index::*, *},
     token::{associated_token::*, metadata::*, mint::*, *},
     wallet::*,

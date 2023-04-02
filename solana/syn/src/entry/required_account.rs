@@ -1,3 +1,4 @@
+use case::CaseExt;
 use convert_case::{Case, Casing};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -36,15 +37,15 @@ pub enum ObjectType {
     Wallet,
     Token(bool),
     Mint(bool),
-    Metadata(bool),
-    AssociatedTokenAccount(bool),
+    Metadata,
+    AssociatedTokenAccount,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Construct {
     Index(bool),
     SelfAccount(String, String, bool, bool),
-    Metadata(String, String, bool, bool),
+    Metadata(String, String, bool),
     MintAuthority(String, String, bool, bool),
     FeePayer,
     Sysvar(SysvarType),
@@ -75,35 +76,35 @@ impl From<Construct> for RequiredAccount {
                     account_type: RequiredAccountType::IndexAccount,
                 }
             }
-            Construct::SelfAccount(name, desc, is_mut, is_pda) => {
+            Construct::SelfAccount(name, desc, is_mut, is_signer) => {
                 let ident = name_to_ident_snake(&name);
                 RequiredAccount {
                     ident,
                     name,
                     is_mut,
-                    is_signer: is_mut && !is_pda,
+                    is_signer,
                     desc,
                     account_type: RequiredAccountType::Account(RequiredAccountSubtype::SelfAccount),
                 }
             }
-            Construct::Metadata(name, desc, is_mut, is_pda) => {
+            Construct::Metadata(name, desc, is_mut) => {
                 let ident = name_to_ident_snake(&name);
                 RequiredAccount {
                     ident,
                     name,
                     is_mut,
-                    is_signer: is_mut && !is_pda,
+                    is_signer: false,
                     desc,
                     account_type: RequiredAccountType::Account(RequiredAccountSubtype::Metadata),
                 }
             }
-            Construct::MintAuthority(name, desc, is_mut, is_pda) => {
+            Construct::MintAuthority(name, desc, is_mut, is_signer) => {
                 let ident = name_to_ident_snake(&name);
                 RequiredAccount {
                     ident,
                     name,
                     is_mut,
-                    is_signer: is_mut && !is_pda,
+                    is_signer,
                     desc,
                     account_type: RequiredAccountType::Account(
                         RequiredAccountSubtype::MintAuthority,
@@ -195,9 +196,9 @@ impl RequiredAccount {
         } else if ty_name.eq("Mint") {
             ObjectType::Mint(false) // TODO: PDA Tokens not supported yet
         } else if ty_name.eq("Metadata") {
-            ObjectType::Metadata(false) // TODO: PDA Tokens not supported yet
+            ObjectType::Metadata
         } else if ty_name.eq("AssociatedTokenAccount") {
-            ObjectType::AssociatedTokenAccount(true)
+            ObjectType::AssociatedTokenAccount
         } else {
             ObjectType::Table(vec![]) // TODO: PDA authorities not supported yet
         }
@@ -208,70 +209,48 @@ impl RequiredAccount {
         object_type: ObjectType,
         is_create: bool,
         is_signer: bool,
+        is_mut: bool,
     ) -> (Vec<Self>, Option<Vec<Self>>) {
         let read = match object_type {
             ObjectType::Table(_) => {
-                vec![Construct::SelfAccount(
-                    obj_name.clone(),
-                    obj_name,
-                    is_create || is_signer,
-                    true,
-                )
-                .into()]
+                vec![Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true).into()]
             }
             ObjectType::Wallet => vec![
-                Construct::SelfAccount(obj_name.clone(), obj_name, is_create || is_signer, false)
-                    .into(),
+                Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, is_signer).into(),
                 Construct::SystemProgram.into(),
             ],
             ObjectType::Token(is_pda) => {
-                let metadata_name = obj_name.clone() + "Metadata";
-                // let mint_authority_name = obj_name.clone() + "MintAuthority";
+                let metadata_name = obj_name.clone() + "_metadata";
                 vec![
                     Construct::SelfAccount(
                         obj_name.clone(),
-                        obj_name,
-                        is_create || is_signer,
-                        is_pda,
+                        obj_name.clone(),
+                        is_mut,
+                        is_signer && !is_pda,
                     )
                     .into(),
                     Construct::Metadata(
                         metadata_name.clone(),
-                        metadata_name,
-                        is_create || is_signer,
-                        is_pda,
+                        format!("Metadata account for: {}", obj_name),
+                        is_mut,
                     )
                     .into(),
-                    // Construct::MintAuthority(
-                    //     mint_authority_name.clone(),
-                    //     mint_authority_name,
-                    //     is_create || is_signer,
-                    //     is_pda,
-                    // )
-                    // .into(),
                     Construct::TokenProgram.into(),
                     Construct::TokenMetadataProgram.into(),
                 ]
             }
             ObjectType::Mint(is_pda) => vec![
-                Construct::SelfAccount(obj_name.clone(), obj_name, is_create || is_signer, is_pda)
+                Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, is_signer && !is_pda)
                     .into(),
                 Construct::TokenProgram.into(),
             ],
-            ObjectType::Metadata(is_pda) => vec![
-                Construct::SelfAccount(obj_name.clone(), obj_name, is_create || is_signer, is_pda)
-                    .into(),
+            ObjectType::Metadata => vec![
+                Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
                 Construct::TokenMetadataProgram.into(),
             ],
-            ObjectType::AssociatedTokenAccount(is_pda) => {
+            ObjectType::AssociatedTokenAccount => {
                 vec![
-                    Construct::SelfAccount(
-                        obj_name.clone(),
-                        obj_name,
-                        is_create || is_signer,
-                        is_pda,
-                    )
-                    .into(),
+                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
                     Construct::TokenProgram.into(),
                     Construct::AssociatedTokenProgram.into(),
                 ]
@@ -314,8 +293,9 @@ impl RequiredAccount {
     }
 
     pub fn to_idl_instruction_account(&self) -> nautilus_idl::IdlInstructionAccount {
+        let name = self.name.clone().to_case(Case::Camel);
         nautilus_idl::IdlInstructionAccount {
-            name: self.name.clone(),
+            name,
             is_mut: self.is_mut,
             is_signer: self.is_signer,
             desc: self.desc.clone(),
@@ -341,13 +321,7 @@ impl From<&RequiredAccount> for proc_macro2::TokenStream {
                     quote::quote! { mint_authority: #ident.to_owned() }
                 }
             },
-            RequiredAccountType::FeePayer
-            | RequiredAccountType::Sysvar
-            | RequiredAccountType::SystemProgram
-            | RequiredAccountType::Program
-            | RequiredAccountType::TokenProgram
-            | RequiredAccountType::AssociatedTokenProgram
-            | RequiredAccountType::TokenMetadataProgram => {
+            _ => {
                 let ident = &ast.ident;
                 quote::quote! { #ident: #ident.to_owned() }
             }
@@ -379,8 +353,6 @@ pub fn name_to_ident(name: &str) -> syn::Ident {
 }
 
 pub fn name_to_ident_snake(name: &str) -> syn::Ident {
-    use case::CaseExt;
-
     syn::Ident::new(
         &(name.to_string().to_snake()),
         proc_macro2::Span::call_site(),

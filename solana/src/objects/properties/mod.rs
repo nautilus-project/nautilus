@@ -3,7 +3,10 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
+use self::mutable::NautilusMut;
+
 pub mod create;
+pub mod mutable;
 pub mod signer;
 pub mod table;
 
@@ -25,5 +28,5 @@ pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
 }
 
 pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> + 'a {
-    fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult;
+    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult;
 }

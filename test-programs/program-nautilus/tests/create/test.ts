@@ -23,8 +23,11 @@ import {
     createCreateWalletInstruction, 
     createCreateWalletWithPayerInstruction 
 } from './instructions'
+import { createTransferWalletInstruction } from './instructions/transfer'
 
 describe("Nautilus Unit Tests: Create", async () => {
+
+    const skipMetadata = true; // Enabled for localnet
 
     const connection = CONNECTION
     const payer = PAYER
@@ -44,6 +47,8 @@ describe("Nautilus Unit Tests: Create", async () => {
     const symbol = "NTLS"
     const uri = "NTLS"
 
+    const transferAmount = LAMPORTS_PER_SOL / 100
+
     async function initAccount(publicKey: PublicKey) {
         connection.confirmTransaction(
             await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL)
@@ -55,15 +60,19 @@ describe("Nautilus Unit Tests: Create", async () => {
     }
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
-        await sendAndConfirmTransaction(
+        let sx = await sendAndConfirmTransaction(
             connection, 
             new Transaction().add(ix),
             signers,
             {skipPreflight: true}
         )
+        console.log(`\n\n  [INFO]: sig: ${sx}\n`)
     }
 
-    before(async () => initTestAccounts())
+    before(async () => {
+        if (skipMetadata) console.log("  [WARN]: `skipMetadata` is set to `true`, so tests for Metadata and Token will not execute & automatically pass.")
+        initTestAccounts()
+    })
 
     it("Create Wallet", async () => test(
         createCreateWalletInstruction(newWallet.publicKey, payer.publicKey, program.publicKey),
@@ -85,12 +94,12 @@ describe("Nautilus Unit Tests: Create", async () => {
         [payer, newMintWithPayer],
     ))
 
-    it("Create Metadata", async () => test(
+    it("Create Metadata", async () => skipMetadata ?? test(
         createCreateMetadataInstruction(newMint.publicKey, payer.publicKey, program.publicKey, title, symbol, uri),
         [payer],
     ))
 
-    it("Create Metadata with Payer", async () => test(
+    it("Create Metadata with Payer", async () => skipMetadata ?? test(
         createCreateMetadataWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, title, symbol, uri),
         [payer],
     ))
@@ -105,14 +114,19 @@ describe("Nautilus Unit Tests: Create", async () => {
         [payer],
     ))
 
-    it("Create Token", async () => test(
+    it("Create Token", async () => skipMetadata ?? test(
         createCreateTokenInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
         [payer, newTokenMint],
     ))
 
-    it("Create Token with Payer", async () => test(
+    it("Create Token with Payer", async () => skipMetadata ?? test(
         createCreateTokenWithPayerInstruction(newTokenMintWithPayer.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
         [payer, newTokenMintWithPayer],
+    ))
+
+    it("Transfer Wallet", async () => test(
+        createTransferWalletInstruction(payer.publicKey, newWallet.publicKey, program.publicKey, transferAmount),
+        [payer],
     ))
   })
   

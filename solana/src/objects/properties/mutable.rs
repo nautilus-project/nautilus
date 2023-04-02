@@ -9,12 +9,12 @@ use solana_program::{
 use crate::NautilusAccountInfo;
 
 #[derive(Clone)]
-pub struct Signer<'a, T: NautilusAccountInfo<'a> + 'a> {
+pub struct Mut<'a, T: NautilusAccountInfo<'a> + 'a> {
     phantom: PhantomData<&'a T>,
     pub self_account: T,
 }
 
-impl<'a, T: NautilusAccountInfo<'a> + 'a> Signer<'a, T> {
+impl<'a, T: NautilusAccountInfo<'a> + 'a> Mut<'a, T> {
     pub fn new(self_account: T) -> Self {
         Self {
             self_account,
@@ -23,13 +23,13 @@ impl<'a, T: NautilusAccountInfo<'a> + 'a> Signer<'a, T> {
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Signer<'a, T> {
+impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Mut<'a, T> {
     fn into_account_info(self) -> AccountInfo<'a> {
         self.self_account.into_account_info()
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Signer<'a, T> {
+impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Mut<'a, T> {
     fn key(&self) -> &'a Pubkey {
         self.self_account.key()
     }
@@ -59,6 +59,6 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Signer<'a, T> {
     }
 }
 
-pub trait NautilusSigner<'a>: NautilusAccountInfo<'a> + 'a {}
+pub trait NautilusMut<'a>: NautilusAccountInfo<'a> + 'a {}
 
-impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusSigner<'a> for Signer<'a, T> {}
+impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusMut<'a> for Mut<'a, T> {}

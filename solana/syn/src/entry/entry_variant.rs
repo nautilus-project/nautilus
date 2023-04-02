@@ -117,13 +117,18 @@ impl NautilusEntrypointEnumVariant {
                                     );
                                 },
                                 None => {
-                                    match config.is_signer {
-                                        true => object_inits.push(
+                                    if config.is_signer { 
+                                        object_inits.push(
                                             quote! { let #arg_ident = Signer::new(#obj_type{#(#read_initializers,)*}); },
-                                        ),
-                                        false => object_inits.push(
+                                        );
+                                    } else if config.is_mut {
+                                        object_inits.push(
+                                            quote! { let #arg_ident = Mut::new(#obj_type{#(#read_initializers,)*}); },
+                                        );
+                                    } else { 
+                                        object_inits.push(
                                             quote! { let #arg_ident = #obj_type{#(#read_initializers,)*}; },
-                                        ),
+                                        );
                                     }
                                 },
                             };
