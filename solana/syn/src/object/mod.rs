@@ -1,20 +1,27 @@
 pub mod impl_nautilus;
 pub mod parser;
+pub mod source;
 
-use nautilus_idl::IdlTypeType;
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{Field, Ident, ItemStruct};
+use syn::{Field, Ident, ItemStruct, ItemEnum};
 
-use crate::entry::required_account::{name_to_ident, RequiredAccount};
+use crate::entry::required_account::RequiredAccount;
 
 use self::parser::{parse_item_struct, NautilusObjectConfig};
 
 #[derive(Clone, Debug)]
 pub struct NautilusObject {
     pub ident: Ident,
+    pub raw_type: NautilusObjectRawType,
     pub entry_config: Option<ObjectEntryConfig>,
     pub object_config: Option<NautilusObjectConfig>,
+}
+
+#[derive(Clone, Debug)]
+pub enum NautilusObjectRawType {
+    Struct(ItemStruct),
+    Enum(ItemEnum),
 }
 
 #[derive(Clone, Debug)]
@@ -26,27 +33,6 @@ pub struct ObjectEntryConfig {
 }
 
 impl NautilusObject {
-    pub fn default(ident: Ident) -> Self {
-        Self {
-            ident,
-            entry_config: None,
-            object_config: None,
-        }
-    }
-
-    pub fn source_nautilus_objects() -> Vec<Self> {
-        [
-            "Wallet",
-            "Token",
-            "Mint",
-            "Metadata",
-            "AssociatedTokenAccount",
-        ]
-        .into_iter()
-        .map(|s| Self::default(name_to_ident(s)))
-        .collect()
-    }
-
     pub fn get_required_accounts(&self) -> (Vec<RequiredAccount>, Option<Vec<RequiredAccount>>) {
         match &self.entry_config {
             Some(config) => RequiredAccount::resolve_accounts(
@@ -59,18 +45,15 @@ impl NautilusObject {
             None => panic!("Error: `get_required_accounts` was invoked before setting the value for `entry_config`!"),
         }
     }
-
-    pub fn to_idl_type(&self) -> IdlTypeType {
-        todo!()
-    }
 }
 
-impl From<ItemStruct> for NautilusObject {
-    fn from(value: ItemStruct) -> Self {
+impl From<&ItemStruct> for NautilusObject {
+    fn from(value: &ItemStruct) -> Self {
         let ident = value.ident.clone();
-        let object_config = Some(parse_item_struct(value));
+        let object_config = parse_item_struct(value);
         Self {
             ident,
+            raw_type: NautilusObjectRawType::Struct(value.clone()),
             entry_config: None,
             object_config,
         }

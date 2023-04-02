@@ -23,7 +23,7 @@ extern crate proc_macro;
 pub fn nautilus(_: TokenStream, input: TokenStream) -> TokenStream {
     let parsed_item = parse_macro_input!(input as Item);
 
-    match parsed_item {
+    match &parsed_item {
         Item::Struct(item_struct) => {
             let object: NautilusObject = item_struct.into();
             object.to_token_stream().into()

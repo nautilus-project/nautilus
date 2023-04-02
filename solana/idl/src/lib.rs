@@ -1,43 +1,54 @@
-mod accounts;
-mod instructions;
-mod types;
-mod util;
+//
+//
+// ----------------------------------------------------------------
+//                          Nautilus IDL
+// ----------------------------------------------------------------
+//
+//
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::Path,
+};
 
-pub use accounts::*;
-pub use instructions::*;
-pub use types::*;
-pub use util::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(
-    Clone,
-    Debug,
-    borsh::BorshDeserialize,
-    borsh::BorshSerialize,
-    serde::Deserialize,
-    serde::Serialize,
-)]
+use self::{idl_instruction::IdlInstruction, idl_metadata::IdlMetadata, idl_type_def::IdlTypeDef};
+
+pub mod converters;
+pub mod idl_instruction;
+pub mod idl_metadata;
+pub mod idl_nautilus_config;
+pub mod idl_type;
+pub mod idl_type_def;
+pub mod util;
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Idl {
     pub version: String,
     pub name: String,
-    pub instructions: Vec<crate::instructions::IdlInstruction>,
-    pub accounts: Vec<crate::accounts::IdlAccount>,
-    pub types: Vec<crate::types::IdlType>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub instructions: Vec<IdlInstruction>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub accounts: Vec<IdlTypeDef>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub types: Vec<IdlTypeDef>,
     pub metadata: IdlMetadata,
 }
 
 impl Idl {
     pub fn new(
-        version: &str,
-        name: &str,
-        instructions: Vec<crate::instructions::IdlInstruction>,
-        accounts: Vec<crate::accounts::IdlAccount>,
-        types: Vec<crate::types::IdlType>,
+        version: String,
+        name: String,
+        instructions: Vec<IdlInstruction>,
+        accounts: Vec<IdlTypeDef>,
+        types: Vec<IdlTypeDef>,
         metadata: IdlMetadata,
     ) -> Self {
         Self {
-            version: version.to_string(),
-            name: name.to_string(),
+            version,
+            name,
             instructions,
             accounts,
             types,
@@ -45,41 +56,17 @@ impl Idl {
         }
     }
 
-    pub fn write(&self) {
-        use std::fs::File;
-        use std::io::Write;
-
-        let mut file = File::create(format!("{}.json", &self.name)).unwrap();
-        let json_string = serde_json::to_string(&self).unwrap();
-        file.write_all(json_string.as_bytes()).unwrap();
-    }
-}
-
-#[derive(
-    Clone,
-    Debug,
-    borsh::BorshDeserialize,
-    borsh::BorshSerialize,
-    serde::Deserialize,
-    serde::Serialize,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct IdlMetadata {
-    origin: String,
-    address: Option<String>,
-}
-
-impl IdlMetadata {
-    pub fn new(address: &str) -> Self {
-        Self {
-            origin: "nautilus".to_string(),
-            address: Some(address.to_string()),
+    pub fn write_to_json(&self, dir_path: &str) -> std::io::Result<()> {
+        if dir_path != "." {
+            fs::create_dir_all(dir_path)?;
         }
-    }
-    pub fn new_with_no_id() -> Self {
-        Self {
-            origin: "nautilus".to_string(),
-            address: None,
-        }
+
+        let idl_path = Path::join(Path::new(dir_path), &format!("{}.json", &self.name));
+
+        let mut file = File::create(idl_path)?;
+        let json_string = serde_json::to_string(&self)?;
+        file.write_all(json_string.as_bytes())?;
+
+        Ok(())
     }
 }

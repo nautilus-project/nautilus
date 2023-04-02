@@ -1,4 +1,4 @@
-use nautilus_idl::IdlInstruction;
+use nautilus_idl::idl_instruction::IdlInstruction;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Ident, ItemFn};

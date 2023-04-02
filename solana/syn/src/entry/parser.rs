@@ -1,22 +1,18 @@
 use cargo_toml::Manifest;
 use convert_case::{Case::Pascal, Casing};
-use nautilus_idl::{
-    IdlAccount, IdlAccountType, IdlAccountTypeField, IdlType, IdlTypeType, IdlTypeTypeField,
-};
+use nautilus_idl::idl_type_def::IdlTypeDef;
 use proc_macro2::Span;
 use quote::quote;
 use shank_macro_impl::krate::CrateContext;
 use syn::{
-    AngleBracketedGenericArguments, Fields, FnArg, Ident, Item, ItemFn, Pat, PathArguments, Type,
-    TypePath, UseTree,
+    AngleBracketedGenericArguments, FnArg, Ident, Item, ItemFn, Pat, PathArguments, Type, TypePath,
+    UseTree,
 };
 use syn::{Meta, NestedMeta};
 
+use crate::object::source::source_nautilus_objects;
+use crate::object::NautilusObject;
 use crate::object::ObjectEntryConfig;
-use crate::object::{
-    parser::{parse_field_attributes, parse_top_level_attributes},
-    NautilusObject,
-};
 
 use super::entry_variant::CallContext;
 
@@ -30,19 +26,17 @@ pub fn parse_manifest() -> (String, String) {
         .version
         .get()
         .expect("Failed to parse crate version from `Cargo.toml`. Did you provide one ?");
-    let nautilus_config = package.keywords();
-    println!("NAUTLUS KEYWORD: {:#?}", nautilus_config);
     (String::from(crate_version), package.name)
 }
 
-pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlAccount>, Vec<IdlType>) {
+pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTypeDef>) {
     let root = std::env::current_dir().unwrap().join("src/lib.rs");
     let crate_context = CrateContext::parse(root).expect(
         "Failed to detect `src/lib.rs`. Are you sure you've built your program with `--lib` ?",
     );
 
-    let mut idl_accounts: Vec<IdlAccount> = vec![];
-    let mut idl_types: Vec<IdlType> = vec![];
+    let mut idl_accounts: Vec<IdlTypeDef> = vec![];
+    let mut idl_types: Vec<IdlTypeDef> = vec![];
 
     let mut nautilus_objects: Vec<NautilusObject> = crate_context
         .structs()
@@ -54,20 +48,14 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlAccount>, Vec<IdlTy
                             if let NestedMeta::Meta(Meta::Path(path)) = nested {
                                 path.is_ident("Nautilus")
                             } else {
-                                idl_types.push(IdlType::new(
-                                    &s.ident.to_string(),
-                                    idl_type_type_from_struct_fields(&s.fields),
-                                ));
+                                idl_types.push(s.into());
                                 false
                             }
                         }) {
-                            let account_ident_string = s.ident.to_string();
-                            idl_accounts.push(IdlAccount::new(
-                                &account_ident_string,
-                                idl_account_type_from_struct_fields(&s.fields),
-                                parse_top_level_attributes(&account_ident_string, &s.attrs),
-                            ));
-                            return Some(s.clone().into());
+                            let nautilus_obj: NautilusObject = s.into();
+                            let i = &nautilus_obj;
+                            idl_accounts.push(i.into());
+                            return Some(nautilus_obj);
                         }
                     }
                 }
@@ -75,10 +63,9 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlAccount>, Vec<IdlTy
             None
         })
         .collect();
-    nautilus_objects.extend(NautilusObject::source_nautilus_objects());
+    nautilus_objects.extend(source_nautilus_objects());
 
-    // TODO: Enums
-    // crate_context.enums().iter().for_each(|e| idl_types.push(e.into()))
+    crate_context.enums().for_each(|e| idl_types.push(e.into()));
 
     (nautilus_objects, idl_accounts, idl_types)
 }
@@ -265,48 +252,4 @@ pub fn type_to_string(ty: &syn::Type) -> Option<String> {
         }
     }
     None
-}
-
-//
-
-pub fn idl_account_type_from_struct_fields<'a>(fields: &'a Fields) -> IdlAccountType {
-    IdlAccountType::new(
-        "struct",
-        match fields {
-            Fields::Named(fields) => fields
-                .named
-                .iter()
-                .map(|field| {
-                    let field_name = field.ident.as_ref().unwrap().to_string();
-                    let field_type = format!("{}", quote! { #field.ty });
-                    let nautilus_attributes = parse_field_attributes(field);
-                    IdlAccountTypeField::new(
-                        &field_name,
-                        &field_type,
-                        nautilus_attributes.is_primary_key,
-                        nautilus_attributes.is_authority,
-                    )
-                })
-                .collect(),
-            _ => vec![],
-        },
-    )
-}
-
-pub fn idl_type_type_from_struct_fields<'a>(fields: &'a Fields) -> IdlTypeType {
-    IdlTypeType::new(
-        "struct",
-        match fields {
-            Fields::Named(fields) => fields
-                .named
-                .iter()
-                .map(|field| {
-                    let field_name = field.ident.as_ref().unwrap().to_string();
-                    let field_type = format!("{}", quote! { #field.ty });
-                    IdlTypeTypeField::new(&field_name, &field_type)
-                })
-                .collect(),
-            _ => vec![],
-        },
-    )
 }

@@ -112,14 +112,15 @@ impl From<Construct> for RequiredAccount {
                 }
             }
             Construct::FeePayer => {
-                let name = "feePayer".to_string();
+                let account_type = RequiredAccountType::FeePayer;
+                let name = account_type.to_string();
                 RequiredAccount {
                     ident: name_to_ident_snake(&name),
                     name,
                     is_mut: true,
                     is_signer: true,
                     desc: "The transaction fee payer".to_string(),
-                    account_type: RequiredAccountType::FeePayer,
+                    account_type,
                 }
             }
             Construct::Sysvar(sysvar_type) => {
@@ -138,47 +139,51 @@ impl From<Construct> for RequiredAccount {
                 }
             }
             Construct::SystemProgram => {
-                let name = "systemProgram".to_string();
+                let account_type = RequiredAccountType::SystemProgram;
+                let name = account_type.to_string();
                 RequiredAccount {
                     ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The System Program".to_string(),
-                    account_type: RequiredAccountType::SystemProgram,
+                    account_type,
                 }
             }
             Construct::TokenProgram => {
-                let name = "tokenProgram".to_string();
+                let account_type = RequiredAccountType::TokenProgram;
+                let name = account_type.to_string();
                 RequiredAccount {
                     ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The Token Program".to_string(),
-                    account_type: RequiredAccountType::TokenProgram,
+                    account_type,
                 }
             }
             Construct::AssociatedTokenProgram => {
-                let name = "associatedTokenProgram".to_string();
+                let account_type = RequiredAccountType::AssociatedTokenProgram;
+                let name = account_type.to_string();
                 RequiredAccount {
                     ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The Associated Token Program".to_string(),
-                    account_type: RequiredAccountType::AssociatedTokenProgram,
+                    account_type,
                 }
             }
             Construct::TokenMetadataProgram => {
-                let name = "tokenMetadataProgram".to_string();
+                let account_type = RequiredAccountType::TokenMetadataProgram;
+                let name = account_type.to_string();
                 RequiredAccount {
                     ident: name_to_ident_snake(&name),
                     name,
                     is_mut: false,
                     is_signer: false,
                     desc: "The Token Metadata Program".to_string(),
-                    account_type: RequiredAccountType::TokenMetadataProgram,
+                    account_type,
                 }
             }
         }
@@ -291,16 +296,6 @@ impl RequiredAccount {
         });
         res
     }
-
-    pub fn to_idl_instruction_account(&self) -> nautilus_idl::IdlInstructionAccount {
-        let name = self.name.clone().to_case(Case::Camel);
-        nautilus_idl::IdlInstructionAccount {
-            name,
-            is_mut: self.is_mut,
-            is_signer: self.is_signer,
-            desc: self.desc.clone(),
-        }
-    }
 }
 
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
@@ -325,6 +320,22 @@ impl From<&RequiredAccount> for proc_macro2::TokenStream {
                 let ident = &ast.ident;
                 quote::quote! { #ident: #ident.to_owned() }
             }
+        }
+    }
+}
+
+impl ToString for RequiredAccountType {
+    fn to_string(&self) -> String {
+        match self {
+            RequiredAccountType::IndexAccount => "index".to_string(),
+            RequiredAccountType::FeePayer => "feePayer".to_string(),
+            RequiredAccountType::Sysvar => "sysvar".to_string(),
+            RequiredAccountType::SystemProgram => "systemProgram".to_string(),
+            RequiredAccountType::Program => "program".to_string(),
+            RequiredAccountType::TokenProgram => "tokenProgram".to_string(),
+            RequiredAccountType::AssociatedTokenProgram => "associatedTokenProgram".to_string(),
+            RequiredAccountType::TokenMetadataProgram => "tokenMetadataProgram".to_string(),
+            _ => "account".to_string(),
         }
     }
 }

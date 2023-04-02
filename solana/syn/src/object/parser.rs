@@ -1,4 +1,4 @@
-use nautilus_idl::IdlAccountNautilusDefaultInstructionType;
+use nautilus_idl::idl_nautilus_config::IdlTypeDefNautilusConfigDefaultInstruction;
 use proc_macro2::{Span, TokenStream};
 // use quote::quote;
 use syn::{Fields, Ident, ItemStruct, Type};
@@ -10,7 +10,7 @@ pub struct NautilusObjectConfig {
     pub autoincrement_enabled: bool,
     pub primary_key: Ident,
     pub authorities: Vec<Ident>,
-    pub default_instructions: Vec<IdlAccountNautilusDefaultInstructionType>,
+    pub default_instructions: Vec<IdlTypeDefNautilusConfigDefaultInstruction>,
 }
 
 pub struct NautilusAccountFieldAttributes {
@@ -25,7 +25,7 @@ pub enum DefaultInstructions {
     Update,
 }
 
-pub fn parse_item_struct(item_struct: ItemStruct) -> NautilusObjectConfig {
+pub fn parse_item_struct(item_struct: &ItemStruct) -> Option<NautilusObjectConfig> {
     let ident_string = item_struct.ident.to_string();
     let _ident_optionized_struct_name =
         Ident::new(&(ident_string.clone() + "Optionized"), Span::call_site());
@@ -33,7 +33,7 @@ pub fn parse_item_struct(item_struct: ItemStruct) -> NautilusObjectConfig {
     let table_name = ident_string.clone().to_lowercase();
     let default_instructions = parse_top_level_attributes(&ident_string, &item_struct.attrs);
 
-    let data_fields = item_struct.fields;
+    let data_fields = item_struct.fields.clone();
 
     let mut primary_key_ident_opt: Option<(Ident, Type)> = None;
     let mut autoincrement_enabled: bool = true;
@@ -70,17 +70,17 @@ pub fn parse_item_struct(item_struct: ItemStruct) -> NautilusObjectConfig {
 
     let (primary_key, _) = match primary_key_ident_opt {
         Some((ident, ty)) => (ident, ty),
-        None => todo!("Throw an error on None value"),
+        None => return None,
     };
 
-    NautilusObjectConfig {
+    Some(NautilusObjectConfig {
         table_name,
         data_fields,
         autoincrement_enabled,
         primary_key,
         authorities,
         default_instructions,
-    }
+    })
 }
 
 pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttributes {
@@ -119,7 +119,7 @@ pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttribu
 pub fn parse_top_level_attributes(
     struct_name: &str,
     attrs: &Vec<syn::Attribute>,
-) -> Vec<nautilus_idl::IdlAccountNautilusDefaultInstructionType> {
+) -> Vec<IdlTypeDefNautilusConfigDefaultInstruction> {
     let mut default_instructions = Vec::new();
 
     for attr in attrs.iter() {
@@ -130,19 +130,19 @@ pub fn parse_top_level_attributes(
                         let variant_string = path.get_ident().unwrap().to_string();
                         if variant_string.eq("Create") {
                             default_instructions.push(
-                                nautilus_idl::IdlAccountNautilusDefaultInstructionType::Create(
+                                IdlTypeDefNautilusConfigDefaultInstruction::Create(
                                     struct_name.to_string(),
                                 ),
                             );
                         } else if variant_string.eq("Delete") {
                             default_instructions.push(
-                                nautilus_idl::IdlAccountNautilusDefaultInstructionType::Delete(
+                                IdlTypeDefNautilusConfigDefaultInstruction::Delete(
                                     struct_name.to_string(),
                                 ),
                             );
                         } else if variant_string.eq("Update") {
                             default_instructions.push(
-                                nautilus_idl::IdlAccountNautilusDefaultInstructionType::Update(
+                                IdlTypeDefNautilusConfigDefaultInstruction::Update(
                                     struct_name.to_string(),
                                 ),
                             );

@@ -1,6 +1,4 @@
-use nautilus_idl::{
-    IdlInstruction, IdlInstructionArg, IdlInstructionArgType, IdlInstructionDiscriminant,
-};
+use nautilus_idl::idl_instruction::{IdlInstruction};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Ident, Type, ItemFn};
@@ -9,7 +7,6 @@ use crate::{entry::required_account::{RequiredAccountSubtype}, object::NautilusO
 
 use super::{
     entry_enum::NautilusEntrypointEnum,
-    parser::type_to_string,
     required_account::{
         metadata_ident, mint_authority_ident, self_account_ident, RequiredAccount,
         RequiredAccountType,
@@ -154,30 +151,6 @@ impl NautilusEntrypointEnumVariant {
             }
         }
     }
-
-    pub fn to_idl_instruction(&self) -> IdlInstruction {
-        let mut name = self.variant_ident.to_string();
-        name.replace_range(..1, &name[..1].to_lowercase());
-        IdlInstruction {
-            name,
-            accounts: self
-                .required_accounts
-                .iter()
-                .map(|a| a.to_idl_instruction_account())
-                .collect(),
-            args: self
-                .variant_args
-                .iter()
-                .map(|(ident, ty)| {
-                    IdlInstructionArg::new(
-                        &ident.to_string(),
-                        IdlInstructionArgType::new(&type_to_string(&ty).unwrap()),
-                    )
-                })
-                .collect(),
-            discriminant: IdlInstructionDiscriminant::new(self.discriminant),
-        }
-    }
 }
 
 impl From<&NautilusEntrypointEnumVariant> for (TokenStream, TokenStream, TokenStream, IdlInstruction) {
@@ -192,7 +165,7 @@ impl From<&NautilusEntrypointEnumVariant> for (TokenStream, TokenStream, TokenSt
             quote! { #variant_ident(#(#arg_types,)*), },
             quote! { #enum_ident::#variant_ident(#(#arg_names,)*) => #match_arm_logic, },
             quote! { #modified_fn },
-            value.to_idl_instruction(),
+            value.into(),
         )
     }
 }
