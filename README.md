@@ -1,7 +1,7 @@
 # Nautilus
 [![Rust](https://github.com/nautilus-project/nautilus/actions/workflows/rust.yml/badge.svg)](https://github.com/nautilus-project/nautilus/actions/workflows/rust.yml)
-[![Node.js CI](https://github.com/nautilus-project/nautilus/actions/workflows/node.js.yml/badge.svg)](https://github.com/nautilus-project/nautilus/actions/workflows/node.js.yml)
-[![Python package](https://github.com/nautilus-project/nautilus/actions/workflows/python-package.yml/badge.svg)](https://github.com/nautilus-project/nautilus/actions/workflows/python-package.yml)
+[![TypeScript](https://github.com/nautilus-project/nautilus/actions/workflows/node.js.yml/badge.svg)](https://github.com/nautilus-project/nautilus/actions/workflows/node.js.yml)
+[![Python](https://github.com/nautilus-project/nautilus/actions/workflows/python-package.yml/badge.svg)](https://github.com/nautilus-project/nautilus/actions/workflows/python-package.yml)
 
 <p width="full" margin="auto" align="center" style = "background:gray"><img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/public/nautilus-icon.jpg" alt="youtube" width="200" margin="auto" align="center" bg="white"/></p>
 
