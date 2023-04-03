@@ -1,6 +1,6 @@
 # Nautilus
 
-<p width="full" margin="auto" align="center" style = "background:#4e5a5c"><img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/icons/nautilus-icon.jpg" alt="youtube" width="200" margin="auto" align="center" bg="white"/></p>
+<p width="full" margin="auto" align="center" style = "background:gray"><img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/icons/nautilus-icon.jpg" alt="youtube" width="200" margin="auto" align="center" bg="white"/></p>
 
 🚧 **Note**:   
 This framework is still under active development and this spec is subject to change.   
