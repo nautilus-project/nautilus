@@ -6,10 +6,10 @@ pub fn transfer_lamports<'a>(
     from: impl NautilusSigner<'a>,
     to: impl NautilusMut<'a>,
     amount: u64,
-    system_program: AccountInfo<'a>,
+    system_program: Box<AccountInfo<'a>>,
 ) -> ProgramResult {
     invoke(
         &solana_program::system_instruction::transfer(from.key(), to.key(), amount),
-        &[from.into(), to.into(), system_program],
+        &[from.into(), to.into(), *system_program],
     )
 }

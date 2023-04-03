@@ -1,6 +1,7 @@
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
+    msg,
     program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
@@ -14,40 +15,49 @@ use crate::{
 
 #[derive(Clone)]
 pub struct AssociatedTokenAccount<'a> {
-    pub account_info: AccountInfo<'a>,
-    pub token_program: AccountInfo<'a>,
-    pub associated_token_program: AccountInfo<'a>,
+    pub account_info: Box<AccountInfo<'a>>,
+    pub token_program: Box<AccountInfo<'a>>,
+    pub associated_token_program: Box<AccountInfo<'a>>,
     pub data: Option<AssociatedTokenAccountState>,
 }
 
 impl<'a> AssociatedTokenAccount<'a> {
     pub fn new(
-        account_info: AccountInfo<'a>,
-        token_program: AccountInfo<'a>,
-        associated_token_program: AccountInfo<'a>,
+        account_info: Box<AccountInfo<'a>>,
+        token_program: Box<AccountInfo<'a>>,
+        associated_token_program: Box<AccountInfo<'a>>,
         load_data: bool,
     ) -> Self {
-        let data = match load_data {
-            true => {
-                match AssociatedTokenAccountState::unpack(account_info.data.borrow().as_ref()) {
-                    Ok(state) => Some(state),
-                    Err(_) => {
-                        println!(
-                            "Error parsing AssociatedTokenAccount state from {}",
-                            &account_info.key
-                        );
-                        println!("Are you sure this is an AssociatedTokenAccount?");
-                        None
-                    }
-                }
-            }
-            false => None,
-        };
-        Self {
+        let mut obj = Self {
             account_info,
             token_program,
             associated_token_program,
-            data,
+            data: None,
+        };
+        if load_data {
+            obj.load_data();
+        };
+        obj
+    }
+
+    fn load_data(&mut self) {
+        match AssociatedTokenAccountState::unpack(match &self.account_info.try_borrow_data() {
+            Ok(data) => data,
+            Err(e) => {
+                msg!("Could not read data from {}", &self.account_info.key);
+                msg!("Is it empty?");
+                panic!("{}", e);
+            }
+        }) {
+            Ok(state) => self.data = Some(state),
+            Err(_) => {
+                msg!(
+                    "Error parsing AssociatedTokenAccount state from {}",
+                    &self.account_info.key
+                );
+                msg!("Are you sure this is an AssociatedTokenAccount?");
+                self.data = None
+            }
         }
     }
 
@@ -61,7 +71,7 @@ impl<'a> AssociatedTokenAccount<'a> {
 
 impl<'a> IntoAccountInfo<'a> for AssociatedTokenAccount<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.account_info
+        *self.account_info
     }
 }
 
@@ -96,7 +106,7 @@ impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
 }
 
 impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedTokenAccount<'a>> {
-    fn create(&self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
+    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
@@ -109,11 +119,13 @@ impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedToken
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
             self.self_account.associated_token_program.to_owned(),
-        )
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 
     fn create_with_payer(
-        &self,
+        &mut self,
         mint: Mint<'a>,
         owner: impl NautilusAccountInfo<'a>,
         payer: impl NautilusSigner<'a>,
@@ -126,6 +138,8 @@ impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedToken
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
             self.self_account.associated_token_program.to_owned(),
-        )
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 }

@@ -65,7 +65,7 @@ describe("Nautilus Unit Tests: Source Robust", async () => {
 
     it("Get Token Info", async () => {if (!skipMetadata) return test(
         createGetTokenInfoInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey),
-        [payer, newTokenMint],
+        [payer],
     )})
   })
   

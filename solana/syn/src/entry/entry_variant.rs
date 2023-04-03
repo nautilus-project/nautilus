@@ -107,7 +107,7 @@ impl NautilusEntrypointEnumVariant {
                                         t
                                     });
                                     object_inits.push(
-                                        quote! { let #arg_ident = Create::new(
+                                        quote! { let mut #arg_ident = Create::new(
                                             #(#create_call_idents,)*
                                             #obj_type::new(#(#read_call_idents,)* false)
                                     ); },

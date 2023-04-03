@@ -2,6 +2,7 @@ use borsh::BorshDeserialize;
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
+    msg,
     program_error::ProgramError,
     pubkey::Pubkey,
 };
@@ -76,36 +77,42 @@ impl NautilusData for NautilusIndexData {
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
-    pub account_info: AccountInfo<'a>,
+    pub account_info: Box<AccountInfo<'a>>,
     pub data: Option<NautilusIndexData>,
 }
 
 impl<'a> NautilusIndex<'a> {
-    pub fn new(program_id: &'a Pubkey, account_info: AccountInfo<'a>, load_data: bool) -> Self {
-        let data = match load_data {
-            true => {
-                match NautilusIndexData::try_from_slice(match &account_info.try_borrow_mut_data() {
-                    Ok(data) => data,
-                    Err(e) => {
-                        println!("Could not read data from the Index account.");
-                        println!("Is it empty?");
-                        panic!("{}", e);
-                    }
-                }) {
-                    Ok(state) => Some(state),
-                    Err(_) => {
-                        println!("Error parsing NautilusIndexData state from provided account.");
-                        println!("Are you sure this is a NautilusIndexData?");
-                        None
-                    }
-                }
-            }
-            false => None,
-        };
-        Self {
+    pub fn new(
+        program_id: &'a Pubkey,
+        account_info: Box<AccountInfo<'a>>,
+        load_data: bool,
+    ) -> Self {
+        let mut obj = Self {
             program_id,
             account_info,
-            data,
+            data: None,
+        };
+        if load_data {
+            obj.load_data();
+        };
+        obj
+    }
+
+    fn load_data(&mut self) {
+        match NautilusIndexData::try_from_slice(match &self.account_info.try_borrow_data() {
+            Ok(data) => data,
+            Err(e) => {
+                msg!("Could not read data from {}", &self.account_info.key);
+                msg!("Is it empty?");
+                panic!("{}", e);
+            }
+        }) {
+            Ok(state) => self.data = Some(state),
+            Err(_) => {
+                msg!("Error parsing Mint state from {}", &self.account_info.key);
+                msg!("Are you sure this is the Index?");
+                self.data = None
+            }
         }
     }
 
@@ -119,7 +126,7 @@ impl<'a> NautilusIndex<'a> {
 
 impl<'a> IntoAccountInfo<'a> for NautilusIndex<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.account_info
+        *self.account_info
     }
 }
 
@@ -200,25 +207,29 @@ impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
 }
 
 impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
-    fn create(&self) -> ProgramResult {
+    fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
+            account_info: self.fee_payer.clone(),
+            system_program: self.system_program.clone(),
         });
         create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
-        )
+            self.system_program.clone(),
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 
-    fn create_with_payer(&self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
-        )
+            self.system_program.clone(),
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 }

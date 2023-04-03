@@ -11,17 +11,17 @@ use super::{signer::NautilusSigner, NautilusAccountInfo};
 
 #[derive(Clone)]
 pub struct Create<'a, T: NautilusAccountInfo<'a> + 'a> {
-    pub fee_payer: AccountInfo<'a>,
-    pub system_program: AccountInfo<'a>,
-    pub rent: AccountInfo<'a>,
+    pub fee_payer: Box<AccountInfo<'a>>,
+    pub system_program: Box<AccountInfo<'a>>,
+    pub rent: Box<AccountInfo<'a>>,
     pub self_account: T,
 }
 
 impl<'a, T: NautilusAccountInfo<'a>> Create<'a, T> {
     pub fn new(
-        fee_payer: AccountInfo<'a>,
-        system_program: AccountInfo<'a>,
-        rent: AccountInfo<'a>,
+        fee_payer: Box<AccountInfo<'a>>,
+        system_program: Box<AccountInfo<'a>>,
+        rent: Box<AccountInfo<'a>>,
         self_account: T,
     ) -> Self {
         Self {
@@ -72,31 +72,20 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
 impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusSigner<'a> for Create<'a, T> {}
 
 pub trait NautilusCreate<'a> {
-    fn create(&self) -> ProgramResult;
-    fn create_with_payer(&self, payer: impl NautilusSigner<'a>) -> ProgramResult;
-}
-
-pub trait NautilusCreateAssociatedTokenAccount<'a> {
-    fn create(&self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
-
-    fn create_with_payer(
-        &self,
-        mint: Mint<'a>,
-        owner: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
+    fn create(&mut self) -> ProgramResult;
+    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
 }
 
 pub trait NautilusCreateMint<'a> {
     fn create(
-        &self,
+        &mut self,
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
     ) -> ProgramResult;
 
     fn create_with_payer(
-        &self,
+        &mut self,
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
@@ -106,7 +95,7 @@ pub trait NautilusCreateMint<'a> {
 
 pub trait NautilusCreateMetadata<'a> {
     fn create(
-        &self,
+        &mut self,
         title: String,
         symbol: String,
         uri: String,
@@ -116,7 +105,7 @@ pub trait NautilusCreateMetadata<'a> {
     ) -> ProgramResult;
 
     fn create_with_payer(
-        &self,
+        &mut self,
         title: String,
         symbol: String,
         uri: String,
@@ -129,7 +118,7 @@ pub trait NautilusCreateMetadata<'a> {
 
 pub trait NautilusCreateToken<'a> {
     fn create(
-        &self,
+        &mut self,
         decimals: u8,
         title: String,
         symbol: String,
@@ -140,7 +129,7 @@ pub trait NautilusCreateToken<'a> {
     ) -> ProgramResult;
 
     fn create_with_payer(
-        &self,
+        &mut self,
         decimals: u8,
         title: String,
         symbol: String,
@@ -148,6 +137,17 @@ pub trait NautilusCreateToken<'a> {
         mint_authority: impl NautilusSigner<'a>,
         update_authority: impl NautilusAccountInfo<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+pub trait NautilusCreateAssociatedTokenAccount<'a> {
+    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
+
+    fn create_with_payer(
+        &mut self,
+        mint: Mint<'a>,
+        owner: impl NautilusAccountInfo<'a>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult;
 }

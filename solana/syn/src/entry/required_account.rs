@@ -301,24 +301,24 @@ impl RequiredAccount {
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
-            RequiredAccountType::IndexAccount => quote::quote! { index.to_owned() },
+            RequiredAccountType::IndexAccount => quote::quote! { Box::new(index.to_owned()) },
             RequiredAccountType::Account(subtype) => match subtype {
                 RequiredAccountSubtype::SelfAccount => {
                     let ident = self_account_ident(&ast.ident);
-                    quote::quote! { #ident.to_owned() }
+                    quote::quote! { Box::new(#ident.to_owned()) }
                 }
                 RequiredAccountSubtype::Metadata => {
                     let ident = metadata_ident(&ast.ident);
-                    quote::quote! { #ident.to_owned() }
+                    quote::quote! { Box::new(#ident.to_owned()) }
                 }
                 RequiredAccountSubtype::MintAuthority => {
                     let ident = mint_authority_ident(&ast.ident);
-                    quote::quote! { #ident.to_owned() }
+                    quote::quote! { Box::new(#ident.to_owned()) }
                 }
             },
             _ => {
                 let ident = &ast.ident;
-                quote::quote! { #ident.to_owned() }
+                quote::quote! { Box::new(#ident.to_owned()) }
             }
         }
     }

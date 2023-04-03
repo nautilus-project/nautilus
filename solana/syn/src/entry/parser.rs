@@ -103,7 +103,12 @@ pub fn parse_function(
                             });
                             let mut new_arg = arg.clone();
                             new_arg.ty = Box::new(ty_with_lifetimes);
-                            new_inputs.push(FnArg::Typed(new_arg));
+                            let new_fn_arg = FnArg::Typed(new_arg);
+                            if is_create {
+                                new_inputs.push(syn::parse_quote!( mut #new_fn_arg ));
+                            } else {
+                                new_inputs.push(new_fn_arg);
+                            }
                             return CallContext::Nautilus(nautilus_obj);
                         }
                     }

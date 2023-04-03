@@ -15,32 +15,46 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Metadata<'a> {
-    pub account_info: AccountInfo<'a>,
-    pub token_metadata_program: AccountInfo<'a>,
+    pub account_info: Box<AccountInfo<'a>>,
+    pub token_metadata_program: Box<AccountInfo<'a>>,
     pub data: Option<MetadataState>,
 }
 
 impl<'a> Metadata<'a> {
     pub fn new(
-        account_info: AccountInfo<'a>,
-        token_metadata_program: AccountInfo<'a>,
+        account_info: Box<AccountInfo<'a>>,
+        token_metadata_program: Box<AccountInfo<'a>>,
         load_data: bool,
     ) -> Self {
-        let data = match load_data {
-            true => match MetadataState::try_from_slice(account_info.data.borrow().as_ref()) {
-                Ok(state) => Some(state),
-                Err(_) => {
-                    msg!("Error parsing Metadata state from {}", &account_info.key);
-                    msg!("Are you sure this is a Metadata?");
-                    None
-                }
-            },
-            false => None,
-        };
-        Self {
+        let mut obj = Self {
             account_info,
             token_metadata_program,
-            data,
+            data: None,
+        };
+        if load_data {
+            obj.load_data();
+        };
+        obj
+    }
+
+    fn load_data(&mut self) {
+        match MetadataState::try_from_slice(match &self.account_info.try_borrow_data() {
+            Ok(data) => data,
+            Err(e) => {
+                msg!("Could not read data from {}", &self.account_info.key);
+                msg!("Is it empty?");
+                panic!("{}", e);
+            }
+        }) {
+            Ok(state) => self.data = Some(state),
+            Err(_) => {
+                msg!(
+                    "Error parsing Metadata state from {}",
+                    &self.account_info.key
+                );
+                msg!("Are you sure this is a Metadata?");
+                self.data = None
+            }
         }
     }
 
@@ -54,7 +68,7 @@ impl<'a> Metadata<'a> {
 
 impl<'a> IntoAccountInfo<'a> for Metadata<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.account_info
+        *self.account_info
     }
 }
 
@@ -90,7 +104,7 @@ impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
 
 impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
     fn create(
-        &self,
+        &mut self,
         title: String,
         symbol: String,
         uri: String,
@@ -113,11 +127,13 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
             payer,
             self.rent.to_owned(),
             self.self_account.token_metadata_program.to_owned(),
-        )
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 
     fn create_with_payer(
-        &self,
+        &mut self,
         title: String,
         symbol: String,
         uri: String,
@@ -137,6 +153,8 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
             payer,
             self.rent.to_owned(),
             self.self_account.token_metadata_program.to_owned(),
-        )
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 }

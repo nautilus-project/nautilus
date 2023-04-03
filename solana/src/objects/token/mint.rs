@@ -15,32 +15,43 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Mint<'a> {
-    pub account_info: AccountInfo<'a>,
-    pub token_program: AccountInfo<'a>,
+    pub account_info: Box<AccountInfo<'a>>,
+    pub token_program: Box<AccountInfo<'a>>,
     pub data: Option<MintState>,
 }
 
 impl<'a> Mint<'a> {
     pub fn new(
-        account_info: AccountInfo<'a>,
-        token_program: AccountInfo<'a>,
+        account_info: Box<AccountInfo<'a>>,
+        token_program: Box<AccountInfo<'a>>,
         load_data: bool,
     ) -> Self {
-        let data = match load_data {
-            true => match MintState::unpack(account_info.data.borrow().as_ref()) {
-                Ok(state) => Some(state),
-                Err(_) => {
-                    msg!("Error parsing Mint state from {}", &account_info.key);
-                    msg!("Are you sure this is a Mint?");
-                    None
-                }
-            },
-            false => None,
-        };
-        Self {
+        let mut obj = Self {
             account_info,
             token_program,
-            data,
+            data: None,
+        };
+        if load_data {
+            obj.load_data();
+        };
+        obj
+    }
+
+    fn load_data(&mut self) {
+        match MintState::unpack(match &self.account_info.try_borrow_data() {
+            Ok(data) => data,
+            Err(e) => {
+                msg!("Could not read data from {}", &self.account_info.key);
+                msg!("Is it empty?");
+                panic!("{}", e);
+            }
+        }) {
+            Ok(state) => self.data = Some(state),
+            Err(_) => {
+                msg!("Error parsing Mint state from {}", &self.account_info.key);
+                msg!("Are you sure this is a Mint?");
+                self.data = None
+            }
         }
     }
 
@@ -54,7 +65,7 @@ impl<'a> Mint<'a> {
 
 impl<'a> IntoAccountInfo<'a> for Mint<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.account_info
+        *self.account_info
     }
 }
 
@@ -90,7 +101,7 @@ impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
 
 impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
     fn create(
-        &self,
+        &mut self,
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
@@ -108,11 +119,13 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             self.rent.to_owned(),
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
-        )
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 
     fn create_with_payer(
-        &self,
+        &mut self,
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
@@ -127,6 +140,8 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             self.rent.to_owned(),
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
-        )
+        )?;
+        self.self_account.load_data();
+        Ok(())
     }
 }

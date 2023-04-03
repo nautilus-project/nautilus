@@ -50,8 +50,8 @@ function createInstruction(
     )[0]
 
     const keys = [
-        {pubkey: mint, isSigner: true, isWritable: true},
-        {pubkey: metadata, isSigner: false, isWritable: true},
+        {pubkey: mint, isSigner: false, isWritable: false},
+        {pubkey: metadata, isSigner: false, isWritable: false},
         {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
         {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
     ]

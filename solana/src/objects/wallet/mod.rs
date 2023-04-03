@@ -13,14 +13,14 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Wallet<'a> {
-    pub account_info: AccountInfo<'a>,
-    pub system_program: AccountInfo<'a>,
+    pub account_info: Box<AccountInfo<'a>>,
+    pub system_program: Box<AccountInfo<'a>>,
 }
 
 impl<'a> Wallet<'a> {
     pub fn new(
-        account_info: AccountInfo<'a>,
-        system_program: AccountInfo<'a>,
+        account_info: Box<AccountInfo<'a>>,
+        system_program: Box<AccountInfo<'a>>,
         _load_data: bool,
     ) -> Self {
         Self {
@@ -32,7 +32,7 @@ impl<'a> Wallet<'a> {
 
 impl<'a> IntoAccountInfo<'a> for Wallet<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.account_info
+        *self.account_info
     }
 }
 
@@ -74,7 +74,7 @@ impl<'a> NautilusTransferLamports<'a> for Signer<'a, Wallet<'a>> {
 }
 
 impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
-    fn create(&self) -> ProgramResult {
+    fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
@@ -87,7 +87,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
         )
     }
 
-    fn create_with_payer(&self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         create_account(
             self.clone(),
             &self.system_program.key,

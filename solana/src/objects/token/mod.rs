@@ -8,8 +8,8 @@ use solana_program::{
 };
 
 use crate::{
-    cpi::create::create_token, Create, Metadata, Mint, NautilusAccountInfo, NautilusCreateToken,
-    NautilusSigner, Signer, Wallet,
+    Create, Metadata, Mint, NautilusAccountInfo, NautilusCreateMetadata, NautilusCreateMint,
+    NautilusCreateToken, NautilusSigner,
 };
 
 pub mod associated_token;
@@ -40,10 +40,10 @@ pub struct TokenState {
 
 impl<'a> Token<'a> {
     pub fn new(
-        mint_account: AccountInfo<'a>,
-        metadata_account: AccountInfo<'a>,
-        token_program: AccountInfo<'a>,
-        token_metadata_program: AccountInfo<'a>,
+        mint_account: Box<AccountInfo<'a>>,
+        metadata_account: Box<AccountInfo<'a>>,
+        token_program: Box<AccountInfo<'a>>,
+        token_metadata_program: Box<AccountInfo<'a>>,
         load_data: bool,
     ) -> Self {
         Self {
@@ -73,7 +73,7 @@ impl<'a> Token<'a> {
 
 impl<'a> IntoAccountInfo<'a> for Token<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.mint.account_info
+        *self.mint.account_info
     }
 }
 
@@ -143,7 +143,7 @@ impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
 
 impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
     fn create(
-        &self,
+        &mut self,
         decimals: u8,
         title: String,
         symbol: String,
@@ -152,32 +152,22 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
         update_authority: impl NautilusAccountInfo<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
     ) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
-        });
-        let create_mint: Create<Mint> = self.clone().into();
-        let create_metadata: Create<Metadata> = self.clone().into();
-        create_token(
-            create_mint,
-            create_metadata,
-            decimals,
+        let mut create_mint: Create<Mint> = self.clone().into();
+        let mut create_metadata: Create<Metadata> = self.clone().into();
+        create_mint.create(decimals, mint_authority.clone(), freeze_authority)?;
+        create_metadata.create(
             title,
             symbol,
             uri,
+            self.self_account.mint.to_owned(),
             mint_authority,
-            freeze_authority,
             update_authority,
-            payer,
-            self.rent.to_owned(),
-            self.system_program.to_owned(),
-            self.self_account.mint.token_program.to_owned(),
-            self.self_account.metadata.token_metadata_program.to_owned(),
-        )
+        )?;
+        Ok(())
     }
 
     fn create_with_payer(
-        &self,
+        &mut self,
         decimals: u8,
         title: String,
         symbol: String,
@@ -187,23 +177,23 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        let create_mint: Create<Mint> = self.clone().into();
-        let create_metadata: Create<Metadata> = self.clone().into();
-        create_token(
-            create_mint,
-            create_metadata,
+        let mut create_mint: Create<Mint> = self.clone().into();
+        let mut create_metadata: Create<Metadata> = self.clone().into();
+        create_mint.create_with_payer(
             decimals,
+            mint_authority.clone(),
+            freeze_authority,
+            payer.clone(),
+        )?;
+        create_metadata.create_with_payer(
             title,
             symbol,
             uri,
+            self.self_account.mint.to_owned(),
             mint_authority,
-            freeze_authority,
             update_authority,
             payer,
-            self.rent.to_owned(),
-            self.system_program.to_owned(),
-            self.self_account.mint.token_program.to_owned(),
-            self.self_account.metadata.token_metadata_program.to_owned(),
-        )
+        )?;
+        Ok(())
     }
 }
