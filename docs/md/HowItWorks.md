@@ -3,7 +3,7 @@
 ## 🎬 Recorded Walkthroughs
 | Link | Release |
 | ---- | ---------- |
-| [<img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/icons/youtube-icon.png" alt="youtube" width="20" align="center"/> Coming Soon](https://github.com/nautilus-project/nautilus) | 0.0.1 |
+| [<img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/public/youtube-icon.png" alt="youtube" width="20" align="center"/> Coming Soon](https://github.com/nautilus-project/nautilus) | 0.0.1 |
 
 ---
 
