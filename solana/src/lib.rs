@@ -23,7 +23,6 @@ pub use solana_program::{
     system_instruction, system_program, sysvar,
 };
 
-pub use cpi::*;
 pub use objects::{
     properties::{create::*, mutable::*, signer::*, table::*, *},
     table::{index::*, *},

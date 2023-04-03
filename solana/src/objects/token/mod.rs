@@ -1,13 +1,15 @@
+use mpl_token_metadata::state::Creator;
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
     program_error::ProgramError,
+    program_option::COption,
     pubkey::Pubkey,
 };
 
 use crate::{
-    create_token, Create, Metadata, Mint, NautilusAccountInfo, NautilusCreateToken, NautilusSigner,
-    Signer, Wallet,
+    cpi::create::create_token, Create, Metadata, Mint, NautilusAccountInfo, NautilusCreateToken,
+    NautilusSigner, Signer, Wallet,
 };
 
 pub mod associated_token;
@@ -16,54 +18,98 @@ pub mod mint;
 
 #[derive(Clone)]
 pub struct Token<'a> {
-    pub account_info: AccountInfo<'a>,
-    pub metadata: AccountInfo<'a>,
-    pub token_program: AccountInfo<'a>,
-    pub token_metadata_program: AccountInfo<'a>,
+    pub mint: Mint<'a>,
+    pub metadata: Metadata<'a>,
+}
+
+#[derive(Clone)]
+pub struct TokenState {
+    pub mint_authority: COption<Pubkey>,
+    pub supply: u64,
+    pub decimals: u8,
+    pub is_initialized: bool,
+    pub freeze_authority: COption<Pubkey>,
+    pub update_authority: Pubkey,
+    pub title: String,
+    pub symbol: String,
+    pub uri: String,
+    pub seller_fee_basis_points: u16,
+    pub creators: Option<Vec<Creator>>,
+    // TODO: More data to come
+}
+
+impl<'a> Token<'a> {
+    pub fn new(
+        mint_account: AccountInfo<'a>,
+        metadata_account: AccountInfo<'a>,
+        token_program: AccountInfo<'a>,
+        token_metadata_program: AccountInfo<'a>,
+        load_data: bool,
+    ) -> Self {
+        Self {
+            mint: Mint::new(mint_account, token_program, load_data),
+            metadata: Metadata::new(metadata_account, token_metadata_program, load_data),
+        }
+    }
+
+    pub fn data(&self) -> TokenState {
+        let mint_state = self.mint.data();
+        let metadata_state = self.metadata.data();
+        TokenState {
+            mint_authority: mint_state.mint_authority,
+            supply: mint_state.supply,
+            decimals: mint_state.decimals,
+            is_initialized: mint_state.is_initialized,
+            freeze_authority: mint_state.freeze_authority,
+            update_authority: metadata_state.update_authority,
+            title: metadata_state.data.name,
+            symbol: metadata_state.data.symbol,
+            uri: metadata_state.data.uri,
+            seller_fee_basis_points: metadata_state.data.seller_fee_basis_points,
+            creators: metadata_state.data.creators,
+        }
+    }
 }
 
 impl<'a> IntoAccountInfo<'a> for Token<'a> {
     fn into_account_info(self) -> AccountInfo<'a> {
-        self.account_info
+        self.mint.account_info
     }
 }
 
 impl<'a> NautilusAccountInfo<'a> for Token<'a> {
     fn key(&self) -> &'a Pubkey {
-        self.account_info.key
+        self.mint.account_info.key
     }
 
     fn is_signer(&self) -> bool {
-        self.account_info.is_signer
+        self.mint.account_info.is_signer
     }
 
     fn is_writable(&self) -> bool {
-        self.account_info.is_writable
+        self.mint.account_info.is_writable
     }
 
     fn lamports(&self) -> u64 {
-        self.account_info.lamports()
+        self.mint.account_info.lamports()
     }
 
     fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
+        self.mint.account_info.try_borrow_mut_lamports()
     }
 
     fn owner(&self) -> &'a Pubkey {
-        self.account_info.owner
+        self.mint.account_info.owner
     }
 
     fn span(&self) -> usize {
-        self.account_info.data_len()
+        self.mint.account_info.data_len()
     }
 }
 
 impl<'a> From<Token<'a>> for Mint<'a> {
     fn from(value: Token<'a>) -> Self {
-        Self {
-            account_info: value.account_info,
-            token_program: value.token_program,
-        }
+        value.mint
     }
 }
 
@@ -80,10 +126,7 @@ impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Mint<'a>> {
 
 impl<'a> From<Token<'a>> for Metadata<'a> {
     fn from(value: Token<'a>) -> Self {
-        Self {
-            account_info: value.metadata,
-            token_metadata_program: value.token_metadata_program,
-        }
+        value.metadata
     }
 }
 
@@ -128,8 +171,8 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
             payer,
             self.rent.to_owned(),
             self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
-            self.self_account.token_metadata_program.to_owned(),
+            self.self_account.mint.token_program.to_owned(),
+            self.self_account.metadata.token_metadata_program.to_owned(),
         )
     }
 
@@ -159,8 +202,8 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
             payer,
             self.rent.to_owned(),
             self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
-            self.self_account.token_metadata_program.to_owned(),
+            self.self_account.mint.token_program.to_owned(),
+            self.self_account.metadata.token_metadata_program.to_owned(),
         )
     }
 }

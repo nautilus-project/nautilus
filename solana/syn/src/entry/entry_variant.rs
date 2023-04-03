@@ -93,7 +93,7 @@ impl NautilusEntrypointEnumVariant {
                             let required_accounts_for_obj = obj.get_required_accounts();
 
                             let accounts_for_read = required_accounts_for_obj.0;
-                            let read_initializers = accounts_for_read.iter().map(|r| {
+                            let read_call_idents = accounts_for_read.iter().map(|r| {
                                 let t: TokenStream = r.into();
                                 t
                             });
@@ -102,29 +102,29 @@ impl NautilusEntrypointEnumVariant {
 
                             match accounts_for_create_option {
                                 Some(accounts_for_create) => {
-                                    let create_initializers = accounts_for_create.iter().map(|r| {
+                                    let create_call_idents = accounts_for_create.iter().map(|r| {
                                         let t: TokenStream = r.into();
                                         t
                                     });
                                     object_inits.push(
-                                        quote! { let #arg_ident = Create{
-                                            #(#create_initializers,)*
-                                            self_account: #obj_type{#(#read_initializers,)*}
-                                        }; },
+                                        quote! { let #arg_ident = Create::new(
+                                            #(#create_call_idents,)*
+                                            #obj_type::new(#(#read_call_idents,)* false)
+                                    ); },
                                     );
                                 },
                                 None => {
                                     if config.is_signer { 
                                         object_inits.push(
-                                            quote! { let #arg_ident = Signer::new(#obj_type{#(#read_initializers,)*}); },
+                                            quote! { let #arg_ident = Signer::new(#obj_type::new(#(#read_call_idents,)* true)); },
                                         );
                                     } else if config.is_mut {
                                         object_inits.push(
-                                            quote! { let #arg_ident = Mut::new(#obj_type{#(#read_initializers,)*}); },
+                                            quote! { let #arg_ident = Mut::new(#obj_type::new(#(#read_call_idents,)* true)); },
                                         );
                                     } else { 
                                         object_inits.push(
-                                            quote! { let #arg_ident = #obj_type{#(#read_initializers,)*}; },
+                                            quote! { let #arg_ident = #obj_type::new(#(#read_call_idents,)* true); },
                                         );
                                     }
                                 },

@@ -1,3 +1,4 @@
+use borsh::BorshDeserialize;
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
@@ -6,8 +7,9 @@ use solana_program::{
 };
 
 use crate::{
-    create_pda, Create, NautilusAccountInfo, NautilusCreate, NautilusData, NautilusSigner,
-    NautilusTable, NautilusTransferLamports, Signer, Wallet,
+    cpi::create::create_pda, objects::table::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
+    NautilusCreate, NautilusData, NautilusSigner, NautilusTable, NautilusTransferLamports, Signer,
+    Wallet,
 };
 
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
@@ -75,7 +77,44 @@ impl NautilusData for NautilusIndexData {
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
     pub account_info: AccountInfo<'a>,
-    pub data: NautilusIndexData,
+    pub data: Option<NautilusIndexData>,
+}
+
+impl<'a> NautilusIndex<'a> {
+    pub fn new(program_id: &'a Pubkey, account_info: AccountInfo<'a>, load_data: bool) -> Self {
+        let data = match load_data {
+            true => {
+                match NautilusIndexData::try_from_slice(match &account_info.try_borrow_mut_data() {
+                    Ok(data) => data,
+                    Err(e) => {
+                        println!("Could not read data from the Index account.");
+                        println!("Is it empty?");
+                        panic!("{}", e);
+                    }
+                }) {
+                    Ok(state) => Some(state),
+                    Err(_) => {
+                        println!("Error parsing NautilusIndexData state from provided account.");
+                        println!("Are you sure this is a NautilusIndexData?");
+                        None
+                    }
+                }
+            }
+            false => None,
+        };
+        Self {
+            program_id,
+            account_info,
+            data,
+        }
+    }
+
+    pub fn data(&self) -> NautilusIndexData {
+        match &self.data {
+            Some(data) => data.clone(),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
+    }
 }
 
 impl<'a> IntoAccountInfo<'a> for NautilusIndex<'a> {
@@ -116,23 +155,38 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
 
 impl<'a> NautilusTable<'a> for NautilusIndex<'a> {
     fn primary_key(&self) -> &'a [u8] {
-        self.data.primary_key()
+        match &self.data {
+            Some(data) => data.primary_key(),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
     }
 
     fn seeds(&self) -> [&'a [u8]; 2] {
-        self.data.seeds()
+        match &self.data {
+            Some(data) => data.seeds(),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
     }
 
     fn pda(&self) -> (Pubkey, u8) {
-        self.data.pda(self.program_id)
+        match &self.data {
+            Some(data) => data.pda(self.program_id),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
     }
 
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
-        self.data.check_authorities(accounts)
+        match &self.data {
+            Some(data) => data.check_authorities(accounts),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
     }
 
     fn count_authorities(&self) -> u8 {
-        self.data.count_authorities()
+        match &self.data {
+            Some(data) => data.count_authorities(),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
     }
 }
 

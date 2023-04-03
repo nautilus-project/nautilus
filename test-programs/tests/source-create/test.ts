@@ -10,7 +10,7 @@ import {
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
-import { CONNECTION, PAYER, PROGRAM_CREATE } from '../const'
+import { CONNECTION, PAYER, PROGRAM_SOURCE_CREATE } from '../const'
 import { 
     createCreateAssociatedTokenInstruction,
     createCreateAssociatedTokenWithPayerInstruction,
@@ -25,13 +25,13 @@ import {
 } from './instructions'
 import { createTransferWalletInstruction } from './instructions/transfer'
 
-describe("Nautilus Unit Tests: Create", async () => {
+describe("Nautilus Unit Tests: Source Create", async () => {
 
-    const skipMetadata = true; // Enabled for localnet
+    const skipMetadata = true; // `true` for localnet
 
     const connection = CONNECTION
     const payer = PAYER
-    const program = PROGRAM_CREATE
+    const program = PROGRAM_SOURCE_CREATE
     
     const rent_payer = Keypair.generate()
 
@@ -94,15 +94,15 @@ describe("Nautilus Unit Tests: Create", async () => {
         [payer, newMintWithPayer],
     ))
 
-    it("Create Metadata", async () => skipMetadata ?? test(
+    it("Create Metadata", async () => {if (!skipMetadata) return test(
         createCreateMetadataInstruction(newMint.publicKey, payer.publicKey, program.publicKey, title, symbol, uri),
         [payer],
-    ))
+    )})
 
-    it("Create Metadata with Payer", async () => skipMetadata ?? test(
+    it("Create Metadata with Payer", async () => {if (!skipMetadata) return test(
         createCreateMetadataWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, title, symbol, uri),
         [payer],
-    ))
+    )})
 
     it("Create Associated Token", async () => test(
         createCreateAssociatedTokenInstruction(newMint.publicKey, newWallet.publicKey, payer.publicKey, program.publicKey),
@@ -114,15 +114,15 @@ describe("Nautilus Unit Tests: Create", async () => {
         [payer],
     ))
 
-    it("Create Token", async () => skipMetadata ?? test(
+    it("Create Token", async () => {if (!skipMetadata) return test(
         createCreateTokenInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
         [payer, newTokenMint],
-    ))
+    )})
 
-    it("Create Token with Payer", async () => skipMetadata ?? test(
+    it("Create Token with Payer", async () => {if (!skipMetadata) return test(
         createCreateTokenWithPayerInstruction(newTokenMintWithPayer.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
         [payer, newTokenMintWithPayer],
-    ))
+    )})
 
     it("Transfer Wallet", async () => test(
         createTransferWalletInstruction(payer.publicKey, newWallet.publicKey, program.publicKey, transferAmount),

@@ -6,7 +6,7 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::NautilusAccountInfo;
+use super::NautilusAccountInfo;
 
 #[derive(Clone)]
 pub struct Mut<'a, T: NautilusAccountInfo<'a> + 'a> {

@@ -6,14 +6,28 @@ use solana_program::{
 };
 
 use crate::{
-    create_account, mutable::NautilusMut, transfer_lamports, Create, NautilusAccountInfo,
-    NautilusCreate, NautilusSigner, NautilusTransferLamports, Signer,
+    cpi::{create::create_account, transfer::transfer_lamports},
+    Create, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
+    NautilusTransferLamports, Signer,
 };
 
 #[derive(Clone)]
 pub struct Wallet<'a> {
     pub account_info: AccountInfo<'a>,
     pub system_program: AccountInfo<'a>,
+}
+
+impl<'a> Wallet<'a> {
+    pub fn new(
+        account_info: AccountInfo<'a>,
+        system_program: AccountInfo<'a>,
+        _load_data: bool,
+    ) -> Self {
+        Self {
+            account_info,
+            system_program,
+        }
+    }
 }
 
 impl<'a> IntoAccountInfo<'a> for Wallet<'a> {

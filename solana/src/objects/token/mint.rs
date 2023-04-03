@@ -1,19 +1,55 @@
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
+    msg,
     program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
 };
+use spl_token::state::Mint as MintState;
 
 use crate::{
-    create_mint, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner, Signer, Wallet,
+    cpi::create::create_mint, objects::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
+    NautilusCreateMint, NautilusSigner, Signer, Wallet,
 };
 
 #[derive(Clone)]
 pub struct Mint<'a> {
     pub account_info: AccountInfo<'a>,
     pub token_program: AccountInfo<'a>,
+    pub data: Option<MintState>,
+}
+
+impl<'a> Mint<'a> {
+    pub fn new(
+        account_info: AccountInfo<'a>,
+        token_program: AccountInfo<'a>,
+        load_data: bool,
+    ) -> Self {
+        let data = match load_data {
+            true => match MintState::unpack(account_info.data.borrow().as_ref()) {
+                Ok(state) => Some(state),
+                Err(_) => {
+                    msg!("Error parsing Mint state from {}", &account_info.key);
+                    msg!("Are you sure this is a Mint?");
+                    None
+                }
+            },
+            false => None,
+        };
+        Self {
+            account_info,
+            token_program,
+            data,
+        }
+    }
+
+    pub fn data(&self) -> MintState {
+        match self.data {
+            Some(data) => data,
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
+    }
 }
 
 impl<'a> IntoAccountInfo<'a> for Mint<'a> {

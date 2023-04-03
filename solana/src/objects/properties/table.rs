@@ -1,6 +1,6 @@
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::NautilusAccountInfo;
+use super::NautilusAccountInfo;
 
 pub trait NautilusData: Clone + borsh::BorshDeserialize + borsh::BorshSerialize {
     fn primary_key<'a>(&self) -> &'a [u8];

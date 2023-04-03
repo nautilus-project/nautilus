@@ -266,8 +266,8 @@ impl RequiredAccount {
             match is_create {
                 true => Some(vec![
                     Construct::FeePayer.into(),
-                    Construct::Sysvar(SysvarType::Rent).into(),
                     Construct::SystemProgram.into(),
+                    Construct::Sysvar(SysvarType::Rent).into(),
                 ]),
                 false => None,
             },
@@ -301,24 +301,24 @@ impl RequiredAccount {
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
-            RequiredAccountType::IndexAccount => quote::quote! { index: index.to_owned() },
+            RequiredAccountType::IndexAccount => quote::quote! { index.to_owned() },
             RequiredAccountType::Account(subtype) => match subtype {
                 RequiredAccountSubtype::SelfAccount => {
                     let ident = self_account_ident(&ast.ident);
-                    quote::quote! { account_info: #ident.to_owned() }
+                    quote::quote! { #ident.to_owned() }
                 }
                 RequiredAccountSubtype::Metadata => {
                     let ident = metadata_ident(&ast.ident);
-                    quote::quote! { metadata: #ident.to_owned() }
+                    quote::quote! { #ident.to_owned() }
                 }
                 RequiredAccountSubtype::MintAuthority => {
                     let ident = mint_authority_ident(&ast.ident);
-                    quote::quote! { mint_authority: #ident.to_owned() }
+                    quote::quote! { #ident.to_owned() }
                 }
             },
             _ => {
                 let ident = &ast.ident;
-                quote::quote! { #ident: #ident.to_owned() }
+                quote::quote! { #ident.to_owned() }
             }
         }
     }

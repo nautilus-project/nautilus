@@ -1,19 +1,55 @@
+use borsh::BorshDeserialize;
+use mpl_token_metadata::state::Metadata as MetadataState;
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
+    msg,
     program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::{
-    create_metadata, Create, Mint, NautilusAccountInfo, NautilusCreateMetadata, NautilusSigner,
-    Signer, Wallet,
+    cpi::create::create_metadata, objects::DATA_NOT_SET_MSG, Create, Mint, NautilusAccountInfo,
+    NautilusCreateMetadata, NautilusSigner, Signer, Wallet,
 };
 
 #[derive(Clone)]
 pub struct Metadata<'a> {
     pub account_info: AccountInfo<'a>,
     pub token_metadata_program: AccountInfo<'a>,
+    pub data: Option<MetadataState>,
+}
+
+impl<'a> Metadata<'a> {
+    pub fn new(
+        account_info: AccountInfo<'a>,
+        token_metadata_program: AccountInfo<'a>,
+        load_data: bool,
+    ) -> Self {
+        let data = match load_data {
+            true => match MetadataState::try_from_slice(account_info.data.borrow().as_ref()) {
+                Ok(state) => Some(state),
+                Err(_) => {
+                    msg!("Error parsing Metadata state from {}", &account_info.key);
+                    msg!("Are you sure this is a Metadata?");
+                    None
+                }
+            },
+            false => None,
+        };
+        Self {
+            account_info,
+            token_metadata_program,
+            data,
+        }
+    }
+
+    pub fn data(&self) -> MetadataState {
+        match &self.data {
+            Some(data) => data.clone(),
+            None => panic!("{}", DATA_NOT_SET_MSG),
+        }
+    }
 }
 
 impl<'a> IntoAccountInfo<'a> for Metadata<'a> {

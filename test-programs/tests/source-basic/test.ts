@@ -10,13 +10,13 @@ import {
     Transaction,
 } from '@solana/web3.js'
 import { createTestInstruction, TestInstruction } from './instruction'
-import { CONNECTION, PAYER, PROGRAM_BASIC } from '../const'
+import { CONNECTION, PAYER, PROGRAM_SOURCE_BASIC } from '../const'
 
-describe("Nautilus Unit Tests: Basic", async () => {
+describe("Nautilus Unit Tests: Source Basic", async () => {
 
     const connection = CONNECTION
     const payer = PAYER
-    const program = PROGRAM_BASIC
+    const program = PROGRAM_SOURCE_BASIC
     
     const from = Keypair.generate()
     const to = Keypair.generate()
@@ -42,7 +42,8 @@ describe("Nautilus Unit Tests: Basic", async () => {
                 program.publicKey,
                 instruction,
             )),
-            [payer]
+            [payer],
+            {skipPreflight: true}
         )
     }
 

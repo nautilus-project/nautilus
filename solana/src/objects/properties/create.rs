@@ -5,7 +5,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{Mint, NautilusAccountInfo, NautilusSigner};
+use crate::Mint;
+
+use super::{signer::NautilusSigner, NautilusAccountInfo};
 
 #[derive(Clone)]
 pub struct Create<'a, T: NautilusAccountInfo<'a> + 'a> {
@@ -13,6 +15,22 @@ pub struct Create<'a, T: NautilusAccountInfo<'a> + 'a> {
     pub system_program: AccountInfo<'a>,
     pub rent: AccountInfo<'a>,
     pub self_account: T,
+}
+
+impl<'a, T: NautilusAccountInfo<'a>> Create<'a, T> {
+    pub fn new(
+        fee_payer: AccountInfo<'a>,
+        system_program: AccountInfo<'a>,
+        rent: AccountInfo<'a>,
+        self_account: T,
+    ) -> Self {
+        Self {
+            fee_payer,
+            system_program,
+            rent,
+            self_account,
+        }
+    }
 }
 
 impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Create<'a, T> {

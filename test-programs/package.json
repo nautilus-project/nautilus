@@ -19,8 +19,9 @@
     "@solana/web3.js": "^1.73.2"
   },
   "scripts": {
-    "test-basic": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/basic/test.ts",
-    "test-create": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/create/test.ts",
+    "test-source-basic": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-basic/test.ts",
+    "test-source-create": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-create/test.ts",
+    "test-source-robust": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-robust/test.ts",
     "all": "sh ./tests/all-tests.sh"
   }
 }
