@@ -1,4 +1,6 @@
-# ⛴️ Nautilus
+# Nautilus
+
+<img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/icons/nautilus-icon.jpg" alt="youtube" width="20" align="center" margin="auto/>
 
 🚧 **Note**:   
 This framework is still under active development and this spec is subject to change.   
