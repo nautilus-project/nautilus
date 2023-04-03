@@ -21,9 +21,9 @@ import {
     createCreateTokenInstruction, 
     createCreateTokenWithPayerInstruction, 
     createCreateWalletInstruction, 
-    createCreateWalletWithPayerInstruction 
+    createCreateWalletWithPayerInstruction,
+    createTransferWalletInstruction,
 } from './instructions'
-import { createTransferWalletInstruction } from './instructions/transfer'
 
 describe("Nautilus Unit Tests: Source Create", async () => {
 

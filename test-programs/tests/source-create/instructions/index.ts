@@ -2,6 +2,7 @@ export * from './associated-token'
 export * from './mint'
 export * from './metadata'
 export * from './token'
+export * from './transfer'
 export * from './wallet'
 
 export enum MyInstructions {
