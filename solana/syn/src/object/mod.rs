@@ -1,14 +1,14 @@
-pub mod impl_nautilus;
+pub mod data;
 pub mod parser;
 pub mod source;
 
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, Span};
 use quote::{quote, ToTokens};
 use syn::{Field, Ident, ItemStruct, ItemEnum};
 
 use crate::entry::required_account::RequiredAccount;
 
-use self::parser::{parse_item_struct, NautilusObjectConfig};
+use self::{parser::{parse_item_struct, NautilusObjectConfig}, data::impl_nautilus_data};
 
 #[derive(Clone, Debug)]
 pub struct NautilusObject {
@@ -68,16 +68,13 @@ impl ToTokens for NautilusObject {
 
 impl From<&NautilusObject> for TokenStream {
     fn from(ast: &NautilusObject) -> Self {
-        let table_ident = &ast.ident;
-        // let data_ident = syn::Ident::new(
-        //     &(table_ident.to_string() + "NautilusData"),
-        //     proc_macro2::Span::call_site(),
-        // );
+        let ident = &ast.ident;
+        let data_ident = Ident::new(&(ident.to_string() + "NautilusData"), Span::call_site());
         let object_config = match &ast.object_config {
             Some(object_config) => object_config,
             None => panic!(
                 "No object_config was derived for this Nautilus table: {}",
-                table_ident.to_string()
+                ident.to_string()
             ),
         };
         let data_fields = object_config.data_fields.iter().map(|f| Field {
@@ -85,27 +82,24 @@ impl From<&NautilusObject> for TokenStream {
             ..f.clone()
         });
 
-        // let data_nautilus_impl = quote!();
-        // let table_nautilus_impl = quote!();
+        let nautilus_data_impl = impl_nautilus_data(
+            &ident, 
+            &data_ident, 
+            data_fields.clone().collect(),
+            object_config.autoincrement_enabled,
+            &object_config.primary_key_ident, 
+            &object_config.primary_key_ty,
+        );
 
         quote! {
-            #[derive(borsh::BorshDeserialize, borsh::BorshSerialize)]
-            pub struct #table_ident {
+            #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+            pub struct #data_ident {
                 #(#data_fields,)*
             }
-            // #[derive(borsh::BorshDeserialize, borsh::BorshSerialize)]
-            // pub struct #data_ident {
-            //     #data_fields
-            // }
-            // #data_nautilus_impl
 
-            // #[derive(borsh::BorshDeserialize, borsh::BorshSerialize)]
-            // pub struct #table_ident {
-            //     pub program_id: &'a solana_program::pubkey::Pubkey,
-            //     pub account_info: solana_program::account_info::AccountInfo<'a>,
-            //     pub data: #data_ident,
-            // }
-            // #table_nautilus_impl
+            pub type #ident<'a> = Table<'a, #data_ident>;
+            
+            #nautilus_data_impl
         }
         .into()
     }

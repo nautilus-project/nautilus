@@ -8,7 +8,8 @@ pub struct NautilusObjectConfig {
     pub table_name: String,
     pub data_fields: Fields,
     pub autoincrement_enabled: bool,
-    pub primary_key: Ident,
+    pub primary_key_ident: Ident,
+    pub primary_key_ty: Type,
     pub authorities: Vec<Ident>,
     pub default_instructions: Vec<IdlTypeDefNautilusConfigDefaultInstruction>,
 }
@@ -68,7 +69,7 @@ pub fn parse_item_struct(item_struct: &ItemStruct) -> Option<NautilusObjectConfi
         // });
     }
 
-    let (primary_key, _) = match primary_key_ident_opt {
+    let (primary_key_ident, primary_key_ty) = match primary_key_ident_opt {
         Some((ident, ty)) => (ident, ty),
         None => return None,
     };
@@ -77,7 +78,8 @@ pub fn parse_item_struct(item_struct: &ItemStruct) -> Option<NautilusObjectConfi
         table_name,
         data_fields,
         autoincrement_enabled,
-        primary_key,
+        primary_key_ident,
+        primary_key_ty,
         authorities,
         default_instructions,
     })

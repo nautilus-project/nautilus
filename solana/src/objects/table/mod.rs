@@ -7,7 +7,7 @@ use solana_program::{
 };
 
 use crate::{
-    cpi::create::create_pda, Create, NautilusAccountInfo, NautilusCreate, NautilusData,
+    cpi::create::create_pda, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
     NautilusSigner, NautilusTable, NautilusTransferLamports, Signer, Wallet,
 };
 
@@ -151,8 +151,8 @@ impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Table<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> NautilusCreate<'a> for Create<'a, Table<'a, T>> {
-    fn create(&mut self) -> ProgramResult {
+impl<'a, T: NautilusData> NautilusCreateRecord<'a, T> for Create<'a, Table<'a, T>> {
+    fn create_record(&mut self, data: T) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
@@ -162,17 +162,23 @@ impl<'a, T: NautilusData> NautilusCreate<'a> for Create<'a, Table<'a, T>> {
             self.self_account.program_id,
             payer,
             self.system_program.to_owned(),
+            data,
         )?;
         self.self_account.load_data();
         Ok(())
     }
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    fn create_record_with_payer(
+        &mut self,
+        data: T,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
         create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.system_program.to_owned(),
+            data,
         )?;
         self.self_account.load_data();
         Ok(())

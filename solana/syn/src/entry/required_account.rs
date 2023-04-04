@@ -1,9 +1,12 @@
 use case::CaseExt;
 use convert_case::{Case, Casing};
+use proc_macro2::Span;
+use quote::quote;
+use syn::Ident;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RequiredAccount {
-    pub ident: syn::Ident,
+    pub ident: Ident,
     pub name: String,
     pub is_mut: bool,
     pub is_signer: bool,
@@ -13,6 +16,7 @@ pub struct RequiredAccount {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RequiredAccountType {
+    ProgramId,
     IndexAccount,
     Account(RequiredAccountSubtype),
     FeePayer,
@@ -43,6 +47,7 @@ pub enum ObjectType {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Construct {
+    ProgramId,
     Index(bool),
     SelfAccount(String, String, bool, bool),
     Metadata(String, String, bool),
@@ -65,6 +70,17 @@ pub enum SysvarType {
 impl From<Construct> for RequiredAccount {
     fn from(value: Construct) -> Self {
         match value {
+            Construct::ProgramId => {
+                let name = "program_id".to_string();
+                RequiredAccount {
+                    ident: Ident::new(&name, Span::call_site()),
+                    name: name.clone(),
+                    is_mut: false,
+                    is_signer: false,
+                    desc: name,
+                    account_type: RequiredAccountType::ProgramId,
+                }
+            }
             Construct::Index(is_mut) => {
                 let name = "index".to_string();
                 RequiredAccount {
@@ -218,7 +234,10 @@ impl RequiredAccount {
     ) -> (Vec<Self>, Option<Vec<Self>>) {
         let read = match object_type {
             ObjectType::Table(_) => {
-                vec![Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true).into()]
+                vec![
+                    Construct::ProgramId.into(),
+                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true).into(),
+                ]
             }
             ObjectType::Wallet => vec![
                 Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, is_signer).into(),
@@ -277,7 +296,11 @@ impl RequiredAccount {
     pub fn condense(all_required_accounts: Vec<Vec<Self>>) -> Vec<Self> {
         let flattened = all_required_accounts
             .into_iter()
-            .flat_map(|v| v.into_iter());
+            .flat_map(|v| v.into_iter())
+            .filter(|r| match r.account_type {
+                RequiredAccountType::ProgramId => false,
+                _ => true,
+            });
         let mut map = std::collections::HashMap::new();
         for account in flattened {
             let entry = map.entry(account.name.clone()).or_insert(account.clone());
@@ -301,24 +324,25 @@ impl RequiredAccount {
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
-            RequiredAccountType::IndexAccount => quote::quote! { Box::new(index.to_owned()) },
+            RequiredAccountType::ProgramId => quote! { program_id },
+            RequiredAccountType::IndexAccount => quote! { Box::new(index.to_owned()) },
             RequiredAccountType::Account(subtype) => match subtype {
                 RequiredAccountSubtype::SelfAccount => {
                     let ident = self_account_ident(&ast.ident);
-                    quote::quote! { Box::new(#ident.to_owned()) }
+                    quote! { Box::new(#ident.to_owned()) }
                 }
                 RequiredAccountSubtype::Metadata => {
                     let ident = metadata_ident(&ast.ident);
-                    quote::quote! { Box::new(#ident.to_owned()) }
+                    quote! { Box::new(#ident.to_owned()) }
                 }
                 RequiredAccountSubtype::MintAuthority => {
                     let ident = mint_authority_ident(&ast.ident);
-                    quote::quote! { Box::new(#ident.to_owned()) }
+                    quote! { Box::new(#ident.to_owned()) }
                 }
             },
             _ => {
                 let ident = &ast.ident;
-                quote::quote! { Box::new(#ident.to_owned()) }
+                quote! { Box::new(#ident.to_owned()) }
             }
         }
     }
@@ -340,32 +364,26 @@ impl ToString for RequiredAccountType {
     }
 }
 
-fn appended_ident(ident: &syn::Ident, to_append: &str) -> syn::Ident {
-    syn::Ident::new(
-        &(ident.to_string() + to_append),
-        proc_macro2::Span::call_site(),
-    )
+fn appended_ident(ident: &Ident, to_append: &str) -> Ident {
+    Ident::new(&(ident.to_string() + to_append), Span::call_site())
 }
 
-pub fn self_account_ident(ident: &syn::Ident) -> syn::Ident {
+pub fn self_account_ident(ident: &Ident) -> Ident {
     appended_ident(ident, "_self_account")
 }
 
-pub fn metadata_ident(ident: &syn::Ident) -> syn::Ident {
+pub fn metadata_ident(ident: &Ident) -> Ident {
     appended_ident(ident, "_metadata_account")
 }
 
-pub fn mint_authority_ident(ident: &syn::Ident) -> syn::Ident {
+pub fn mint_authority_ident(ident: &Ident) -> Ident {
     appended_ident(ident, "_mint_authority")
 }
 
-pub fn name_to_ident(name: &str) -> syn::Ident {
-    syn::Ident::new(name, proc_macro2::Span::call_site())
+pub fn name_to_ident(name: &str) -> Ident {
+    Ident::new(name, Span::call_site())
 }
 
-pub fn name_to_ident_snake(name: &str) -> syn::Ident {
-    syn::Ident::new(
-        &(name.to_string().to_snake()),
-        proc_macro2::Span::call_site(),
-    )
+pub fn name_to_ident_snake(name: &str) -> Ident {
+    Ident::new(&(name.to_string().to_snake()), Span::call_site())
 }

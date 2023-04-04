@@ -1,5 +1,4 @@
-use borsh::BorshDeserialize;
-use mpl_token_metadata::state::Metadata as MetadataState;
+use mpl_token_metadata::state::{Metadata as MetadataState, TokenMetadataAccount};
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
@@ -38,7 +37,7 @@ impl<'a> Metadata<'a> {
     }
 
     fn load_data(&mut self) {
-        match MetadataState::try_from_slice(match &self.account_info.try_borrow_data() {
+        match MetadataState::safe_deserialize(match &self.account_info.try_borrow_data() {
             Ok(data) => data,
             Err(e) => {
                 msg!("Could not read data from {}", &self.account_info.key);

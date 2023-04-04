@@ -12,6 +12,7 @@ mod program_nautilus {
         update_authority: Signer<Wallet>,
     ) -> ProgramResult {
         msg!("-- Token: {}", &new_token.key());
+        msg!("-- Metadata: {}", &new_token.metadata().key());
         msg!("-- Update Authority: {}", &update_authority.key());
         new_token.create(
             decimals,
@@ -37,4 +38,23 @@ mod program_nautilus {
 
         Ok(())
     }
+
+    fn create_person(
+        new_person: Create<Person>,
+        id: u8,
+        name: String,
+        authority: Pubkey,
+    ) -> ProgramResult {
+        new_person.create(id, name, authority)
+    }
+}
+
+#[nautilus]
+#[default_instructions(Create, Delete, Update)]
+struct Person {
+    #[primary_key(autoincrement = true)]
+    id: u8,
+    name: String,
+    #[authority]
+    authority: Pubkey,
 }

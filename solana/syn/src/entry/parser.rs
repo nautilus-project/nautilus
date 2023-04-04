@@ -8,7 +8,6 @@ use syn::{
     AngleBracketedGenericArguments, FnArg, Ident, Item, ItemFn, Pat, PathArguments, Type, TypePath,
     UseTree,
 };
-use syn::{Meta, NestedMeta};
 
 use crate::object::source::source_nautilus_objects;
 use crate::object::NautilusObject;
@@ -41,26 +40,15 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
     let mut nautilus_objects: Vec<NautilusObject> = crate_context
         .structs()
         .filter_map(|s| {
-            if let Some(attr) = s.attrs.iter().find(|attr| attr.path.is_ident("derive")) {
-                if let Ok(meta) = attr.parse_meta() {
-                    if let Meta::List(meta_list) = meta {
-                        if meta_list.nested.iter().any(|nested| {
-                            if let NestedMeta::Meta(Meta::Path(path)) = nested {
-                                path.is_ident("Nautilus")
-                            } else {
-                                idl_types.push(s.into());
-                                false
-                            }
-                        }) {
-                            let nautilus_obj: NautilusObject = s.into();
-                            let i = &nautilus_obj;
-                            idl_accounts.push(i.into());
-                            return Some(nautilus_obj);
-                        }
-                    }
-                }
+            if let Some(_) = s.attrs.iter().find(|attr| attr.path.is_ident("nautilus")) {
+                let nautilus_obj: NautilusObject = s.into();
+                let i = &nautilus_obj;
+                idl_accounts.push(i.into());
+                return Some(nautilus_obj);
+            } else {
+                idl_types.push(s.into());
+                None
             }
-            None
         })
         .collect();
     nautilus_objects.extend(source_nautilus_objects());

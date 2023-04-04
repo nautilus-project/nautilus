@@ -5,7 +5,7 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::Mint;
+use crate::{Metadata, Mint, NautilusData};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
@@ -139,6 +139,8 @@ pub trait NautilusCreateToken<'a> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult;
+
+    fn metadata(&self) -> Metadata<'a>;
 }
 
 pub trait NautilusCreateAssociatedTokenAccount<'a> {
@@ -148,6 +150,15 @@ pub trait NautilusCreateAssociatedTokenAccount<'a> {
         &mut self,
         mint: Mint<'a>,
         owner: impl NautilusAccountInfo<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+pub trait NautilusCreateRecord<'a, T: NautilusData> {
+    fn create_record(&mut self, data: T) -> ProgramResult;
+    fn create_record_with_payer(
+        &mut self,
+        data: T,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult;
 }

@@ -53,16 +53,12 @@ impl std::fmt::Display for InsertRecordError {
 }
 
 impl NautilusData for NautilusIndexData {
+    const TABLE_NAME: &'static str = "nautilus_index";
+
+    const AUTO_INCREMENT: bool = false;
+
     fn primary_key<'a>(&self) -> &'a [u8] {
         &[0]
-    }
-
-    fn seeds<'a>(&self) -> [&'a [u8]; 2] {
-        [Self::SEED_PREFIX.as_bytes(), &[0]]
-    }
-
-    fn pda<'a>(&self, program_id: &'a Pubkey) -> (Pubkey, u8) {
-        Pubkey::find_program_address(&self.seeds(), program_id)
     }
 
     fn check_authorities(&self, _accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
@@ -217,6 +213,9 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             self.self_account.program_id,
             payer,
             self.system_program.clone(),
+            NautilusIndexData {
+                index: std::collections::HashMap::new(),
+            },
         )?;
         self.self_account.load_data();
         Ok(())
@@ -228,6 +227,9 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             self.self_account.program_id,
             payer,
             self.system_program.clone(),
+            NautilusIndexData {
+                index: std::collections::HashMap::new(),
+            },
         )?;
         self.self_account.load_data();
         Ok(())

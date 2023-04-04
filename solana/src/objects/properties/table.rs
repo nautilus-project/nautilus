@@ -3,9 +3,15 @@ use solana_program::{account_info::AccountInfo, program_error::ProgramError, pub
 use super::NautilusAccountInfo;
 
 pub trait NautilusData: Clone + borsh::BorshDeserialize + borsh::BorshSerialize {
+    const TABLE_NAME: &'static str;
+    const AUTO_INCREMENT: bool;
     fn primary_key<'a>(&self) -> &'a [u8];
-    fn seeds<'a>(&self) -> [&'a [u8]; 2];
-    fn pda<'a>(&self, program_id: &'a Pubkey) -> (Pubkey, u8);
+    fn seeds<'a>(&self) -> [&'a [u8]; 2] {
+        [Self::TABLE_NAME.as_bytes(), self.primary_key()]
+    }
+    fn pda<'a>(&self, program_id: &'a Pubkey) -> (Pubkey, u8) {
+        Pubkey::find_program_address(&self.seeds(), program_id)
+    }
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError>;
     fn count_authorities(&self) -> u8;
 }

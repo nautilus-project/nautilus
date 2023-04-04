@@ -7,8 +7,8 @@ use solana_program::{
 };
 
 use crate::{
-    AssociatedTokenAccount, Create, Metadata, Mint, NautilusAccountInfo, NautilusSigner,
-    NautilusTable,
+    AssociatedTokenAccount, Create, Metadata, Mint, NautilusAccountInfo, NautilusData,
+    NautilusSigner, NautilusTable,
 };
 
 pub fn create_account<'a>(
@@ -34,6 +34,7 @@ pub fn create_pda<'a>(
     owner: &Pubkey,
     payer: impl NautilusSigner<'a>,
     system_program: Box<AccountInfo<'a>>,
+    data: impl NautilusData,
 ) -> ProgramResult {
     let (_, bump) = new_account.pda();
     let seeds = new_account.seeds();
@@ -45,9 +46,11 @@ pub fn create_pda<'a>(
             new_account.size(),
             owner,
         ),
-        &[payer.into(), new_account.into(), *system_program],
+        &[payer.into(), new_account.clone().into(), *system_program],
         &[&seeds, &[&[bump]]],
-    )
+    )?;
+    data.serialize(&mut &mut new_account.into_account_info().data.borrow_mut()[..])?;
+    Ok(())
 }
 
 pub fn create_mint<'a>(

@@ -196,4 +196,8 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
         )?;
         Ok(())
     }
+
+    fn metadata(&self) -> Metadata<'a> {
+        self.self_account.metadata.to_owned()
+    }
 }

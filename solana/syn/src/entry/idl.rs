@@ -57,7 +57,7 @@ impl From<&NautilusObjectConfig> for IdlTypeDefNautilusConfig {
     fn from(value: &NautilusObjectConfig) -> Self {
         Self {
             table_name: value.table_name.clone(),
-            primary_key: value.primary_key.to_string(),
+            primary_key: value.primary_key_ident.to_string(),
             autoincrement: value.autoincrement_enabled,
             authorities: value.authorities.iter().map(|a| a.to_string()).collect(),
             default_instructions: value.default_instructions.clone(),

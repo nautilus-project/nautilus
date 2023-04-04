@@ -65,8 +65,8 @@ impl From<&NautilusEntrypointEnum>
             },
             quote! { #(#modified_fns)* },
             quote! {
-                pub fn process_instruction(
-                    program_id: &Pubkey,
+                pub fn process_instruction<'a>(
+                    program_id: &'static Pubkey,
                     accounts: &[AccountInfo],
                     input: &[u8],
                 ) -> ProgramResult {
