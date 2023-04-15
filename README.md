@@ -38,6 +38,10 @@ pub mod my_program {
     fn create_person(new_person: Create<Person>, name: String, authority: Pubkey) -> ProgramResult {
         new_person.create(name, authority)
     }
+
+    fn update_person(person: Person, name: String, authority: Signer<Pubkey>) -> ProgramResult {
+        person.update(name, authority)
+    }
 }
 
 #[nautilus]
@@ -57,7 +61,7 @@ struct Person {
 
 
 **Example from `test-programs/programs/source-robust`:**
-https://github.com/nautilus-project/nautilus/blob/220e80fd1af2eab689e48371e96b7a6926c36732/test-programs/programs/source-robust/src/lib.rs
+https://github.com/nautilus-project/nautilus/blob/87a086cccb9763df30ba3c3786323ed6dd088e0a/test-programs/programs/source-robust/src/lib.rs#L1-L102
 
 ### 🔎 How It Works
 
