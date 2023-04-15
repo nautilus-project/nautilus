@@ -5,20 +5,50 @@
 
 <p width="full" margin="auto" align="center" style = "background:gray"><img src="https://raw.githubusercontent.com/nautilus-project/nautilus/main/docs/public/nautilus-icon.jpg" alt="youtube" width="200" margin="auto" align="center" bg="white"/></p>
 
+**Sample Program:**
+```rust
+use nautilus::*;
 
-The ⛴️ Nautilus Framework is a brand-new Solana program framework for 🦀 Rust. It introduces:
-* 🦀 **On-Chain** (Rust):
-    * [📥 Object-oriented on-chain programming](#📥-object-oriented-on-chain-programming)
-    * [🔗 SQL-native program data](#🔗-sql-native-program-data-pdas)
-* 👾 **Client-Side** (TypeScript):
-    * [🔍 Native SQL support for program data](#🔍-native-sql-support-for-program-data)
-    * [⚡️ Account resolution](#⚡️-account-resolution)
+#[nautilus]
+pub mod my_program {
 
-Some other notable elements:
-* 🗝️ Dynamic CPI Support
-* 🗝️ High-quality error logs
-* 🗝️ TypeScript-native client-side types
-* 🗝️ More verbose IDL
+    fn transfer_sol(from: Signer<Wallet>, to: Mut<Wallet>, amount: u64) -> ProgramResult {    
+        from.transfer_lamports(to, amount)
+    }
+
+    fn create_nft(
+        new_nft: Create<Token>,
+        decimals: u8,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: Signer<Wallet>,
+    ) -> ProgramResult {
+        new_nft.create(
+            decimals,
+            title,
+            symbol,
+            uri,
+            mint_authority.clone(),     // mint_authority
+            mint_authority.clone(),     // update_authority
+            Some(mint_authority),       // freeze_authority
+        )
+    }
+
+    fn create_person(new_person: Create<Person>, name: String, authority: Pubkey) -> ProgramResult {
+        new_person.create(name, authority)
+    }
+}
+
+#[nautilus]
+struct Person {
+    #[primary_key(autoincrement = true)]
+    id: u8,
+    name: String,
+    #[authority]
+    authority: Pubkey,
+}
+```
 
 ## 🦀 On-Chain (Rust)
 
