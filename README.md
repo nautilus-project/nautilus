@@ -50,81 +50,10 @@ struct Person {
 }
 ```
 
-## 🦀 On-Chain (Rust)
 
-### Overview
+**Example from `test-programs/programs/source-robust`:**
+https://github.com/nautilus-project/nautilus/blob/main/test-programs/programs/source-robust/src/lib.rs#L1-L102
 
-Entrypoint:
-```rust
-// Entrypoint:
-#[nautilus]
-mod program {
-    fn some_instruction(..) -> ProgramResult {}
-    fn some_other_instruction(..) -> ProgramResult {}
-}
-
-// State:
-#[derive(Nautilus)]
-struct MyData {
-    #[primary_key]
-    id: u8,
-    value: u8,
-}
-```
-
-### 📥 Object-Oriented On-Chain Programming
-
-Similar to the [🐴 Seahorse Framework](https://seahorse-lang.org/), Nautilus takes an object-oriented approach to writing on-chain program logic.   
-With this approach, one can simply call operations on these objects via methods, such as `transfer`.
-```rust
-#[nautilus]
-mod program {
-    fn my_wallet_function(from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
-
-        from.transfer(to, amount)
-    }
-
-    fn my_token_function(mint: Token, from: Wallet, to: Wallet, amount: u64) -> ProgramResult {
-
-        mint.transfer(from, to, amount)
-    }
-}
-```
-
-A `Create<T>` wrapper is used for creating new objects, but the concept is still the same as above.
-```rust
-#[nautilus]
-mod program {
-    fn create_token(new_token: Create<Token>, decimals: u8) -> ProgramResult {
-
-        new_token.create(decimals)
-    }
-
-    fn create_token_with_metadata(
-        new_token: Create<Token>, 
-        decimals: u8,
-        title: String,
-        symbol: String,
-        uri: String,
-    ) -> ProgramResult {
-
-        new_token.create(decimals)?;
-        new_token.create_metadata(title, symbol, uri)?;
-        // - or -
-        new_token.create_with_metadata(
-            decimals,
-            title,
-            symbol,
-            uri,
-        )?;
-        Ok(())
-    }
-}
-```
-
-As you can infer, all accounts are abstracted away from you and packed into your instruction automatically based on the operations you conduct on these objects.   
-   
-But what about custom data (PDAs)? 👇🏼
 
 ### 🔗 SQL-Native Program Data (PDAs)
 
@@ -195,10 +124,6 @@ struct Person {
     second_authority: Pubkey,
 }
 ```
-
-As you can probably guess, these authority fields will required signatures to modify these records.
-   
-You might be wondering 🤔, why does this relation matter? 👇🏼
 
 ## 👾 Client-Side (TypeScript)
 
