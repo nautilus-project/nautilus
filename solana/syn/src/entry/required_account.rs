@@ -37,7 +37,7 @@ pub enum RequiredAccountSubtype {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ObjectType {
-    Table(Vec<Construct>),
+    Table(bool, Vec<Construct>),
     Wallet,
     Token(bool),
     Mint(bool),
@@ -209,7 +209,7 @@ impl From<Construct> for RequiredAccount {
 // TODO: Add support for custom descriptions
 //
 impl RequiredAccount {
-    pub fn derive_object_type(ty_name: &str) -> ObjectType {
+    pub fn derive_object_type(ty_name: &str, is_mut: bool) -> ObjectType {
         if ty_name.eq("Wallet") {
             ObjectType::Wallet
         } else if ty_name.eq("Token") {
@@ -221,7 +221,7 @@ impl RequiredAccount {
         } else if ty_name.eq("AssociatedTokenAccount") {
             ObjectType::AssociatedTokenAccount
         } else {
-            ObjectType::Table(vec![]) // TODO: PDA authorities not supported yet
+            ObjectType::Table(is_mut, vec![]) // TODO: PDA authorities not supported yet
         }
     }
 
@@ -233,9 +233,10 @@ impl RequiredAccount {
         is_mut: bool,
     ) -> (Vec<Self>, Option<Vec<Self>>) {
         let read = match object_type {
-            ObjectType::Table(_) => {
+            ObjectType::Table(is_mut, _) => {
                 vec![
                     Construct::ProgramId.into(),
+                    Construct::Index(is_mut).into(),
                     Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true).into(),
                 ]
             }

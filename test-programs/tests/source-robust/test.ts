@@ -10,7 +10,7 @@ import {
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
-import { CONNECTION, PAYER, PROGRAM_SOURCE_ROBUST } from '../const'
+import { PAYER, PROGRAM_SOURCE_ROBUST, TEST_CONFIGS } from '../const'
 import { 
     createCreateTokenInstruction, 
     createGetTokenInfoInstruction, 
@@ -18,9 +18,9 @@ import {
 
 describe("Nautilus Unit Tests: Source Robust", async () => {
 
-    const skipMetadata = false; // Enabled for localnet
+    const skipMetadata = TEST_CONFIGS.skipMetadata // Enabled for localnet
 
-    const connection = CONNECTION
+    const connection = TEST_CONFIGS.connection
     const payer = PAYER
     const program = PROGRAM_SOURCE_ROBUST
     
@@ -44,6 +44,7 @@ describe("Nautilus Unit Tests: Source Robust", async () => {
     }
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
+        TEST_CONFIGS.sleep()
         let sx = await sendAndConfirmTransaction(
             connection, 
             new Transaction().add(ix),

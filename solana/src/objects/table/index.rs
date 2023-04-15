@@ -1,4 +1,4 @@
-use borsh::BorshDeserialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::{AccountInfo, IntoAccountInfo},
     entrypoint::ProgramResult,
@@ -19,24 +19,25 @@ pub struct NautilusIndexData {
 }
 
 impl NautilusIndexData {
-    pub const SEED_PREFIX: &'static str = "nautilus_index";
-
-    pub fn get_count(&self, table_name: &String) -> Option<&u32> {
-        self.index.get(table_name)
-    }
-
-    pub fn get_next_count(&self, table_name: &String) -> Option<u32> {
-        match self.index.get(table_name) {
-            Some(count) => Some(count + 1),
+    pub fn get_count(&self, table_name: &str) -> Option<u32> {
+        match self.index.get(&(table_name.to_string())) {
+            Some(u) => Some(*u),
             None => None,
         }
     }
 
-    pub fn add_record(&mut self, table_name: &String) -> Result<&u32, InsertRecordError> {
-        match self.index.get_mut(table_name) {
+    pub fn get_next_count(&self, table_name: &str) -> u32 {
+        match self.index.get(&(table_name.to_string())) {
+            Some(count) => count + 1,
+            None => 1,
+        }
+    }
+
+    pub fn add_record(&mut self, table_name: &str) -> Result<u32, InsertRecordError> {
+        match self.index.get_mut(&(table_name.to_string())) {
             Some(count) => {
                 *count += 1;
-                Ok(count)
+                Ok(*count)
             }
             None => Err(InsertRecordError()),
         }
@@ -105,7 +106,7 @@ impl<'a> NautilusIndex<'a> {
         }) {
             Ok(state) => self.data = Some(state),
             Err(_) => {
-                msg!("Error parsing Mint state from {}", &self.account_info.key);
+                msg!("Error parsing Index state from {}", &self.account_info.key);
                 msg!("Are you sure this is the Index?");
                 self.data = None
             }
@@ -117,6 +118,24 @@ impl<'a> NautilusIndex<'a> {
             Some(data) => data.clone(),
             None => panic!("{}", DATA_NOT_SET_MSG),
         }
+    }
+
+    pub fn get_count(&self, table_name: &str) -> Option<u32> {
+        self.data().get_count(table_name)
+    }
+
+    pub fn get_next_count(&self, table_name: &str) -> u32 {
+        self.data().get_next_count(table_name)
+    }
+
+    pub fn add_record(&mut self, table_name: &str) -> Result<u32, ProgramError> {
+        let count = match self.data().add_record(table_name) {
+            Ok(count) => count,
+            Err(e) => return Err(ProgramError::BorshIoError(e.to_string())),
+        };
+        self.data()
+            .serialize(&mut &mut self.account_info.data.borrow_mut()[..])?;
+        Ok(count)
     }
 }
 

@@ -10,7 +10,7 @@ import {
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
-import { CONNECTION, PAYER, PROGRAM_SOURCE_CREATE } from '../const'
+import { PAYER, PROGRAM_SOURCE_CREATE, TEST_CONFIGS } from '../const'
 import { 
     createCreateAssociatedTokenInstruction,
     createCreateAssociatedTokenWithPayerInstruction,
@@ -27,9 +27,9 @@ import {
 
 describe("Nautilus Unit Tests: Source Create", async () => {
 
-    const skipMetadata = true; // `true` for localnet
+    const skipMetadata = TEST_CONFIGS.skipMetadata // `true` for localnet
 
-    const connection = CONNECTION
+    const connection = TEST_CONFIGS.connection
     const payer = PAYER
     const program = PROGRAM_SOURCE_CREATE
     
@@ -60,6 +60,7 @@ describe("Nautilus Unit Tests: Source Create", async () => {
     }
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
+        TEST_CONFIGS.sleep()
         let sx = await sendAndConfirmTransaction(
             connection, 
             new Transaction().add(ix),

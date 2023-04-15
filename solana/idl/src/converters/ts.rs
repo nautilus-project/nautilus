@@ -61,7 +61,7 @@ impl TypeScriptConverter for IdlTypeDef {
                     .iter()
                     .map(|field| {
                         format!(
-                            "{}: {};",
+                            "   {}: {};",
                             field.name,
                             field.field_data_type.to_typescript_string()
                         )
@@ -80,7 +80,7 @@ impl TypeScriptConverter for IdlTypeDef {
                                 .iter()
                                 .map(|field| {
                                     format!(
-                                        "{}: {};",
+                                        "   {}: {};",
                                         field.name,
                                         field.field_data_type.to_typescript_string()
                                     )
@@ -122,7 +122,7 @@ impl TypeScriptConverter for IdlType {
                     .collect::<Vec<String>>()
                     .join(", ")
             ),
-            IdlType::PublicKey => "Uint8Array".to_string(),
+            IdlType::PublicKey => "PublicKey".to_string(),
             IdlType::String => "string".to_string(),
             IdlType::U128 | IdlType::U16 | IdlType::U32 | IdlType::U64 | IdlType::U8 => {
                 "number".to_string()

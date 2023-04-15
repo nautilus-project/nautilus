@@ -8,7 +8,7 @@ use solana_program::{
 
 use crate::{
     cpi::create::create_pda, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
-    NautilusSigner, NautilusTable, NautilusTransferLamports, Signer, Wallet,
+    NautilusIndex, NautilusSigner, NautilusTable, NautilusTransferLamports, Signer, Wallet,
 };
 
 use super::DATA_NOT_SET_MSG;
@@ -18,6 +18,7 @@ pub mod index;
 #[derive(Clone)]
 pub struct Table<'a, T: NautilusData + 'a> {
     pub program_id: &'a Pubkey,
+    pub index: NautilusIndex<'a>,
     pub account_info: Box<AccountInfo<'a>>,
     pub data: Option<T>,
 }
@@ -25,11 +26,14 @@ pub struct Table<'a, T: NautilusData + 'a> {
 impl<'a, T: NautilusData> Table<'a, T> {
     pub fn new(
         program_id: &'a Pubkey,
+        index_account_info: Box<AccountInfo<'a>>,
         account_info: Box<AccountInfo<'a>>,
         load_data: bool,
     ) -> Self {
+        let index = NautilusIndex::new(program_id, index_account_info, true);
         let mut obj = Self {
             program_id,
+            index,
             account_info,
             data: None,
         };
@@ -50,7 +54,7 @@ impl<'a, T: NautilusData> Table<'a, T> {
         }) {
             Ok(state) => self.data = Some(state),
             Err(_) => {
-                msg!("Error parsing Mint state from {}", &self.account_info.key);
+                msg!("Error parsing Table state from {}", &self.account_info.key);
                 msg!("Are you sure this is the correct data type?"); // TODO: Get type name in here
                 self.data = None
             }

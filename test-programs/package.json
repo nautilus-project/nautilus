@@ -16,7 +16,8 @@
   "dependencies": {
     "@metaplex-foundation/mpl-token-metadata": "^2.9.1",
     "@solana/spl-token": "^0.3.7",
-    "@solana/web3.js": "^1.73.2"
+    "@solana/web3.js": "^1.73.2",
+    "yaml": "^2.2.1"
   },
   "scripts": {
     "test-source-basic": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-basic/test.ts",

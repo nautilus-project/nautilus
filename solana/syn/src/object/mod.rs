@@ -37,7 +37,7 @@ impl NautilusObject {
         match &self.entry_config {
             Some(config) => RequiredAccount::resolve_accounts(
                 config.arg_ident.to_string(), 
-                RequiredAccount::derive_object_type(&self.ident.to_string()), 
+                RequiredAccount::derive_object_type(&self.ident.to_string(), config.is_mut), 
                 config.is_create,
                 config.is_signer,
                 config.is_mut,

@@ -10,11 +10,11 @@ import {
     Transaction,
 } from '@solana/web3.js'
 import { createTestInstruction, TestInstruction } from './instruction'
-import { CONNECTION, PAYER, PROGRAM_SOURCE_BASIC } from '../const'
+import { PAYER, PROGRAM_SOURCE_BASIC, TEST_CONFIGS } from '../const'
 
 describe("Nautilus Unit Tests: Source Basic", async () => {
 
-    const connection = CONNECTION
+    const connection = TEST_CONFIGS.connection
     const payer = PAYER
     const program = PROGRAM_SOURCE_BASIC
     
@@ -33,6 +33,7 @@ describe("Nautilus Unit Tests: Source Basic", async () => {
     }
 
     async function test(instruction: TestInstruction) {
+        TEST_CONFIGS.sleep()
         await sendAndConfirmTransaction(
             connection, 
             new Transaction().add(createTestInstruction(

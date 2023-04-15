@@ -39,22 +39,64 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn create_person(
-        new_person: Create<Person>,
+    fn create_person(new_person: Create<Person>, name: String, authority: Pubkey) -> ProgramResult {
+        msg!("-- New Person: {}", &new_person.key());
+        new_person.create(name, authority)
+    }
+
+    fn read_person(person: Person) -> ProgramResult {
+        msg!("-- Person: {}", &person.key());
+        msg!("      ID:             {}", person.data().id);
+        msg!("      Name:           {}", person.data().name);
+        msg!("      Authority:      {}", person.data().authority);
+        Ok(())
+    }
+
+    fn create_home(
+        new_home: Create<Home>,
         id: u8,
-        name: String,
-        authority: Pubkey,
+        house_number: u8,
+        street: String,
     ) -> ProgramResult {
-        new_person.create(id, name, authority)
+        msg!("-- New Home: {}", &new_home.key());
+        new_home.create(id, house_number, street)
+    }
+
+    fn read_home(home: Home) -> ProgramResult {
+        msg!("-- Home: {}", &home.key());
+        msg!("      ID:             {}", home.data().id);
+        msg!("      House Number:   {}", home.data().house_number);
+        msg!("      Street:         {}", home.data().street);
+        Ok(())
     }
 }
 
 #[nautilus]
-#[default_instructions(Create, Delete, Update)]
 struct Person {
     #[primary_key(autoincrement = true)]
     id: u8,
     name: String,
     #[authority]
     authority: Pubkey,
+}
+
+#[nautilus]
+struct Home {
+    #[primary_key(autoincrement = false)]
+    id: u8,
+    house_number: u8,
+    street: String,
+}
+
+#[nautilus]
+#[default_instructions(Create, Delete, Update)]
+struct Car {
+    #[primary_key(autoincrement = true)]
+    id: u8,
+    make: String,
+    model: String,
+    #[authority]
+    purchase_authority: Pubkey,
+    #[authority]
+    operating_authority: Pubkey,
 }
