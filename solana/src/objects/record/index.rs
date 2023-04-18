@@ -8,8 +8,8 @@ use solana_program::{
 };
 
 use crate::{
-    cpi::create::create_pda, objects::table::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
-    NautilusCreate, NautilusData, NautilusSigner, NautilusTable, NautilusTransferLamports, Signer,
+    cpi::create::create_pda, objects::record::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
+    NautilusCreate, NautilusData, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer,
     Wallet,
 };
 
@@ -131,7 +131,7 @@ impl<'a> NautilusIndex<'a> {
     pub fn add_record(&mut self, table_name: &str) -> Result<u32, ProgramError> {
         let count = match self.data().add_record(table_name) {
             Ok(count) => count,
-            Err(e) => return Err(ProgramError::BorshIoError(e.to_string())),
+            Err(e) => return Err(ProgramError::BorshIoError(e.to_string())), // TODO wtf?
         };
         self.data()
             .serialize(&mut &mut self.account_info.data.borrow_mut()[..])?;
@@ -175,7 +175,7 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> NautilusTable<'a> for NautilusIndex<'a> {
+impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
     fn primary_key(&self) -> &'a [u8] {
         match &self.data {
             Some(data) => data.primary_key(),

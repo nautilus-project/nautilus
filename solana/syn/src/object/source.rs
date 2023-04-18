@@ -59,19 +59,19 @@ fn source_struct(name: &str, source_fields: Vec<SourceField>) -> ItemStruct {
 
 pub fn source_nautilus_objects() -> Vec<NautilusObject> {
     [
-        &source_struct(
+        source_struct(
             "Wallet",
             vec![SourceField::AccountInfo, SourceField::SystemProgram],
         ),
-        &source_struct(
+        source_struct(
             "Mint",
             vec![SourceField::AccountInfo, SourceField::TokenProgram],
         ),
-        &source_struct(
+        source_struct(
             "Metadata",
             vec![SourceField::AccountInfo, SourceField::TokenMetadataProgram],
         ),
-        &source_struct(
+        source_struct(
             "AssociatedTokenAccount",
             vec![
                 SourceField::AccountInfo,
@@ -79,7 +79,7 @@ pub fn source_nautilus_objects() -> Vec<NautilusObject> {
                 SourceField::AssociatedTokenProgram,
             ],
         ),
-        &source_struct(
+        source_struct(
             "Token",
             vec![
                 SourceField::AccountInfo,

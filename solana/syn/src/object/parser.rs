@@ -1,6 +1,5 @@
 use nautilus_idl::idl_nautilus_config::IdlTypeDefNautilusConfigDefaultInstruction;
-use proc_macro2::{Span, TokenStream};
-// use quote::quote;
+use proc_macro2::TokenStream;
 use syn::{Fields, Ident, ItemStruct, Type};
 
 #[derive(Clone, Debug)]
@@ -28,8 +27,6 @@ pub enum DefaultInstructions {
 
 pub fn parse_item_struct(item_struct: &ItemStruct) -> Option<NautilusObjectConfig> {
     let ident_string = item_struct.ident.to_string();
-    let _ident_optionized_struct_name =
-        Ident::new(&(ident_string.clone() + "Optionized"), Span::call_site());
 
     let table_name = ident_string.clone().to_lowercase();
     let default_instructions = parse_top_level_attributes(&ident_string, &item_struct.attrs);
@@ -52,21 +49,6 @@ pub fn parse_item_struct(item_struct: &ItemStruct) -> Option<NautilusObjectConfi
         if parsed_attributes.is_authority {
             authorities.push(f.ident.clone().unwrap());
         }
-
-        // let field_name = &f.ident;
-        // let field_ty = &f.ty;
-        // optionized_struct_fields.push(match parsed_attributes.is_primary_key {
-        //     true => (
-        //         field_name.clone().unwrap(),
-        //         quote! { #field_ty },
-        //         quote! { #field_name: #field_ty },
-        //     ),
-        //     false => (
-        //         field_name.clone().unwrap(),
-        //         quote! { std::option::Option<#field_ty> },
-        //         quote! { #field_name: std::option::Option<#field_ty> },
-        //     ),
-        // });
     }
 
     let (primary_key_ident, primary_key_ty) = match primary_key_ident_opt {

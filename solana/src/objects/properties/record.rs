@@ -16,7 +16,7 @@ pub trait NautilusData: Clone + borsh::BorshDeserialize + borsh::BorshSerialize 
     fn count_authorities(&self) -> u8;
 }
 
-pub trait NautilusTable<'a>: NautilusAccountInfo<'a> {
+pub trait NautilusRecord<'a>: NautilusAccountInfo<'a> {
     fn primary_key(&self) -> &'a [u8];
     fn seeds(&self) -> [&'a [u8]; 2];
     fn pda(&self) -> (Pubkey, u8);

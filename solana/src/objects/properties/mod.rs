@@ -7,8 +7,8 @@ use self::mutable::NautilusMut;
 
 pub mod create;
 pub mod mutable;
+pub mod record;
 pub mod signer;
-pub mod table;
 
 pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
     fn key(&self) -> &'a Pubkey;

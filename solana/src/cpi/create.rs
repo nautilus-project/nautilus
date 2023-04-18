@@ -8,7 +8,7 @@ use solana_program::{
 
 use crate::{
     AssociatedTokenAccount, Create, Metadata, Mint, NautilusAccountInfo, NautilusData,
-    NautilusSigner, NautilusTable,
+    NautilusRecord, NautilusSigner,
 };
 
 pub fn create_account<'a>(
@@ -30,7 +30,7 @@ pub fn create_account<'a>(
 }
 
 pub fn create_pda<'a>(
-    new_account: impl NautilusTable<'a>,
+    new_account: impl NautilusRecord<'a>,
     owner: &Pubkey,
     payer: impl NautilusSigner<'a>,
     system_program: Box<AccountInfo<'a>>,

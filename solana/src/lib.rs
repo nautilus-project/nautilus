@@ -11,7 +11,7 @@ pub mod cpi;
 pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
-pub use nautilus_derive::nautilus;
+pub use nautilus_derive::{nautilus, Nautilus};
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo, IntoAccountInfo},
     declare_id, entrypoint,
@@ -24,8 +24,8 @@ pub use solana_program::{
 };
 
 pub use objects::{
-    properties::{create::*, mutable::*, signer::*, table::*, *},
-    table::{index::*, *},
+    properties::{create::*, mutable::*, record::*, signer::*, *},
+    record::{index::*, *},
     token::{associated_token::*, metadata::*, mint::*, *},
     wallet::*,
 };

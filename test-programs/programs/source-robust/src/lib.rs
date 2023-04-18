@@ -39,12 +39,16 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn create_person(new_person: Create<Person>, name: String, authority: Pubkey) -> ProgramResult {
+    fn create_person(
+        new_person: Create<Record<Person>>,
+        name: String,
+        authority: Pubkey,
+    ) -> ProgramResult {
         msg!("-- New Person: {}", &new_person.key());
         new_person.create(name, authority)
     }
 
-    fn read_person(person: Person) -> ProgramResult {
+    fn read_person(person: Record<Person>) -> ProgramResult {
         msg!("-- Person: {}", &person.key());
         msg!("      ID:             {}", person.data().id);
         msg!("      Name:           {}", person.data().name);
@@ -53,7 +57,7 @@ mod program_nautilus {
     }
 
     fn create_home(
-        new_home: Create<Home>,
+        new_home: Create<Record<Home>>,
         id: u8,
         house_number: u8,
         street: String,
@@ -62,16 +66,38 @@ mod program_nautilus {
         new_home.create(id, house_number, street)
     }
 
-    fn read_home(home: Home) -> ProgramResult {
+    fn read_home(home: Record<Home>) -> ProgramResult {
         msg!("-- Home: {}", &home.key());
         msg!("      ID:             {}", home.data().id);
         msg!("      House Number:   {}", home.data().house_number);
         msg!("      Street:         {}", home.data().street);
         Ok(())
     }
+
+    fn create_car(
+        new_car: Create<Record<Car>>,
+        id: u8,
+        make: String,
+        model: String,
+        purchase_authority: Pubkey,
+        operating_authority: Pubkey,
+    ) -> ProgramResult {
+        msg!("-- New Car: {}", &new_car.key());
+        new_car.create(id, make, model, purchase_authority, operating_authority)
+    }
+
+    fn read_car(car: Record<Car>) -> ProgramResult {
+        msg!("-- Car: {}", &car.key());
+        msg!("      ID:             {}", car.data().id);
+        msg!("      Make:           {}", car.data().make);
+        msg!("      Model:          {}", car.data().model);
+        msg!("      Purchase Auth:  {}", car.data().purchase_authority);
+        msg!("      Operating Auth: {}", car.data().operating_authority);
+        Ok(())
+    }
 }
 
-#[nautilus]
+#[derive(Nautilus)]
 struct Person {
     #[primary_key(autoincrement = true)]
     id: u8,
@@ -80,7 +106,7 @@ struct Person {
     authority: Pubkey,
 }
 
-#[nautilus]
+#[derive(Nautilus)]
 struct Home {
     #[primary_key(autoincrement = false)]
     id: u8,
@@ -88,7 +114,7 @@ struct Home {
     street: String,
 }
 
-#[nautilus]
+#[derive(Nautilus)]
 #[default_instructions(Create, Delete, Update)]
 struct Car {
     #[primary_key(autoincrement = true)]

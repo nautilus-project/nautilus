@@ -11,7 +11,7 @@ use nautilus_idl::{
 };
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{Item, ItemMod};
+use syn::{parse::Parse, Item, ItemMod};
 
 use self::{
     entry_enum::NautilusEntrypointEnum,
@@ -26,8 +26,8 @@ pub struct NautilusEntrypoint {
     pub processor: TokenStream,
 }
 
-impl From<&ItemMod> for NautilusEntrypoint {
-    fn from(value: &ItemMod) -> Self {
+impl From<ItemMod> for NautilusEntrypoint {
+    fn from(value: ItemMod) -> Self {
         let mut declared_functions = vec![];
 
         let leftover_content: Vec<Item> = value
@@ -87,6 +87,12 @@ impl From<&ItemMod> for NautilusEntrypoint {
             functions,
             processor,
         }
+    }
+}
+
+impl Parse for NautilusEntrypoint {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(ItemMod::parse(input)?.into())
     }
 }
 

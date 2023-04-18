@@ -8,7 +8,7 @@ use solana_program::{
 
 use crate::{
     cpi::create::create_pda, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
-    NautilusIndex, NautilusSigner, NautilusTable, NautilusTransferLamports, Signer, Wallet,
+    NautilusIndex, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 use super::DATA_NOT_SET_MSG;
@@ -16,14 +16,14 @@ use super::DATA_NOT_SET_MSG;
 pub mod index;
 
 #[derive(Clone)]
-pub struct Table<'a, T: NautilusData + 'a> {
+pub struct Record<'a, T: NautilusData + 'a> {
     pub program_id: &'a Pubkey,
     pub index: NautilusIndex<'a>,
     pub account_info: Box<AccountInfo<'a>>,
     pub data: Option<T>,
 }
 
-impl<'a, T: NautilusData> Table<'a, T> {
+impl<'a, T: NautilusData> Record<'a, T> {
     pub fn new(
         program_id: &'a Pubkey,
         index_account_info: Box<AccountInfo<'a>>,
@@ -54,8 +54,11 @@ impl<'a, T: NautilusData> Table<'a, T> {
         }) {
             Ok(state) => self.data = Some(state),
             Err(_) => {
-                msg!("Error parsing Table state from {}", &self.account_info.key);
-                msg!("Are you sure this is the correct data type?"); // TODO: Get type name in here
+                msg!("Error parsing Record state from {}", &self.account_info.key);
+                msg!(
+                    "Are you sure this is the correct data type for table `{}`?",
+                    T::TABLE_NAME
+                );
                 self.data = None
             }
         }
@@ -69,13 +72,13 @@ impl<'a, T: NautilusData> Table<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> IntoAccountInfo<'a> for Table<'a, T> {
+impl<'a, T: NautilusData> IntoAccountInfo<'a> for Record<'a, T> {
     fn into_account_info(self) -> AccountInfo<'a> {
         *self.account_info
     }
 }
 
-impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Table<'a, T> {
+impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Record<'a, T> {
     fn key(&self) -> &'a Pubkey {
         self.account_info.key
     }
@@ -105,7 +108,7 @@ impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Table<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> NautilusTable<'a> for Table<'a, T> {
+impl<'a, T: NautilusData> NautilusRecord<'a> for Record<'a, T> {
     fn primary_key(&self) -> &'a [u8] {
         match &self.data {
             Some(data) => data.primary_key(),
@@ -142,7 +145,7 @@ impl<'a, T: NautilusData> NautilusTable<'a> for Table<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Table<'a, T> {
+impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Record<'a, T> {
     fn transfer_lamports(
         self,
         to: impl NautilusAccountInfo<'a>,
@@ -155,7 +158,7 @@ impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Table<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> NautilusCreateRecord<'a, T> for Create<'a, Table<'a, T>> {
+impl<'a, T: NautilusData> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, T>> {
     fn create_record(&mut self, data: T) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),

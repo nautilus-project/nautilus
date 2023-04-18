@@ -2,13 +2,13 @@ pub mod data;
 pub mod parser;
 pub mod source;
 
-use proc_macro2::{TokenStream, Span};
+use proc_macro2::{TokenStream, };
 use quote::{quote, ToTokens};
-use syn::{Field, Ident, ItemStruct, ItemEnum};
+use syn::{Ident, ItemStruct, ItemEnum, parse::Parse};
 
 use crate::entry::required_account::RequiredAccount;
 
-use self::{parser::{parse_item_struct, NautilusObjectConfig}, data::impl_nautilus_data};
+use self::{parser::{parse_item_struct, NautilusObjectConfig}, data::{impl_nautilus_data, impl_borsh}};
 
 #[derive(Clone, Debug)]
 pub struct NautilusObject {
@@ -47,16 +47,22 @@ impl NautilusObject {
     }
 }
 
-impl From<&ItemStruct> for NautilusObject {
-    fn from(value: &ItemStruct) -> Self {
+impl From<ItemStruct> for NautilusObject {
+    fn from(value: ItemStruct) -> Self {
         let ident = value.ident.clone();
-        let object_config = parse_item_struct(value);
+        let object_config = parse_item_struct(&value);
         Self {
             ident,
             raw_type: NautilusObjectRawType::Struct(value.clone()),
             entry_config: None,
             object_config,
         }
+    }
+}
+
+impl Parse for NautilusObject {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(ItemStruct::parse(input)?.into())
     }
 }
 
@@ -69,7 +75,6 @@ impl ToTokens for NautilusObject {
 impl From<&NautilusObject> for TokenStream {
     fn from(ast: &NautilusObject) -> Self {
         let ident = &ast.ident;
-        let data_ident = Ident::new(&(ident.to_string() + "NautilusData"), Span::call_site());
         let object_config = match &ast.object_config {
             Some(object_config) => object_config,
             None => panic!(
@@ -77,29 +82,22 @@ impl From<&NautilusObject> for TokenStream {
                 ident.to_string()
             ),
         };
-        let data_fields = object_config.data_fields.iter().map(|f| Field {
-            attrs: vec![],
-            ..f.clone()
-        });
+        let fields = &object_config.data_fields;
 
-        let nautilus_data_impl = impl_nautilus_data(
-            &ident, 
-            &data_ident, 
-            data_fields.clone().collect(),
+        let impl_borsh = impl_borsh(ident, fields);
+
+        let impl_nautilus_data = impl_nautilus_data(
+            ident, 
+            fields,
+            &object_config.table_name,
             object_config.autoincrement_enabled,
             &object_config.primary_key_ident, 
             &object_config.primary_key_ty,
         );
 
         quote! {
-            #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
-            pub struct #data_ident {
-                #(#data_fields,)*
-            }
-
-            pub type #ident<'a> = Table<'a, #data_ident>;
-            
-            #nautilus_data_impl
+            #impl_borsh
+            #impl_nautilus_data
         }
         .into()
     }
