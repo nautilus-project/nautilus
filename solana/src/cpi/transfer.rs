@@ -3,8 +3,8 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, progr
 use crate::{NautilusMut, NautilusSigner};
 
 pub fn transfer_lamports<'a>(
-    from: impl NautilusSigner<'a>,
-    to: impl NautilusMut<'a>,
+    from: impl NautilusSigner,
+    to: impl NautilusMut,
     amount: u64,
     system_program: Box<AccountInfo<'a>>,
 ) -> ProgramResult {

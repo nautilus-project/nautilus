@@ -30,16 +30,16 @@ impl<'a> Wallet<'a> {
     }
 }
 
-impl<'a> IntoAccountInfo<'a> for Wallet<'a> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        *self.account_info
-    }
-}
+// impl<'a> IntoAccountInfo<'a> for Wallet<'a> {
+//     fn into_account_info(self) -> AccountInfo<'a> {
+//         *self.account_info
+//     }
+// }
 
-impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
-    fn key(&self) -> &'a Pubkey {
-        self.account_info.key
-    }
+impl NautilusAccountInfo for Wallet<'_> {
+    // fn key<'b>(&self) -> &'b Pubkey {
+    //     self.account_info.key
+    // }
 
     fn is_signer(&self) -> bool {
         self.account_info.is_signer
@@ -53,27 +53,26 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
+    // fn mut_lamports<'a>(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+    //     self.account_info.try_borrow_mut_lamports()
+    // }
 
-    fn owner(&self) -> &'a Pubkey {
-        self.account_info.owner
-    }
+    // fn owner<'a>(&self) -> &'a Pubkey {
+    //     self.account_info.owner
+    // }
 
     fn span(&self) -> usize {
         self.account_info.data_len()
     }
 }
 
-impl<'a> NautilusTransferLamports<'a> for Signer<'a, Wallet<'a>> {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        let system_program = self.self_account.system_program.clone();
-        transfer_lamports(self, to, amount, system_program)
+impl NautilusTransferLamports for Signer<Wallet<'_>> {
+    fn transfer_lamports(self, to: impl NautilusMut, amount: u64) -> ProgramResult {
+        todo!()
     }
 }
 
-impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
+impl NautilusCreate for Create<'_, Wallet<'_>> {
     fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
@@ -87,7 +86,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
         )
     }
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    fn create_with_payer(&mut self, payer: impl NautilusSigner) -> ProgramResult {
         create_account(
             self.clone(),
             &self.system_program.key,
@@ -95,4 +94,46 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
             self.system_program.to_owned(),
         )
     }
+}
+
+// ---
+
+// impl IntoAccountInfo for Create<'_, Wallet<'_>> {
+//     fn into_account_info(self) -> AccountInfo<'a> {
+//         *self.self_account.account_info
+//     }
+// }
+
+impl NautilusAccountInfo for Create<'_, Wallet<'_>> {
+    // fn key<'a>(&self) -> &'a Pubkey {
+    //     self.self_account.account_info.key
+    // }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.account_info.is_signer
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.account_info.is_writable
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.account_info.lamports()
+    }
+
+    // fn mut_lamports<'a>(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+    //     self.self_account.account_info.try_borrow_mut_lamports()
+    // }
+
+    // fn owner<'a>(&self) -> &'a Pubkey {
+    //     self.self_account.account_info.owner
+    // }
+
+    fn span(&self) -> usize {
+        self.self_account.account_info.data_len()
+    }
+
+    // fn key(&self) -> Pubkey {
+    //     self.self_account.account_info.key.clone()
+    // }
 }

@@ -124,6 +124,7 @@ mod program_nautilus {
             Some(mint_authority),
         )
     }
+
     fn create_token_with_payer(
         new_token: Create<Token>,
         decimals: u8,

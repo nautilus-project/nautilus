@@ -7,16 +7,16 @@ use self::mutable::NautilusMut;
 
 pub mod create;
 pub mod mutable;
-pub mod record;
+// pub mod record;
 pub mod signer;
 
-pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
-    fn key(&self) -> &'a Pubkey;
+pub trait NautilusAccountInfo {
+    // fn key<'b>(&self) -> &'b Pubkey;
     fn is_signer(&self) -> bool;
     fn is_writable(&self) -> bool;
     fn lamports(&self) -> u64;
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError>;
-    fn owner(&self) -> &'a Pubkey;
+    // fn mut_lamports<'a>(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError>;
+    // fn owner<'a>(&self) -> &'a Pubkey;
     fn span(&self) -> usize;
     fn size(&self) -> u64 {
         self.span().try_into().unwrap()
@@ -27,6 +27,6 @@ pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
     }
 }
 
-pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> + 'a {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult;
+pub trait NautilusTransferLamports: NautilusAccountInfo {
+    fn transfer_lamports(self, to: impl NautilusMut, amount: u64) -> ProgramResult;
 }

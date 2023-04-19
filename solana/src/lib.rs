@@ -24,8 +24,16 @@ pub use solana_program::{
 };
 
 pub use objects::{
-    properties::{create::*, mutable::*, record::*, signer::*, *},
-    record::{index::*, *},
-    token::{associated_token::*, metadata::*, mint::*, *},
+    // properties::{create::*, mutable::*, record::*, signer::*, *},
+    properties::{create::*, mutable::*, signer::*, *},
+    // record::{index::*, *},
+    // token::{associated_token::*, metadata::*, mint::*, *},
     wallet::*,
 };
+
+fn create_wallet_with_payer<'a>(
+    mut new_wallet: Create<Wallet>,
+    rent_payer: Signer<Wallet>,
+) -> ProgramResult {
+    new_wallet.create_with_payer(rent_payer)
+}

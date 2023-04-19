@@ -101,7 +101,7 @@ pub fn parse_function(
                                 is_mut,
                             });
                             let mut new_arg = arg.clone();
-                            new_arg.ty = Box::new(ty_with_lifetimes);
+                            // new_arg.ty = Box::new(ty_with_lifetimes);
                             let new_fn_arg = FnArg::Typed(new_arg);
                             if is_create {
                                 new_inputs.push(syn::parse_quote!( mut #new_fn_arg ));
