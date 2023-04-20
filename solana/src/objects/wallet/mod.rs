@@ -7,7 +7,7 @@ use solana_program::{
 
 use crate::{
     cpi::{create::create_account, transfer::transfer_lamports},
-    Create, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
+    Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
     NautilusTransferLamports, Signer,
 };
 
@@ -36,8 +36,8 @@ impl<'a> IntoAccountInfo<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
-    fn key(&self) -> &'a Pubkey {
+impl NautilusAccountInfo for Wallet<'_> {
+    fn key(&self) -> &Pubkey {
         self.account_info.key
     }
 
@@ -53,11 +53,7 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.account_info.owner
     }
 
@@ -66,33 +62,76 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> NautilusTransferLamports<'a> for Signer<'a, Wallet<'a>> {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        let system_program = self.self_account.system_program.clone();
-        transfer_lamports(self, to, amount, system_program)
+impl NautilusTransferLamports for Signer<Wallet<'_>> {
+    fn transfer_lamports(self, to: impl NautilusMut, amount: u64) -> ProgramResult {
+        transfer_lamports(
+            self.self_account.key(),
+            to.key(),
+            amount,
+            &[
+                // self.self_account.into(),
+                // *to.into(),
+                *self.self_account.system_program.clone(),
+            ],
+        )
     }
 }
 
-impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
+impl NautilusCreate for Create<'_, Wallet<'_>> {
     fn create(&mut self) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
-        });
         create_account(
-            self.clone(),
-            &self.system_program.key,
-            payer,
-            self.system_program.to_owned(),
+            self.fee_payer.key,
+            self.key(),
+            self.required_rent()?,
+            self.size(),
+            self.system_program.key,
+            &[
+                *self.fee_payer.clone(),
+                // *self.self_account.account_info.clone(),
+                *self.system_program.clone(),
+            ],
         )
     }
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    fn create_with_payer(&mut self, payer: impl NautilusSigner) -> ProgramResult {
         create_account(
-            self.clone(),
-            &self.system_program.key,
-            payer,
-            self.system_program.to_owned(),
+            payer.key(),
+            self.self_account.key(),
+            self.required_rent()?,
+            self.size(),
+            self.system_program.key,
+            &[
+                // payer.into(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
         )
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Create<'a, Wallet<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusMut for Mut<Wallet<'a>> {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError> {
+        // self.self_account.account_info.try_borrow_mut_lamports()
+        todo!()
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Mut<Wallet<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl NautilusSigner for Signer<Wallet<'_>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<Wallet<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
 }

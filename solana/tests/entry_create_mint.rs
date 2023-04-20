@@ -3,14 +3,14 @@ use nautilus::*;
 #[nautilus]
 pub mod my_mod {
     fn create_mint(
-        new_mint: Create<Mint>,
+        mut new_mint: Create<Mint>,
         decimals: u8,
         mint_authority: Signer<Wallet>,
     ) -> ProgramResult {
         new_mint.create(decimals, mint_authority.clone(), Some(mint_authority))
     }
     fn create_mint_with_payer(
-        new_mint: Create<Mint>,
+        mut new_mint: Create<Mint>,
         decimals: u8,
         mint_authority: Signer<Wallet>,
         rent_payer: Signer<Wallet>,

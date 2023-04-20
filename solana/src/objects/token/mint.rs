@@ -9,15 +9,15 @@ use solana_program::{
 use spl_token::state::Mint as MintState;
 
 use crate::{
-    cpi::create::create_mint, objects::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
-    NautilusCreateMint, NautilusSigner, Signer, Wallet,
+    cpi::create::create_mint, objects::DATA_NOT_SET_MSG, Create, Mut, NautilusAccountInfo,
+    NautilusCreateMint, NautilusMut, NautilusSigner, Signer,
 };
 
 #[derive(Clone)]
 pub struct Mint<'a> {
     pub account_info: Box<AccountInfo<'a>>,
     pub token_program: Box<AccountInfo<'a>>,
-    pub data: Option<MintState>,
+    pub data: Option<Box<MintState>>,
 }
 
 impl<'a> Mint<'a> {
@@ -46,7 +46,7 @@ impl<'a> Mint<'a> {
                 panic!("{}", e);
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state) => self.data = Some(Box::new(state)),
             Err(_) => {
                 msg!("Error parsing Mint state from {}", &self.account_info.key);
                 msg!("Are you sure this is a Mint?");
@@ -55,9 +55,9 @@ impl<'a> Mint<'a> {
         }
     }
 
-    pub fn data(&self) -> MintState {
-        match self.data {
-            Some(data) => data,
+    pub fn data(&self) -> Box<MintState> {
+        match &self.data {
+            Some(data) => data.clone(),
             None => panic!("{}", DATA_NOT_SET_MSG),
         }
     }
@@ -69,8 +69,8 @@ impl<'a> IntoAccountInfo<'a> for Mint<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
-    fn key(&self) -> &'a Pubkey {
+impl NautilusAccountInfo for Mint<'_> {
+    fn key(&self) -> &Pubkey {
         self.account_info.key
     }
 
@@ -86,11 +86,7 @@ impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.account_info.owner
     }
 
@@ -99,26 +95,33 @@ impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
     }
 }
 
-impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
+impl NautilusCreateMint for Create<'_, Mint<'_>> {
     fn create(
         &mut self,
         decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        mint_authority: impl NautilusSigner,
+        freeze_authority: Option<impl NautilusAccountInfo>,
     ) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
-        });
         create_mint(
-            self.clone(),
+            self.fee_payer.key,
+            self.self_account.key(),
+            self.self_account.required_rent()?,
+            self.self_account.size(),
+            self.self_account.token_program.key,
+            mint_authority.key(),
+            freeze_authority.map(|_| self.key()),
             decimals,
-            mint_authority,
-            freeze_authority,
-            payer,
-            self.rent.to_owned(),
-            self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
+            &[
+                *self.fee_payer.clone(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
+            &[
+                // *self.into(),
+                // mint_authority.into(),
+                // *self.self_account.token_program.clone(),
+                *self.rent.clone(),
+            ],
         )?;
         self.self_account.load_data();
         Ok(())
@@ -127,21 +130,59 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
     fn create_with_payer(
         &mut self,
         decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
+        mint_authority: impl NautilusSigner,
+        freeze_authority: Option<impl NautilusAccountInfo>,
+        payer: impl NautilusSigner,
     ) -> ProgramResult {
         create_mint(
-            self.clone(),
+            payer.key(),
+            self.self_account.key(),
+            self.self_account.required_rent()?,
+            self.self_account.size(),
+            self.self_account.token_program.key,
+            mint_authority.key(),
+            freeze_authority.map(|_| self.key()),
             decimals,
-            mint_authority,
-            freeze_authority,
-            payer,
-            self.rent.to_owned(),
-            self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
+            &[
+                // payer.into(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
+            &[
+                // *self.into(),
+                // mint_authority.into(),
+                // *self.self_account.token_program.clone(),
+                *self.rent.clone(),
+            ],
         )?;
         self.self_account.load_data();
         Ok(())
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Create<'a, Mint<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusMut for Mut<Mint<'a>> {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError> {
+        // self.self_account.account_info.try_borrow_mut_lamports()
+        todo!()
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Mut<Mint<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl NautilusSigner for Signer<Mint<'_>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<Mint<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
 }

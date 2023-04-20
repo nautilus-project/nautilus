@@ -19,7 +19,7 @@ impl NautilusEntrypointEnum {
             .into_iter()
             .enumerate()
             .map(|(i, f)| {
-                let (variant_ident, variant_args, call_ident, call_context, modified_fn) =
+                let (variant_ident, variant_args, call_ident, call_context) =
                     parse_function(&nautilus_objects, f);
                 NautilusEntrypointEnumVariant::new(
                     i.try_into().unwrap(),
@@ -27,7 +27,6 @@ impl NautilusEntrypointEnum {
                     variant_args,
                     call_ident,
                     call_context,
-                    modified_fn,
                 )
             })
             .collect();
@@ -39,21 +38,17 @@ impl NautilusEntrypointEnum {
     }
 }
 
-impl From<&NautilusEntrypointEnum>
-    for (TokenStream, TokenStream, TokenStream, Vec<IdlInstruction>)
-{
+impl From<&NautilusEntrypointEnum> for (TokenStream, TokenStream, Vec<IdlInstruction>) {
     fn from(value: &NautilusEntrypointEnum) -> Self {
         let enum_name = NautilusEntrypointEnum::enum_ident();
-        let (variants, match_arms, modified_fns, idl_instructions) = value.variants.iter().fold(
-            (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-            |(mut variants, mut match_arms, mut modified_fns, mut idl_instructions), v| {
-                let (a, b, c, d): (TokenStream, TokenStream, TokenStream, IdlInstruction) =
-                    v.into();
+        let (variants, match_arms, idl_instructions) = value.variants.iter().fold(
+            (Vec::new(), Vec::new(), Vec::new()),
+            |(mut variants, mut match_arms, mut idl_instructions), v| {
+                let (a, b, c): (TokenStream, TokenStream, IdlInstruction) = v.into();
                 variants.push(a);
                 match_arms.push(b);
-                modified_fns.push(c);
-                idl_instructions.push(d);
-                (variants, match_arms, modified_fns, idl_instructions)
+                idl_instructions.push(c);
+                (variants, match_arms, idl_instructions)
             },
         );
         (
@@ -63,7 +58,6 @@ impl From<&NautilusEntrypointEnum>
                     #(#variants)*
                 }
             },
-            quote! { #(#modified_fns)* },
             quote! {
                 pub fn process_instruction<'a>(
                     program_id: &'static Pubkey,

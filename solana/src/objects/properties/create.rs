@@ -1,28 +1,29 @@
-use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
-use crate::{Metadata, Mint, NautilusData};
+use crate::{Mint, NautilusData};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
 #[derive(Clone)]
-pub struct Create<'a, T: NautilusAccountInfo<'a> + 'a> {
+pub struct Create<'a, T>
+where
+    T: NautilusAccountInfo,
+{
     pub fee_payer: Box<AccountInfo<'a>>,
     pub system_program: Box<AccountInfo<'a>>,
     pub rent: Box<AccountInfo<'a>>,
-    pub self_account: T,
+    pub self_account: Box<T>,
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> Create<'a, T> {
+impl<'a, T> Create<'a, T>
+where
+    T: NautilusAccountInfo,
+{
     pub fn new(
         fee_payer: Box<AccountInfo<'a>>,
         system_program: Box<AccountInfo<'a>>,
         rent: Box<AccountInfo<'a>>,
-        self_account: T,
+        self_account: Box<T>,
     ) -> Self {
         Self {
             fee_payer,
@@ -33,14 +34,11 @@ impl<'a, T: NautilusAccountInfo<'a>> Create<'a, T> {
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Create<'a, T> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        self.self_account.into_account_info()
-    }
-}
-
-impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
-    fn key(&self) -> &'a Pubkey {
+impl<T> NautilusAccountInfo for Create<'_, T>
+where
+    T: NautilusAccountInfo,
+{
+    fn key(&self) -> &Pubkey {
         self.self_account.key()
     }
 
@@ -56,11 +54,7 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
         self.self_account.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.self_account.mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.self_account.owner()
     }
 
@@ -69,39 +63,39 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusSigner<'a> for Create<'a, T> {}
+impl<T> NautilusSigner for Create<'_, T> where T: NautilusAccountInfo {}
 
-pub trait NautilusCreate<'a> {
+pub trait NautilusCreate: Clone {
     fn create(&mut self) -> ProgramResult;
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
+    fn create_with_payer(&mut self, payer: impl NautilusSigner) -> ProgramResult;
 }
 
-pub trait NautilusCreateMint<'a> {
+pub trait NautilusCreateMint: Clone {
     fn create(
         &mut self,
         decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        mint_authority: impl NautilusSigner,
+        freeze_authority: Option<impl NautilusAccountInfo>,
     ) -> ProgramResult;
 
     fn create_with_payer(
         &mut self,
         decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
+        mint_authority: impl NautilusSigner,
+        freeze_authority: Option<impl NautilusAccountInfo>,
+        payer: impl NautilusSigner,
     ) -> ProgramResult;
 }
 
-pub trait NautilusCreateMetadata<'a> {
+pub trait NautilusCreateMetadata: Clone {
     fn create(
         &mut self,
         title: String,
         symbol: String,
         uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
+        mint: impl NautilusAccountInfo,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
     ) -> ProgramResult;
 
     fn create_with_payer(
@@ -109,23 +103,23 @@ pub trait NautilusCreateMetadata<'a> {
         title: String,
         symbol: String,
         uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
+        mint: impl NautilusAccountInfo,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
+        payer: impl NautilusSigner,
     ) -> ProgramResult;
 }
 
-pub trait NautilusCreateToken<'a> {
+pub trait NautilusCreateToken: Clone {
     fn create(
         &mut self,
         decimals: u8,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
+        freeze_authority: Option<impl NautilusAccountInfo>,
     ) -> ProgramResult;
 
     fn create_with_payer(
@@ -134,31 +128,32 @@ pub trait NautilusCreateToken<'a> {
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
+        freeze_authority: Option<impl NautilusAccountInfo>,
+        payer: impl NautilusSigner,
     ) -> ProgramResult;
-
-    fn metadata(&self) -> Metadata<'a>;
 }
 
-pub trait NautilusCreateAssociatedTokenAccount<'a> {
-    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
+pub trait NautilusCreateAssociatedTokenAccount: Clone {
+    fn create(
+        &mut self,
+        mint: impl NautilusAccountInfo,
+        owner: impl NautilusAccountInfo,
+    ) -> ProgramResult;
 
     fn create_with_payer(
         &mut self,
-        mint: Mint<'a>,
-        owner: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
+        mint: impl NautilusAccountInfo,
+        owner: impl NautilusAccountInfo,
+        payer: impl NautilusSigner,
     ) -> ProgramResult;
 }
 
-pub trait NautilusCreateRecord<'a, T: NautilusData> {
+pub trait NautilusCreateRecord<T>: Clone
+where
+    T: NautilusData,
+{
     fn create_record(&mut self, data: T) -> ProgramResult;
-    fn create_record_with_payer(
-        &mut self,
-        data: T,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
+    fn create_record_with_payer(&mut self, data: T, payer: impl NautilusSigner) -> ProgramResult;
 }

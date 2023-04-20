@@ -8,9 +8,8 @@ use solana_program::{
 };
 
 use crate::{
-    cpi::create::create_pda, objects::record::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
-    NautilusCreate, NautilusData, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer,
-    Wallet,
+    cpi::create::create_pda, objects::record::DATA_NOT_SET_MSG, Create, Mut, NautilusAccountInfo,
+    NautilusCreate, NautilusData, NautilusMut, NautilusRecord, NautilusSigner, Signer,
 };
 
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
@@ -71,11 +70,11 @@ impl NautilusData for NautilusIndexData {
     }
 }
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
     pub account_info: Box<AccountInfo<'a>>,
-    pub data: Option<NautilusIndexData>,
+    pub data: Option<Box<NautilusIndexData>>,
 }
 
 impl<'a> NautilusIndex<'a> {
@@ -104,7 +103,7 @@ impl<'a> NautilusIndex<'a> {
                 panic!("{}", e);
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state) => self.data = Some(Box::new(state)),
             Err(_) => {
                 msg!("Error parsing Index state from {}", &self.account_info.key);
                 msg!("Are you sure this is the Index?");
@@ -113,7 +112,7 @@ impl<'a> NautilusIndex<'a> {
         }
     }
 
-    pub fn data(&self) -> NautilusIndexData {
+    pub fn data(&self) -> Box<NautilusIndexData> {
         match &self.data {
             Some(data) => data.clone(),
             None => panic!("{}", DATA_NOT_SET_MSG),
@@ -145,8 +144,8 @@ impl<'a> IntoAccountInfo<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
-    fn key(&self) -> &'a Pubkey {
+impl NautilusAccountInfo for NautilusIndex<'_> {
+    fn key(&self) -> &Pubkey {
         self.account_info.key
     }
 
@@ -162,11 +161,7 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.account_info.owner
     }
 
@@ -175,15 +170,15 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
-    fn primary_key(&self) -> &'a [u8] {
+impl NautilusRecord for NautilusIndex<'_> {
+    fn primary_key(&self) -> &[u8] {
         match &self.data {
             Some(data) => data.primary_key(),
             None => panic!("{}", DATA_NOT_SET_MSG),
         }
     }
 
-    fn seeds(&self) -> [&'a [u8]; 2] {
+    fn seeds(&self) -> [&[u8]; 2] {
         match &self.data {
             Some(data) => data.seeds(),
             None => panic!("{}", DATA_NOT_SET_MSG),
@@ -212,45 +207,81 @@ impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
-    fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult {
-        let from = self.account_info;
-        **from.try_borrow_mut_lamports()? -= amount;
-        **to.mut_lamports()? += amount;
+impl NautilusCreate for Create<'_, NautilusIndex<'_>> {
+    fn create(&mut self) -> ProgramResult {
+        let data = NautilusIndexData {
+            index: std::collections::HashMap::new(),
+        };
+        let (_, bump) = self.self_account.pda();
+        let seeds = self.self_account.seeds();
+        create_pda(
+            self.fee_payer.key,
+            self.self_account.key(),
+            self.self_account.required_rent()?,
+            self.self_account.size(),
+            self.self_account.program_id,
+            &[
+                *self.fee_payer.clone(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
+            &seeds,
+            bump,
+        )?;
+        data.serialize(&mut &mut self.self_account.account_info.data.borrow_mut()[..])?;
+        self.self_account.load_data();
+        Ok(())
+    }
+
+    fn create_with_payer(&mut self, payer: impl NautilusSigner) -> ProgramResult {
+        let data = NautilusIndexData {
+            index: std::collections::HashMap::new(),
+        };
+        let (_, bump) = self.self_account.pda();
+        let seeds = self.self_account.seeds();
+        create_pda(
+            payer.key(),
+            self.self_account.key(),
+            self.self_account.required_rent()?,
+            self.self_account.size(),
+            self.self_account.program_id,
+            &[
+                // *payer.into(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
+            &seeds,
+            bump,
+        )?;
+        data.serialize(&mut &mut self.self_account.account_info.data.borrow_mut()[..])?;
+        self.self_account.load_data();
         Ok(())
     }
 }
 
-impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
-    fn create(&mut self) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.clone(),
-            system_program: self.system_program.clone(),
-        });
-        create_pda(
-            self.self_account.clone(),
-            self.self_account.program_id,
-            payer,
-            self.system_program.clone(),
-            NautilusIndexData {
-                index: std::collections::HashMap::new(),
-            },
-        )?;
-        self.self_account.load_data();
-        Ok(())
+impl<'a> IntoAccountInfo<'a> for Create<'a, NautilusIndex<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
+}
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        create_pda(
-            self.self_account.clone(),
-            self.self_account.program_id,
-            payer,
-            self.system_program.clone(),
-            NautilusIndexData {
-                index: std::collections::HashMap::new(),
-            },
-        )?;
-        self.self_account.load_data();
-        Ok(())
+impl<'a> NautilusMut for Mut<NautilusIndex<'a>> {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError> {
+        // self.self_account.account_info.try_borrow_mut_lamports()
+        todo!()
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Mut<NautilusIndex<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl NautilusSigner for Signer<NautilusIndex<'_>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<NautilusIndex<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
 }

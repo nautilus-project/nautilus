@@ -8,15 +8,15 @@ use solana_program::{
 };
 
 use crate::{
-    cpi::create::create_metadata, objects::DATA_NOT_SET_MSG, Create, Mint, NautilusAccountInfo,
-    NautilusCreateMetadata, NautilusSigner, Signer, Wallet,
+    cpi::create::create_metadata, objects::DATA_NOT_SET_MSG, Create, Mint, Mut,
+    NautilusAccountInfo, NautilusCreateMetadata, NautilusMut, NautilusSigner, Signer,
 };
 
 #[derive(Clone)]
 pub struct Metadata<'a> {
     pub account_info: Box<AccountInfo<'a>>,
     pub token_metadata_program: Box<AccountInfo<'a>>,
-    pub data: Option<MetadataState>,
+    pub data: Option<Box<MetadataState>>,
 }
 
 impl<'a> Metadata<'a> {
@@ -45,7 +45,7 @@ impl<'a> Metadata<'a> {
                 panic!("{}", e);
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state) => self.data = Some(Box::new(state)),
             Err(_) => {
                 msg!(
                     "Error parsing Metadata state from {}",
@@ -57,7 +57,7 @@ impl<'a> Metadata<'a> {
         }
     }
 
-    pub fn data(&self) -> MetadataState {
+    pub fn data(&self) -> Box<MetadataState> {
         match &self.data {
             Some(data) => data.clone(),
             None => panic!("{}", DATA_NOT_SET_MSG),
@@ -71,8 +71,8 @@ impl<'a> IntoAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
-    fn key(&self) -> &'a Pubkey {
+impl NautilusAccountInfo for Metadata<'_> {
+    fn key(&self) -> &Pubkey {
         self.account_info.key
     }
 
@@ -88,11 +88,7 @@ impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.account_info.owner
     }
 
@@ -101,31 +97,41 @@ impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
+impl NautilusCreateMetadata for Create<'_, Metadata<'_>> {
     fn create(
         &mut self,
         title: String,
         symbol: String,
         uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
+        mint: impl NautilusAccountInfo,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
     ) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
-        });
         create_metadata(
-            self.clone(),
+            self.self_account.token_metadata_program.key.clone(),
+            self.self_account.key().clone(),
+            mint.key().clone(),
+            mint_authority.key().clone(),
+            self.fee_payer.key.clone(),
+            update_authority.key().clone(),
             title,
             symbol,
             uri,
-            mint,
-            mint_authority,
-            update_authority,
-            payer,
-            self.rent.to_owned(),
-            self.self_account.token_metadata_program.to_owned(),
+            None, // TODO: Make below params available
+            0,
+            true,
+            false,
+            None,
+            None,
+            None,
+            &[
+                // *self.self_account.clone().into(),
+                // mint.into(),
+                // mint_authority.into(),
+                *self.fee_payer.clone(),
+                // *self.self_account.token_metadata_program.clone(),
+                *self.rent.clone(),
+            ],
         )?;
         self.self_account.load_data();
         Ok(())
@@ -136,24 +142,65 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
         title: String,
         symbol: String,
         uri: String,
-        mint: super::mint::Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
+        mint: impl NautilusAccountInfo,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
+        payer: impl NautilusSigner,
     ) -> ProgramResult {
         create_metadata(
-            self.clone(),
+            self.self_account.token_metadata_program.key.clone(),
+            self.self_account.key().clone(),
+            mint.key().clone(),
+            mint_authority.key().clone(),
+            payer.key().clone(),
+            update_authority.key().clone(),
             title,
             symbol,
             uri,
-            mint,
-            mint_authority,
-            update_authority,
-            payer,
-            self.rent.to_owned(),
-            self.self_account.token_metadata_program.to_owned(),
+            None, // TODO: Make below params available
+            0,
+            true,
+            false,
+            None,
+            None,
+            None,
+            &[
+                // *self.self_account.clone().into(),
+                // mint.into(),
+                // mint_authority.into(),
+                // payer.into(),
+                // *self.self_account.token_metadata_program.clone(),
+                *self.rent.clone(),
+            ],
         )?;
         self.self_account.load_data();
         Ok(())
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Create<'a, Metadata<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusMut for Mut<Metadata<'a>> {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError> {
+        // self.self_account.account_info.try_borrow_mut_lamports()
+        todo!()
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Mut<Metadata<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl NautilusSigner for Signer<Metadata<'_>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<Metadata<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
 }

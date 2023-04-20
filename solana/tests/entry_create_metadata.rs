@@ -3,7 +3,7 @@ use nautilus::*;
 #[nautilus]
 pub mod my_mod {
     fn create_metadata(
-        new_metadata: Create<Metadata>,
+        mut new_metadata: Create<Metadata>,
         mint: Mint,
         title: String,
         symbol: String,
@@ -20,7 +20,7 @@ pub mod my_mod {
         )
     }
     fn create_metadata_with_payer(
-        new_metadata: Create<Metadata>,
+        mut new_metadata: Create<Metadata>,
         mint: Mint,
         title: String,
         symbol: String,

@@ -9,8 +9,8 @@ use solana_program::{
 use spl_token::state::Account as AssociatedTokenAccountState;
 
 use crate::{
-    cpi::create::create_associated_token_account, objects::DATA_NOT_SET_MSG, Create, Mint,
-    NautilusAccountInfo, NautilusCreateAssociatedTokenAccount, NautilusSigner, Signer, Wallet,
+    cpi::create::create_associated_token_account, objects::DATA_NOT_SET_MSG, Create, Mint, Mut,
+    NautilusAccountInfo, NautilusCreateAssociatedTokenAccount, NautilusMut, NautilusSigner, Signer,
 };
 
 #[derive(Clone)]
@@ -18,7 +18,7 @@ pub struct AssociatedTokenAccount<'a> {
     pub account_info: Box<AccountInfo<'a>>,
     pub token_program: Box<AccountInfo<'a>>,
     pub associated_token_program: Box<AccountInfo<'a>>,
-    pub data: Option<AssociatedTokenAccountState>,
+    pub data: Option<Box<AssociatedTokenAccountState>>,
 }
 
 impl<'a> AssociatedTokenAccount<'a> {
@@ -49,7 +49,7 @@ impl<'a> AssociatedTokenAccount<'a> {
                 panic!("{}", e);
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state) => self.data = Some(Box::new(state)),
             Err(_) => {
                 msg!(
                     "Error parsing AssociatedTokenAccount state from {}",
@@ -61,9 +61,9 @@ impl<'a> AssociatedTokenAccount<'a> {
         }
     }
 
-    pub fn data(&self) -> AssociatedTokenAccountState {
-        match self.data {
-            Some(data) => data,
+    pub fn data(&self) -> Box<AssociatedTokenAccountState> {
+        match &self.data {
+            Some(data) => data.clone(),
             None => panic!("{}", DATA_NOT_SET_MSG),
         }
     }
@@ -75,8 +75,8 @@ impl<'a> IntoAccountInfo<'a> for AssociatedTokenAccount<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
-    fn key(&self) -> &'a Pubkey {
+impl NautilusAccountInfo for AssociatedTokenAccount<'_> {
+    fn key(&self) -> &Pubkey {
         self.account_info.key
     }
 
@@ -92,11 +92,7 @@ impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.account_info.owner
     }
 
@@ -105,20 +101,26 @@ impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
     }
 }
 
-impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedTokenAccount<'a>> {
-    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
-        });
+impl NautilusCreateAssociatedTokenAccount for Create<'_, AssociatedTokenAccount<'_>> {
+    fn create(
+        &mut self,
+        mint: impl NautilusAccountInfo,
+        owner: impl NautilusAccountInfo,
+    ) -> ProgramResult {
         create_associated_token_account(
-            self.self_account.clone(),
-            mint,
-            owner,
-            payer,
-            self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
-            self.self_account.associated_token_program.to_owned(),
+            self.fee_payer.key,
+            owner.key(),
+            mint.key(),
+            self.self_account.token_program.key,
+            &[
+                // mint.clone().into(),
+                // *self.self_account.into(),
+                // owner.into(),
+                *self.fee_payer.clone(),
+                *self.system_program.clone(),
+                // *self.self_account.token_program.clone(),
+                // *self.self_account.associated_token_program.clone(),
+            ],
         )?;
         self.self_account.load_data();
         Ok(())
@@ -126,20 +128,53 @@ impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedToken
 
     fn create_with_payer(
         &mut self,
-        mint: Mint<'a>,
-        owner: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
+        mint: impl NautilusAccountInfo,
+        owner: impl NautilusAccountInfo,
+        payer: impl NautilusSigner,
     ) -> ProgramResult {
         create_associated_token_account(
-            self.self_account.clone(),
-            mint,
-            owner,
-            payer,
-            self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
-            self.self_account.associated_token_program.to_owned(),
+            payer.key(),
+            owner.key(),
+            mint.key(),
+            self.self_account.token_program.key,
+            &[
+                // mint.clone().into(),
+                // *self.self_account.into(),
+                // owner.into(),
+                // payer.into(),
+                *self.system_program.clone(),
+                // *self.self_account.token_program.clone(),
+                // *self.self_account.associated_token_program.clone(),
+            ],
         )?;
         self.self_account.load_data();
         Ok(())
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Create<'a, AssociatedTokenAccount<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusMut for Mut<AssociatedTokenAccount<'a>> {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError> {
+        // self.self_account.account_info.try_borrow_mut_lamports()
+        todo!()
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Mut<AssociatedTokenAccount<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl NautilusSigner for Signer<AssociatedTokenAccount<'_>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<AssociatedTokenAccount<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
 }

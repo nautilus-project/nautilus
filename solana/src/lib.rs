@@ -24,7 +24,7 @@ pub use solana_program::{
 };
 
 pub use objects::{
-    properties::{create::*, mutable::*, record::*, signer::*, *},
+    properties::{create::*, mutable::*, signer::*, *},
     record::{index::*, *},
     token::{associated_token::*, metadata::*, mint::*, *},
     wallet::*,

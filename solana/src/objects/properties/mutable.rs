@@ -1,36 +1,29 @@
-use std::marker::PhantomData;
-
-use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 
 use super::NautilusAccountInfo;
 
 #[derive(Clone)]
-pub struct Mut<'a, T: NautilusAccountInfo<'a> + 'a> {
-    phantom: PhantomData<&'a T>,
-    pub self_account: T,
+pub struct Mut<T>
+where
+    T: NautilusAccountInfo,
+{
+    pub self_account: Box<T>,
 }
 
-impl<'a, T: NautilusAccountInfo<'a> + 'a> Mut<'a, T> {
-    pub fn new(self_account: T) -> Self {
-        Self {
-            self_account,
-            phantom: PhantomData,
-        }
+impl<T> Mut<T>
+where
+    T: NautilusAccountInfo,
+{
+    pub fn new(self_account: Box<T>) -> Self {
+        Self { self_account }
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Mut<'a, T> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        self.self_account.into_account_info()
-    }
-}
-
-impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Mut<'a, T> {
-    fn key(&self) -> &'a Pubkey {
+impl<T> NautilusAccountInfo for Mut<T>
+where
+    T: NautilusAccountInfo,
+{
+    fn key(&self) -> &Pubkey {
         self.self_account.key()
     }
 
@@ -46,11 +39,7 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Mut<'a, T> {
         self.self_account.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.self_account.mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.self_account.owner()
     }
 
@@ -59,6 +48,6 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Mut<'a, T> {
     }
 }
 
-pub trait NautilusMut<'a>: NautilusAccountInfo<'a> + 'a {}
-
-impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusMut<'a> for Mut<'a, T> {}
+pub trait NautilusMut: NautilusAccountInfo {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError>;
+}

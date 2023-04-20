@@ -1,15 +1,15 @@
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, program::invoke};
-
-use crate::{NautilusMut, NautilusSigner};
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke, pubkey::Pubkey,
+};
 
 pub fn transfer_lamports<'a>(
-    from: impl NautilusSigner<'a>,
-    to: impl NautilusMut<'a>,
+    from: &Pubkey,
+    to: &Pubkey,
     amount: u64,
-    system_program: Box<AccountInfo<'a>>,
+    accounts: &[AccountInfo],
 ) -> ProgramResult {
     invoke(
-        &solana_program::system_instruction::transfer(from.key(), to.key(), amount),
-        &[from.into(), to.into(), *system_program],
+        &solana_program::system_instruction::transfer(from, to, amount),
+        accounts,
     )
 }

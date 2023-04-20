@@ -8,8 +8,8 @@ use solana_program::{
 };
 
 use crate::{
-    Create, Metadata, Mint, NautilusAccountInfo, NautilusCreateMetadata, NautilusCreateMint,
-    NautilusCreateToken, NautilusSigner,
+    Create, Metadata, Mint, Mut, NautilusAccountInfo, NautilusCreateMetadata, NautilusCreateMint,
+    NautilusCreateToken, NautilusMut, NautilusSigner, Signer,
 };
 
 pub mod associated_token;
@@ -77,8 +77,8 @@ impl<'a> IntoAccountInfo<'a> for Token<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for Token<'a> {
-    fn key(&self) -> &'a Pubkey {
+impl NautilusAccountInfo for Token<'_> {
+    fn key(&self) -> &Pubkey {
         self.mint.account_info.key
     }
 
@@ -94,11 +94,7 @@ impl<'a> NautilusAccountInfo<'a> for Token<'a> {
         self.mint.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.mint.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.mint.account_info.owner
     }
 
@@ -116,7 +112,7 @@ impl<'a> From<Token<'a>> for Mint<'a> {
 impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Mint<'a>> {
     fn from(value: Create<'a, Token<'a>>) -> Self {
         Self {
-            self_account: value.self_account.into(),
+            self_account: Box::new(value.self_account.mint),
             fee_payer: value.fee_payer,
             rent: value.rent,
             system_program: value.system_program,
@@ -133,7 +129,7 @@ impl<'a> From<Token<'a>> for Metadata<'a> {
 impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
     fn from(value: Create<'a, Token<'a>>) -> Self {
         Self {
-            self_account: value.self_account.into(),
+            self_account: Box::new(value.self_account.metadata),
             fee_payer: value.fee_payer,
             rent: value.rent,
             system_program: value.system_program,
@@ -141,28 +137,28 @@ impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
     }
 }
 
-impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
+impl NautilusCreateToken for Create<'_, Token<'_>> {
     fn create(
         &mut self,
         decimals: u8,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
+        freeze_authority: Option<impl NautilusAccountInfo>,
     ) -> ProgramResult {
-        let mut create_mint: Create<Mint> = self.clone().into();
-        let mut create_metadata: Create<Metadata> = self.clone().into();
-        create_mint.create(decimals, mint_authority.clone(), freeze_authority)?;
-        create_metadata.create(
-            title,
-            symbol,
-            uri,
-            self.self_account.mint.to_owned(),
-            mint_authority,
-            update_authority,
-        )?;
+        // let mut create_mint: Create<Mint> = self.clone().into();
+        // create_mint.create(decimals, mint_authority.clone(), freeze_authority)?;
+        // let mut create_metadata: Create<Metadata> = self.clone().into();
+        // create_metadata.create(
+        //     title,
+        //     symbol,
+        //     uri,
+        //     self.self_account.mint.to_owned(),
+        //     mint_authority,
+        //     update_authority,
+        // )?;
         Ok(())
     }
 
@@ -172,32 +168,55 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
+        mint_authority: impl NautilusSigner,
+        update_authority: impl NautilusAccountInfo,
+        freeze_authority: Option<impl NautilusAccountInfo>,
+        payer: impl NautilusSigner,
     ) -> ProgramResult {
-        let mut create_mint: Create<Mint> = self.clone().into();
-        let mut create_metadata: Create<Metadata> = self.clone().into();
-        create_mint.create_with_payer(
-            decimals,
-            mint_authority.clone(),
-            freeze_authority,
-            payer.clone(),
-        )?;
-        create_metadata.create_with_payer(
-            title,
-            symbol,
-            uri,
-            self.self_account.mint.to_owned(),
-            mint_authority,
-            update_authority,
-            payer,
-        )?;
+        // let mut create_mint: Create<Mint> = self.clone().into();
+        // let mut create_metadata: Create<Metadata> = self.clone().into();
+        // create_mint.create_with_payer(
+        //     decimals,
+        //     mint_authority.clone(),
+        //     freeze_authority,
+        //     payer.clone(),
+        // )?;
+        // create_metadata.create_with_payer(
+        //     title,
+        //     symbol,
+        //     uri,
+        //     self.self_account.mint.to_owned(),
+        //     mint_authority,
+        //     update_authority,
+        //     payer,
+        // )?;
         Ok(())
     }
+}
 
-    fn metadata(&self) -> Metadata<'a> {
-        self.self_account.metadata.to_owned()
+impl<'a> IntoAccountInfo<'a> for Create<'a, Token<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusMut for Mut<Token<'a>> {
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &mut u64>, ProgramError> {
+        // self.self_account.account_info.try_borrow_mut_lamports()
+        todo!()
+    }
+}
+
+impl<'a> IntoAccountInfo<'a> for Mut<Token<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl NautilusSigner for Signer<Token<'_>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<Token<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
     }
 }

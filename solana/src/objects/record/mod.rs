@@ -8,7 +8,7 @@ use solana_program::{
 
 use crate::{
     cpi::create::create_pda, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
-    NautilusIndex, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    NautilusIndex, NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports,
 };
 
 use super::DATA_NOT_SET_MSG;
@@ -20,10 +20,13 @@ pub struct Record<'a, T: NautilusData + 'a> {
     pub program_id: &'a Pubkey,
     pub index: NautilusIndex<'a>,
     pub account_info: Box<AccountInfo<'a>>,
-    pub data: Option<T>,
+    pub data: Option<Box<T>>,
 }
 
-impl<'a, T: NautilusData> Record<'a, T> {
+impl<'a, T> Record<'a, T>
+where
+    T: NautilusData,
+{
     pub fn new(
         program_id: &'a Pubkey,
         index_account_info: Box<AccountInfo<'a>>,
@@ -52,7 +55,7 @@ impl<'a, T: NautilusData> Record<'a, T> {
                 panic!("{}", e);
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state) => self.data = Some(Box::new(state)),
             Err(_) => {
                 msg!("Error parsing Record state from {}", &self.account_info.key);
                 msg!(
@@ -64,22 +67,32 @@ impl<'a, T: NautilusData> Record<'a, T> {
         }
     }
 
-    pub fn data(&self) -> T {
+    pub fn data(&self) -> Box<T> {
         match &self.data {
             Some(data) => data.clone(),
             None => panic!("{}", DATA_NOT_SET_MSG),
         }
     }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.account_info.try_borrow_mut_lamports()
+    }
 }
 
-impl<'a, T: NautilusData> IntoAccountInfo<'a> for Record<'a, T> {
+impl<'a, T> IntoAccountInfo<'a> for Record<'a, T>
+where
+    T: NautilusData,
+{
     fn into_account_info(self) -> AccountInfo<'a> {
         *self.account_info
     }
 }
 
-impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Record<'a, T> {
-    fn key(&self) -> &'a Pubkey {
+impl<T> NautilusAccountInfo for Record<'_, T>
+where
+    T: NautilusData,
+{
+    fn key(&self) -> &Pubkey {
         self.account_info.key
     }
 
@@ -95,11 +108,7 @@ impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Record<'a, T> {
         self.account_info.lamports()
     }
 
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.account_info.try_borrow_mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
+    fn owner(&self) -> &Pubkey {
         self.account_info.owner
     }
 
@@ -108,15 +117,18 @@ impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Record<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> NautilusRecord<'a> for Record<'a, T> {
-    fn primary_key(&self) -> &'a [u8] {
+impl<T> NautilusRecord for Record<'_, T>
+where
+    T: NautilusData,
+{
+    fn primary_key(&self) -> &[u8] {
         match &self.data {
             Some(data) => data.primary_key(),
             None => panic!("{}", DATA_NOT_SET_MSG),
         }
     }
 
-    fn seeds(&self) -> [&'a [u8]; 2] {
+    fn seeds(&self) -> [&[u8]; 2] {
         match &self.data {
             Some(data) => data.seeds(),
             None => panic!("{}", DATA_NOT_SET_MSG),
@@ -145,48 +157,66 @@ impl<'a, T: NautilusData> NautilusRecord<'a> for Record<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Record<'a, T> {
+impl<T> NautilusTransferLamports for Record<'_, T>
+where
+    T: NautilusData,
+{
     fn transfer_lamports(
         self,
-        to: impl NautilusAccountInfo<'a>,
+        to: impl NautilusMut,
         amount: u64,
     ) -> solana_program::entrypoint::ProgramResult {
-        let from = self.account_info;
-        **from.try_borrow_mut_lamports()? -= amount;
-        **to.mut_lamports()? += amount;
-        Ok(())
+        // **self.mut_lamports()? -= amount;
+        // **to.mut_lamports()? += amount;
+        // Ok(())
+        todo!()
     }
 }
 
-impl<'a, T: NautilusData> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, T>> {
+impl<T> NautilusCreateRecord<T> for Create<'_, Record<'_, T>>
+where
+    T: NautilusData,
+{
     fn create_record(&mut self, data: T) -> ProgramResult {
-        let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
-        });
+        let (_, bump) = self.self_account.pda();
+        let seeds = self.self_account.seeds();
         create_pda(
-            self.self_account.clone(),
+            self.fee_payer.key,
+            self.self_account.key(),
+            self.self_account.required_rent()?,
+            self.self_account.size(),
             self.self_account.program_id,
-            payer,
-            self.system_program.to_owned(),
-            data,
+            &[
+                *self.fee_payer.clone(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
+            &seeds,
+            bump,
         )?;
+        data.serialize(&mut &mut self.self_account.account_info.data.borrow_mut()[..])?;
         self.self_account.load_data();
         Ok(())
     }
 
-    fn create_record_with_payer(
-        &mut self,
-        data: T,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult {
+    fn create_record_with_payer(&mut self, data: T, payer: impl NautilusSigner) -> ProgramResult {
+        let (_, bump) = self.self_account.pda();
+        let seeds = self.self_account.seeds();
         create_pda(
-            self.self_account.clone(),
+            payer.key(),
+            self.self_account.key(),
+            self.self_account.required_rent()?,
+            self.self_account.size(),
             self.self_account.program_id,
-            payer,
-            self.system_program.to_owned(),
-            data,
+            &[
+                // *payer.into(),
+                // *self.into(),
+                *self.system_program.clone(),
+            ],
+            &seeds,
+            bump,
         )?;
+        data.serialize(&mut &mut self.self_account.account_info.data.borrow_mut()[..])?;
         self.self_account.load_data();
         Ok(())
     }

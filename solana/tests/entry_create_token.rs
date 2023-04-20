@@ -3,7 +3,7 @@ use nautilus::*;
 #[nautilus]
 pub mod my_mod {
     fn create_token(
-        new_token: Create<Token>,
+        mut new_token: Create<Token>,
         decimals: u8,
         title: String,
         symbol: String,
@@ -21,7 +21,7 @@ pub mod my_mod {
         )
     }
     fn create_token_with_payer(
-        new_token: Create<Token>,
+        mut new_token: Create<Token>,
         decimals: u8,
         title: String,
         symbol: String,

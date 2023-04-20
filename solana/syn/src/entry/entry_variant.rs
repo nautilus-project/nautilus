@@ -1,7 +1,7 @@
 use nautilus_idl::idl_instruction::{IdlInstruction};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, Type, ItemFn};
+use syn::{Ident, Type};
 
 use crate::{entry::required_account::{RequiredAccountSubtype}, object::NautilusObject};
 
@@ -21,7 +21,6 @@ pub struct NautilusEntrypointEnumVariant {
     pub required_accounts: Vec<RequiredAccount>,
     pub call_ident: Ident,
     pub call_context: Vec<CallContext>,
-    pub modified_fn: ItemFn,
 }
 
 #[derive(Debug)]
@@ -37,7 +36,6 @@ impl NautilusEntrypointEnumVariant {
         variant_args: Vec<(Ident, Type)>,
         call_ident: Ident,
         call_context: Vec<CallContext>,
-        modified_fn: ItemFn,
     ) -> Self {
         let required_accounts = RequiredAccount::condense(
             call_context
@@ -64,7 +62,6 @@ impl NautilusEntrypointEnumVariant {
             required_accounts,
             call_ident,
             call_context,
-            modified_fn,
         }
     }
 
@@ -109,18 +106,18 @@ impl NautilusEntrypointEnumVariant {
                                     object_inits.push(
                                         quote! { let mut #arg_ident = Create::new(
                                             #(#create_call_idents,)*
-                                            #obj_type::new(#(#read_call_idents,)* false)
+                                            Box::new(#obj_type::new(#(#read_call_idents,)* false))
                                     ); },
                                     );
                                 },
                                 None => {
                                     if config.is_signer { 
                                         object_inits.push(
-                                            quote! { let #arg_ident = Signer::new(#obj_type::new(#(#read_call_idents,)* true)); },
+                                            quote! { let #arg_ident = Signer::new(Box::new(#obj_type::new(#(#read_call_idents,)* true))); },
                                         );
                                     } else if config.is_mut {
                                         object_inits.push(
-                                            quote! { let #arg_ident = Mut::new(#obj_type::new(#(#read_call_idents,)* true)); },
+                                            quote! { let #arg_ident = Mut::new(Box::new(#obj_type::new(#(#read_call_idents,)* true))); },
                                         );
                                     } else { 
                                         object_inits.push(
@@ -153,18 +150,16 @@ impl NautilusEntrypointEnumVariant {
     }
 }
 
-impl From<&NautilusEntrypointEnumVariant> for (TokenStream, TokenStream, TokenStream, IdlInstruction) {
+impl From<&NautilusEntrypointEnumVariant> for (TokenStream, TokenStream, IdlInstruction) {
     fn from(value: &NautilusEntrypointEnumVariant) -> Self {
         let variant_ident = &value.variant_ident;
         let enum_ident = NautilusEntrypointEnum::enum_ident();
         let (arg_names, arg_types): (Vec<Ident>, Vec<Type>) =
             value.variant_args.clone().into_iter().unzip();
         let match_arm_logic = value.build_match_arm_logic();
-        let modified_fn = &value.modified_fn;
         (
             quote! { #variant_ident(#(#arg_types,)*), },
             quote! { #enum_ident::#variant_ident(#(#arg_names,)*) => #match_arm_logic, },
-            quote! { #modified_fn },
             value.into(),
         )
     }
