@@ -11,7 +11,7 @@ use nautilus_idl::{
 };
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse::Parse, Item, ItemMod};
+use syn::{parse::Parse, Item, ItemFn, ItemMod};
 
 use self::{
     entry_enum::NautilusEntrypointEnum,
@@ -22,7 +22,7 @@ use self::{
 pub struct NautilusEntrypoint {
     pub leftover_content: Vec<Item>,
     pub instruction_enum: TokenStream,
-    pub functions: TokenStream,
+    pub declared_functions: Vec<ItemFn>,
     pub processor: TokenStream,
 }
 
@@ -51,8 +51,9 @@ impl From<ItemMod> for NautilusEntrypoint {
         let (crate_version, crate_name) = parse_manifest();
         let (nautilus_objects, idl_accounts, idl_types) = parse_crate_context();
 
-        let nautilus_enum = &NautilusEntrypointEnum::new(nautilus_objects, declared_functions);
-        let (instruction_enum, functions, processor, idl_instructions) = nautilus_enum.into();
+        let nautilus_enum =
+            &NautilusEntrypointEnum::new(nautilus_objects, declared_functions.clone());
+        let (instruction_enum, processor, idl_instructions) = nautilus_enum.into();
 
         let idl = Idl::new(
             crate_version,
@@ -84,7 +85,7 @@ impl From<ItemMod> for NautilusEntrypoint {
         Self {
             leftover_content,
             instruction_enum,
-            functions,
+            declared_functions,
             processor,
         }
     }
@@ -106,13 +107,13 @@ impl From<&NautilusEntrypoint> for TokenStream {
     fn from(ast: &NautilusEntrypoint) -> Self {
         let leftover_content = &ast.leftover_content;
         let instruction_enum = &ast.instruction_enum;
-        let functions = &ast.functions;
+        let declared_functions = &ast.declared_functions;
         let processor = &ast.processor;
 
         quote! {
             #instruction_enum
-            #functions
             #processor
+            #(#declared_functions)*
             #(#leftover_content)*
         }
         .into()

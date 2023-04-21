@@ -7,8 +7,12 @@ use crate::Cli;
 
 #[derive(Subcommand)]
 pub enum NautilusCommand {
+    /// Builds the Nautilus program 🛠️
     Build,
+    /// Ships (deploys) the Nautilus program ⛴️
     Deploy,
+    /// Ships (deploys) the Nautilus program ⛴️
+    Ship,
 }
 
 fn os_command(cmd: &str) -> std::io::Result<()> {
@@ -49,6 +53,20 @@ pub fn processor(cli: Cli) -> std::io::Result<()> {
                 NautilusTerminal::new(Color::Yellow, " ⛴️  Deploying Nautilus program...");
             match deploy() {
                 Ok(()) => terminal.end_output(Color::Green, "   ✅  Deploy successful."),
+                Err(_) => terminal.end_output(Color::Red, "   ❌  Deploy failed."),
+            };
+        }
+        NautilusCommand::Ship => {
+            let mut terminal =
+                NautilusTerminal::new(Color::Yellow, " ⛴️  Shipping Nautilus program...");
+            match deploy() {
+                Ok(()) => {
+                    terminal.output(Color::Green, "   ✅  Deploy successful.");
+                    terminal.end_output(
+                        Color::Green,
+                        "   ⛴️  You just shipped a Solana program with Nautilus!",
+                    );
+                }
                 Err(_) => terminal.end_output(Color::Red, "   ❌  Deploy failed."),
             };
         }

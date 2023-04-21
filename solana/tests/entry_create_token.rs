@@ -2,13 +2,13 @@ use nautilus::*;
 
 #[nautilus]
 pub mod my_mod {
-    fn create_token(
-        new_token: Create<Token>,
+    fn create_token<'a>(
+        mut new_token: Create<'a, Token<'a>>,
         decimals: u8,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: Signer<Wallet>,
+        mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         new_token.create(
             decimals,
@@ -20,14 +20,14 @@ pub mod my_mod {
             Some(mint_authority),
         )
     }
-    fn create_token_with_payer(
-        new_token: Create<Token>,
+    fn create_token_with_payer<'a>(
+        mut new_token: Create<'a, Token<'a>>,
         decimals: u8,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: Signer<Wallet>,
-        rent_payer: Signer<Wallet>,
+        mint_authority: Signer<Wallet<'a>>,
+        rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         new_token.create_with_payer(
             decimals,

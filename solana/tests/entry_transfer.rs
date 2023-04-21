@@ -2,7 +2,11 @@ use nautilus::*;
 
 #[nautilus]
 pub mod my_mod {
-    fn transfer_wallet(from: Signer<Wallet>, to: Mut<Wallet>, amount: u64) -> ProgramResult {
+    fn transfer_wallet<'a>(
+        from: Signer<Wallet<'a>>,
+        to: Mut<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
         println!(
             "Transferring {} From: {} to: {}",
             amount,

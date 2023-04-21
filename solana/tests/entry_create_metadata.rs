@@ -2,13 +2,13 @@ use nautilus::*;
 
 #[nautilus]
 pub mod my_mod {
-    fn create_metadata(
-        new_metadata: Create<Metadata>,
-        mint: Mint,
+    fn create_metadata<'a>(
+        mut new_metadata: Create<'a, Metadata<'a>>,
+        mint: Mint<'a>,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: Signer<Wallet>,
+        mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         new_metadata.create(
             title,
@@ -19,14 +19,14 @@ pub mod my_mod {
             mint_authority,
         )
     }
-    fn create_metadata_with_payer(
-        new_metadata: Create<Metadata>,
-        mint: Mint,
+    fn create_metadata_with_payer<'a>(
+        mut new_metadata: Create<'a, Metadata<'a>>,
+        mint: Mint<'a>,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: Signer<Wallet>,
-        rent_payer: Signer<Wallet>,
+        mint_authority: Signer<Wallet<'a>>,
+        rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         new_metadata.create_with_payer(
             title,

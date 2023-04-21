@@ -27,6 +27,13 @@ impl NautilusTerminal {
         NautilusTerminal { stdout }
     }
 
+    pub fn output(&mut self, color: Color, msg: &str) {
+        let mut colspec = ColorSpec::new();
+        colspec.set_fg(Some(color)).set_bold(true);
+        self.stdout.set_color(&colspec).unwrap();
+        println!("\n\n{}", msg);
+    }
+
     pub fn end_output(&mut self, color: Color, msg: &str) {
         let mut colspec = ColorSpec::new();
         colspec.set_fg(Some(color)).set_bold(true);

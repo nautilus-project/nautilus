@@ -7,7 +7,7 @@ use solana_program::{
 
 use crate::{
     cpi::{create::create_account, transfer::transfer_lamports},
-    Create, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
+    Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
     NautilusTransferLamports, Signer,
 };
 
@@ -66,7 +66,83 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> NautilusTransferLamports<'a> for Signer<'a, Wallet<'a>> {
+impl<'a> IntoAccountInfo<'a> for Mut<Wallet<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusAccountInfo<'a> for Mut<Wallet<'a>> {
+    fn key(&self) -> &'a Pubkey {
+        self.self_account.key()
+    }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.is_signer()
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.is_writable()
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.lamports()
+    }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.self_account.mut_lamports()
+    }
+
+    fn owner(&self) -> &'a Pubkey {
+        self.self_account.owner()
+    }
+
+    fn span(&self) -> usize {
+        self.self_account.span()
+    }
+}
+
+impl<'a> NautilusMut<'a> for Mut<Wallet<'a>> {}
+
+impl<'a> IntoAccountInfo<'a> for Signer<Wallet<'a>> {
+    fn into_account_info(self) -> AccountInfo<'a> {
+        self.self_account.into_account_info()
+    }
+}
+
+impl<'a> NautilusAccountInfo<'a> for Signer<Wallet<'a>> {
+    fn key(&self) -> &'a Pubkey {
+        self.self_account.key()
+    }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.is_signer()
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.is_writable()
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.lamports()
+    }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.self_account.mut_lamports()
+    }
+
+    fn owner(&self) -> &'a Pubkey {
+        self.self_account.owner()
+    }
+
+    fn span(&self) -> usize {
+        self.self_account.span()
+    }
+}
+
+impl<'a> NautilusSigner<'a> for Signer<Wallet<'a>> {}
+
+impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
     fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
         let system_program = self.self_account.system_program.clone();
         transfer_lamports(self, to, amount, system_program)

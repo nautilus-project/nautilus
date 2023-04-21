@@ -2,14 +2,14 @@ use nautilus::*;
 
 #[nautilus]
 mod program_nautilus {
-    fn create_token(
-        new_token: Create<Token>,
+    fn create_token<'a>(
+        mut new_token: Create<'a, Token<'a>>,
         decimals: u8,
         title: String,
         symbol: String,
         uri: String,
-        mint_authority: Signer<Wallet>,
-        update_authority: Signer<Wallet>,
+        mint_authority: Signer<Wallet<'a>>,
+        update_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         msg!("-- Token: {}", &new_token.key());
         msg!("-- Metadata: {}", &new_token.metadata().key());
@@ -39,8 +39,8 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn create_person(
-        new_person: Create<Record<Person>>,
+    fn create_person<'a>(
+        mut new_person: Create<'a, Record<'a, Person>>,
         name: String,
         authority: Pubkey,
     ) -> ProgramResult {
@@ -56,8 +56,8 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn create_home(
-        new_home: Create<Record<Home>>,
+    fn create_home<'a>(
+        mut new_home: Create<'a, Record<'a, Home>>,
         id: u8,
         house_number: u8,
         street: String,
@@ -74,8 +74,8 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn create_car(
-        new_car: Create<Record<Car>>,
+    fn create_car<'a>(
+        mut new_car: Create<'a, Record<'a, Car>>,
         id: u8,
         make: String,
         model: String,
