@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Ident, Type};
 
-use crate::{entry::required_account::{RequiredAccountSubtype}, object::NautilusObject};
+use crate::{entry::required_account::{RequiredAccountSubtype, to_ident_pointer}, object::NautilusObject};
 
 use super::{
     entry_enum::NautilusEntrypointEnum,
@@ -76,7 +76,11 @@ impl NautilusEntrypointEnumVariant {
                 },
                 _ => r.ident.clone(),
             };
-            quote! { let #ident = next_account_info(accounts_iter)?; }
+            let ident_pointer = to_ident_pointer(&ident);
+            quote! { 
+                let #ident = next_account_info(accounts_iter)?.to_owned(); 
+                let #ident_pointer = Box::new(#ident); 
+            }
         });
         let mut object_inits = vec![];
         let mut call_args = vec![];

@@ -326,24 +326,24 @@ impl From<&RequiredAccount> for proc_macro2::TokenStream {
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
             RequiredAccountType::ProgramId => quote! { program_id },
-            RequiredAccountType::IndexAccount => quote! { Box::new(index.to_owned()) },
+            RequiredAccountType::IndexAccount => quote! { index_pointer.clone() },
             RequiredAccountType::Account(subtype) => match subtype {
                 RequiredAccountSubtype::SelfAccount => {
-                    let ident = self_account_ident(&ast.ident);
-                    quote! { Box::new(#ident.to_owned()) }
+                    let ident_pointer = self_account_ident_pointer(&ast.ident);
+                    quote! { #ident_pointer.clone() }
                 }
                 RequiredAccountSubtype::Metadata => {
-                    let ident = metadata_ident(&ast.ident);
-                    quote! { Box::new(#ident.to_owned()) }
+                    let ident_pointer = metadata_ident_pointer(&ast.ident);
+                    quote! { #ident_pointer.clone() }
                 }
                 RequiredAccountSubtype::MintAuthority => {
-                    let ident = mint_authority_ident(&ast.ident);
-                    quote! { Box::new(#ident.to_owned()) }
+                    let ident_pointer = mint_authority_ident_pointer(&ast.ident);
+                    quote! { #ident_pointer.clone() }
                 }
             },
             _ => {
-                let ident = &ast.ident;
-                quote! { Box::new(#ident.to_owned()) }
+                let ident_pointer = to_ident_pointer(&ast.ident);
+                quote! { #ident_pointer.clone() }
             }
         }
     }
@@ -379,6 +379,22 @@ pub fn metadata_ident(ident: &Ident) -> Ident {
 
 pub fn mint_authority_ident(ident: &Ident) -> Ident {
     appended_ident(ident, "_mint_authority")
+}
+
+pub fn to_ident_pointer(ident: &Ident) -> Ident {
+    appended_ident(ident, "_pointer")
+}
+
+pub fn self_account_ident_pointer(ident: &Ident) -> Ident {
+    appended_ident(ident, "_self_account_pointer")
+}
+
+pub fn metadata_ident_pointer(ident: &Ident) -> Ident {
+    appended_ident(ident, "_metadata_account_pointer")
+}
+
+pub fn mint_authority_ident_pointer(ident: &Ident) -> Ident {
+    appended_ident(ident, "_mint_authority_pointer")
 }
 
 pub fn name_to_ident(name: &str) -> Ident {
