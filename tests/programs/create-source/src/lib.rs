@@ -42,6 +42,7 @@ mod program_nautilus {
 
     fn read_mint(new_mint: Mint) -> ProgramResult {
         msg!("-- New Mint Public Key: {}", &new_mint.key());
+        print_mint_data(new_mint.data);
         Ok(())
     }
 
@@ -63,6 +64,7 @@ mod program_nautilus {
 
     fn read_mint_created_with_payer(new_mint: Mint) -> ProgramResult {
         msg!("-- New Mint Public Key: {}", &new_mint.key());
+        print_mint_data(new_mint.data);
         Ok(())
     }
 
@@ -90,6 +92,7 @@ mod program_nautilus {
 
     fn read_metadata(new_metadata: Metadata) -> ProgramResult {
         msg!("-- New Metadata Public Key: {}", &new_metadata.key());
+        print_metadata_data(new_metadata.data);
         Ok(())
     }
 
@@ -118,6 +121,7 @@ mod program_nautilus {
 
     fn read_metadata_created_with_payer(new_metadata: Metadata) -> ProgramResult {
         msg!("-- New Metadata Public Key: {}", &new_metadata.key());
+        print_metadata_data(new_metadata.data);
         Ok(())
     }
 
@@ -142,6 +146,7 @@ mod program_nautilus {
             "-- New AssociatedTokenAccount Public Key: {}",
             &new_associated_token.key()
         );
+        print_associated_token_data(new_associated_token.data);
         Ok(())
     }
 
@@ -168,6 +173,7 @@ mod program_nautilus {
             "-- New AssociatedTokenAccount Public Key: {}",
             &new_associated_token.key()
         );
+        print_associated_token_data(new_associated_token.data);
         Ok(())
     }
 
@@ -195,6 +201,8 @@ mod program_nautilus {
 
     fn read_token(new_token: Token) -> ProgramResult {
         msg!("-- New Token Public Key: {}", &new_token.key());
+        print_mint_data(new_token.mint.data);
+        print_metadata_data(new_token.metadata.data);
         Ok(())
     }
 
@@ -223,6 +231,8 @@ mod program_nautilus {
 
     fn read_token_created_with_payer(new_token: Token) -> ProgramResult {
         msg!("-- New Token Public Key: {}", &new_token.key());
+        print_mint_data(new_token.mint.data);
+        print_metadata_data(new_token.metadata.data);
         Ok(())
     }
 
@@ -241,4 +251,35 @@ mod program_nautilus {
         );
         from.transfer_lamports(to, amount)
     }
+}
+
+fn print_mint_data(data: MintState) {
+    msg!("-- Mint Data:");
+    msg!("  Mint Authority:         {:#?}", data.mint_authority);
+    msg!("  Supply:                 {}", data.supply);
+    msg!("  Decimals:               {}", data.decimals);
+    msg!("  Is Initialized:         {}", data.is_initialized);
+    msg!("  Freeze Authority:       {:#?}", data.freeze_authority);
+}
+
+fn print_metadata_data(data: MetadataState) {
+    msg!("-- Metadata Data:");
+    msg!("  Mint:                   {:#?}", data.mint);
+    msg!("  Primary Sale Happened:  {}", data.primary_sale_happened);
+    msg!("  Is Mutable:             {}", data.is_mutable);
+    msg!("  Edition Nonce:          {:#?}", data.edition_nonce);
+    msg!("  Title:                  {}", data.data.name);
+    msg!("  Symbol:                 {}", data.data.symbol);
+    msg!("  URI:                    {}", data.data.uri);
+}
+
+fn print_associated_token_data(data: AssociatedTokenAccountState) {
+    msg!("-- Associated Token Data:");
+    msg!("  Mint:                   {:#?}", data.mint);
+    msg!("  Owner:                  {:#?}", data.owner);
+    msg!("  Amount:                 {}", data.amount);
+    msg!("  Delegate:               {:#?}", data.delegate);
+    msg!("  Is Native:              {:#?}", data.is_native);
+    msg!("  Delegated Amount:       {}", data.delegated_amount);
+    msg!("  Close Authority:        {:#?}", data.close_authority);
 }

@@ -2,7 +2,7 @@ use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     program_pack::Pack, pubkey::Pubkey,
 };
-use spl_token::state::Account as AssociatedTokenAccountState;
+pub use spl_token::state::Account as AssociatedTokenAccountState;
 
 use crate::{
     cpi, error::NautilusError, Create, Mint, NautilusAccountInfo,
