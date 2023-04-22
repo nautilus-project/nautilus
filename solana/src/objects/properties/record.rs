@@ -24,27 +24,3 @@ pub trait NautilusRecord<'a>: NautilusAccountInfo<'a> {
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError>;
     fn count_authorities(&self) -> u8;
 }
-
-// #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
-// pub struct NautilusDataDefault {}
-
-// impl NautilusData for NautilusDataDefault {
-//     const TABLE_NAME: &'static str = "__default_data__";
-
-//     const AUTO_INCREMENT: bool = false;
-
-//     fn primary_key<'a>(&self) -> &'a [u8] {
-//         &[0]
-//     }
-
-//     fn check_authorities(&self, _accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
-//         Ok(())
-//     }
-
-//     fn count_authorities(&self) -> u8 {
-//         0
-//     }
-//     fn default() -> Self {
-//         Self {}
-//     }
-// }
