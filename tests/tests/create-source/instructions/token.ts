@@ -8,7 +8,7 @@ import {
     SYSVAR_RENT_PUBKEY, 
     TransactionInstruction 
 } from '@solana/web3.js'
-import { MyInstructions } from "."
+import { createBaseInstruction, MyInstructions } from "."
 
 class CreateTokenInstructionData {
     instruction: MyInstructions
@@ -47,6 +47,17 @@ const CreateTokenInstructionDataSchema = new Map([
     }]
 ])
 
+function getMetadataAddress(mint: PublicKey): PublicKey {
+    return PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("metadata"),
+            METADATA_PROGRAM_ID.toBuffer(),
+            mint.toBuffer(),
+          ],
+        METADATA_PROGRAM_ID,
+    )[0]
+}
+
 function createInstruction(
     newMint: PublicKey,
     payer: PublicKey,
@@ -60,14 +71,7 @@ function createInstruction(
 
     const myInstructionObject = new CreateTokenInstructionData({instruction, decimals, title, symbol, uri})
 
-    const newMetadata = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("metadata"),
-            METADATA_PROGRAM_ID.toBuffer(),
-            newMint.toBuffer(),
-          ],
-        METADATA_PROGRAM_ID,
-    )[0]
+    const newMetadata = getMetadataAddress(newMint)
 
     function deriveKeys(instruction: MyInstructions) {
         if (instruction === MyInstructions.CreateToken) return [
@@ -115,6 +119,23 @@ export function createCreateTokenInstruction(
     return createInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateToken)
 }
 
+export function createReadTokenInstruction(
+    mint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newMetadata = getMetadataAddress(mint)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadToken,
+        [
+            {pubkey: mint, isSigner: false, isWritable: false},
+            {pubkey: newMetadata, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
+}
+
 export function createCreateTokenWithPayerInstruction(
     newMint: PublicKey,
     payer: PublicKey,
@@ -125,4 +146,21 @@ export function createCreateTokenWithPayerInstruction(
     uri: string,
 ): TransactionInstruction {
     return createInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateTokenWithPayer)
+}
+
+export function createReadTokenCreatedWithPayerInstruction(
+    mint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newMetadata = getMetadataAddress(mint)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadTokenCreatedWithPayer,
+        [
+            {pubkey: mint, isSigner: false, isWritable: false},
+            {pubkey: newMetadata, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
 }

@@ -33,12 +33,12 @@ pub fn create_account<'a>(
     )
 }
 
-pub fn create_pda<'a>(
+pub fn create_record<'a, T: NautilusData>(
     new_account: impl NautilusRecord<'a>,
     owner: &Pubkey,
     payer: impl NautilusSigner<'a>,
     system_program: Box<AccountInfo<'a>>,
-    data: impl NautilusData,
+    data: Box<T>,
 ) -> ProgramResult {
     let (_, bump) = new_account.pda();
     let seeds = new_account.seeds();
@@ -57,7 +57,7 @@ pub fn create_pda<'a>(
         ],
         &[&seeds, &[&[bump]]],
     )?;
-    data.serialize(&mut &mut new_account.into_account_info().data.borrow_mut()[..])?;
+    data.serialize(&mut &mut new_account.account_info().data.borrow_mut()[..])?;
     Ok(())
 }
 

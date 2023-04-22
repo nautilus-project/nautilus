@@ -8,6 +8,7 @@
 extern crate self as nautilus;
 
 pub mod cpi;
+pub mod error;
 pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};

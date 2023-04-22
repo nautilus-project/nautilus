@@ -7,7 +7,7 @@ import {
     SYSVAR_RENT_PUBKEY, 
     TransactionInstruction 
 } from '@solana/web3.js'
-import { MyInstructions } from "."
+import { createBaseInstruction, MyInstructions } from "."
 
 class CreateMintInstructionData {
     instruction: MyInstructions
@@ -83,6 +83,20 @@ export function createCreateMintInstruction(
     return createInstruction(newMint, payer, programId, decimals, MyInstructions.CreateMint)
 }
 
+export function createReadMintInstruction(
+    newMint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadMint,
+        [
+            {pubkey: newMint, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
+}
+
 export function createCreateMintWithPayerInstruction(
     newMint: PublicKey,
     payer: PublicKey,
@@ -90,4 +104,18 @@ export function createCreateMintWithPayerInstruction(
     decimals: number,
 ): TransactionInstruction {
     return createInstruction(newMint, payer, programId, decimals, MyInstructions.CreateMintWithPayer)
+}
+
+export function createReadMintCreatedWithPayerInstruction(
+    newMint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadMintCreatedWithPayer,
+        [
+            {pubkey: newMint, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
 }

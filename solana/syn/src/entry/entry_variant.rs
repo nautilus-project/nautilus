@@ -110,22 +110,22 @@ impl NautilusEntrypointEnumVariant {
                                     object_inits.push(
                                         quote! { let mut #arg_ident = Create::new(
                                             #(#create_call_idents,)*
-                                            #obj_type::new(#(#read_call_idents,)* false)
+                                            #obj_type::new(#(#read_call_idents,)*)
                                     ); },
                                     );
                                 },
                                 None => {
                                     if config.is_signer { 
                                         object_inits.push(
-                                            quote! { let #arg_ident = Signer::new(#obj_type::new(#(#read_call_idents,)* true)); },
+                                            quote! { let #arg_ident = Signer::new(#obj_type::load(#(#read_call_idents,)*)?); },
                                         );
                                     } else if config.is_mut {
                                         object_inits.push(
-                                            quote! { let #arg_ident = Mut::new(#obj_type::new(#(#read_call_idents,)* true)); },
+                                            quote! { let #arg_ident = Mut::new(#obj_type::load(#(#read_call_idents,)*)?); },
                                         );
                                     } else { 
                                         object_inits.push(
-                                            quote! { let #arg_ident = #obj_type::new(#(#read_call_idents,)* true); },
+                                            quote! { let #arg_ident = #obj_type::load(#(#read_call_idents,)*)?; },
                                         );
                                     }
                                 },

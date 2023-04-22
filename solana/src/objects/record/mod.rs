@@ -1,84 +1,80 @@
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    msg,
-    program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::{
-    cpi::create::create_pda, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
     NautilusIndex, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
-
-use super::DATA_NOT_SET_MSG;
 
 pub mod index;
 
 #[derive(Clone)]
-pub struct Record<'a, T: NautilusData + 'a> {
+pub struct Record<'a, T>
+where
+    T: NautilusData,
+{
     pub program_id: &'a Pubkey,
-    pub index: NautilusIndex<'a>,
     pub account_info: Box<AccountInfo<'a>>,
-    pub data: Option<T>,
+    pub index: NautilusIndex<'a>,
+    pub data: T,
 }
 
-impl<'a, T: NautilusData> Record<'a, T> {
+impl<'a, T> Record<'a, T>
+where
+    T: NautilusData,
+{
     pub fn new(
         program_id: &'a Pubkey,
-        index_account_info: Box<AccountInfo<'a>>,
         account_info: Box<AccountInfo<'a>>,
-        load_data: bool,
+        index: NautilusIndex<'a>,
     ) -> Self {
-        let index = NautilusIndex::new(program_id, index_account_info, true);
-        let mut obj = Self {
+        Self {
             program_id,
             index,
             account_info,
-            data: None,
-        };
-        if load_data {
-            obj.load_data();
-        };
-        obj
+            data: T::default(),
+        }
     }
 
-    fn load_data(&mut self) {
-        match T::try_from_slice(match &self.account_info.try_borrow_data() {
-            Ok(data) => data,
-            Err(e) => {
-                msg!("Could not read data from {}", &self.account_info.key);
-                msg!("Is it empty?");
-                panic!("{}", e);
+    pub fn load(
+        program_id: &'a Pubkey,
+        account_info: Box<AccountInfo<'a>>,
+        index: NautilusIndex<'a>,
+    ) -> Result<Self, ProgramError> {
+        let data = match T::try_from_slice(match &account_info.try_borrow_data() {
+            Ok(acct_data) => acct_data,
+            Err(_) => {
+                return Err(NautilusError::LoadDataFailed(
+                    T::TABLE_NAME.to_string(),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state_data) => state_data,
             Err(_) => {
-                msg!("Error parsing Record state from {}", &self.account_info.key);
-                msg!(
-                    "Are you sure this is the correct data type for table `{}`?",
-                    T::TABLE_NAME
-                );
-                self.data = None
+                return Err(NautilusError::DeserializeDataFailed(
+                    T::TABLE_NAME.to_string(),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
-        }
-    }
-
-    pub fn data(&self) -> T {
-        match &self.data {
-            Some(data) => data.clone(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
-    }
-}
-
-impl<'a, T: NautilusData> IntoAccountInfo<'a> for Record<'a, T> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        *self.account_info
+        };
+        Ok(Self {
+            program_id,
+            index,
+            account_info,
+            data,
+        })
     }
 }
 
-impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Record<'a, T> {
+impl<'a, T> NautilusAccountInfo<'a> for Record<'a, T>
+where
+    T: NautilusData,
+{
     fn account_info(&self) -> Box<AccountInfo<'a>> {
         self.account_info.clone()
     }
@@ -112,44 +108,35 @@ impl<'a, T: NautilusData> NautilusAccountInfo<'a> for Record<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> NautilusRecord<'a> for Record<'a, T> {
+impl<'a, T> NautilusRecord<'a> for Record<'a, T>
+where
+    T: NautilusData,
+{
     fn primary_key(&self) -> &'a [u8] {
-        match &self.data {
-            Some(data) => data.primary_key(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.primary_key()
     }
 
     fn seeds(&self) -> [&'a [u8]; 2] {
-        match &self.data {
-            Some(data) => data.seeds(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.seeds()
     }
 
     fn pda(&self) -> (Pubkey, u8) {
-        match &self.data {
-            Some(data) => data.pda(self.program_id),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.pda(self.program_id)
     }
 
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
-        match &self.data {
-            Some(data) => data.check_authorities(accounts),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.check_authorities(accounts)
     }
 
     fn count_authorities(&self) -> u8 {
-        match &self.data {
-            Some(data) => data.count_authorities(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.count_authorities()
     }
 }
 
-impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Record<'a, T> {
+impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
+where
+    T: NautilusData,
+{
     fn transfer_lamports(
         self,
         to: impl NautilusAccountInfo<'a>,
@@ -162,20 +149,24 @@ impl<'a, T: NautilusData + 'a> NautilusTransferLamports<'a> for Record<'a, T> {
     }
 }
 
-impl<'a, T: NautilusData> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, T>> {
+impl<'a, T> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, T>>
+where
+    T: NautilusData,
+{
     fn create_record(&mut self, data: T) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        create_pda(
+        let data_pointer = Box::new(data);
+        cpi::create::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.system_program.to_owned(),
-            data,
+            data_pointer.clone(),
         )?;
-        self.self_account.load_data();
+        self.self_account.data = *data_pointer;
         Ok(())
     }
 
@@ -184,14 +175,15 @@ impl<'a, T: NautilusData> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, 
         data: T,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        create_pda(
+        let data_pointer = Box::new(data);
+        cpi::create::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.system_program.to_owned(),
-            data,
+            data_pointer.clone(),
         )?;
-        self.self_account.load_data();
+        self.self_account.data = *data_pointer;
         Ok(())
     }
 }

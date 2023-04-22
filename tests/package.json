@@ -20,9 +20,8 @@
     "yaml": "^2.2.1"
   },
   "scripts": {
-    "test-source-basic": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-basic/test.ts",
-    "test-source-create": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-create/test.ts",
-    "test-source-robust": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/source-robust/test.ts",
+    "test-create-source": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/create-source/test.ts",
+    "test-create-records": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/create-records/test.ts",
     "all": "sh ./tests/all-tests.sh"
   }
 }

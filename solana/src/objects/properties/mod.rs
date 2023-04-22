@@ -1,7 +1,5 @@
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
@@ -12,7 +10,7 @@ pub mod mutable;
 pub mod record;
 pub mod signer;
 
-pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
+pub trait NautilusAccountInfo<'a>: Clone {
     fn account_info(&self) -> Box<AccountInfo<'a>>;
     fn key(&self) -> &'a Pubkey;
     fn is_signer(&self) -> bool;
@@ -30,6 +28,6 @@ pub trait NautilusAccountInfo<'a>: IntoAccountInfo<'a> + Clone + 'a {
     }
 }
 
-pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> + 'a {
+pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> {
     fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult;
 }

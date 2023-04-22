@@ -8,7 +8,7 @@ import {
     SYSVAR_RENT_PUBKEY, 
     TransactionInstruction 
 } from '@solana/web3.js'
-import { MyInstructions } from "."
+import { createBaseInstruction, MyInstructions } from "."
 
 class CreateMetadataInstructionData {
     instruction: MyInstructions
@@ -43,6 +43,17 @@ const CreateMetadataInstructionDataSchema = new Map([
     }]
 ])
 
+function getMetadataAddress(mint: PublicKey): PublicKey {
+    return PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("metadata"),
+            METADATA_PROGRAM_ID.toBuffer(),
+            mint.toBuffer(),
+          ],
+        METADATA_PROGRAM_ID,
+    )[0]
+}
+
 function createInstruction(
     mint: PublicKey,
     payer: PublicKey,
@@ -55,14 +66,7 @@ function createInstruction(
 
     const myInstructionObject = new CreateMetadataInstructionData({instruction, title, symbol, uri})
 
-    const newMetadata = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("metadata"),
-            METADATA_PROGRAM_ID.toBuffer(),
-            mint.toBuffer(),
-          ],
-        METADATA_PROGRAM_ID,
-    )[0]
+    const newMetadata = getMetadataAddress(mint)
 
     function deriveKeys(instruction: MyInstructions) {
         if (instruction === MyInstructions.CreateMetadata) return [
@@ -109,6 +113,21 @@ export function createCreateMetadataInstruction(
     return createInstruction(mint, payer, programId, title, symbol, uri, MyInstructions.CreateMetadata)
 }
 
+export function createReadMetadataInstruction(
+    mint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newMetadata = getMetadataAddress(mint)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadMetadata,
+        [
+            {pubkey: newMetadata, isSigner: false, isWritable: false},
+            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
+}
+
 export function createCreateMetadataWithPayerInstruction(
     mint: PublicKey,
     payer: PublicKey,
@@ -118,4 +137,19 @@ export function createCreateMetadataWithPayerInstruction(
     uri: string,
 ): TransactionInstruction {
     return createInstruction(mint, payer, programId, title, symbol, uri, MyInstructions.CreateMetadataWithPayer)
+}
+
+export function createReadMetadataCreatedWithPayerInstruction(
+    mint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newMetadata = getMetadataAddress(mint)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadMetadataCreatedWithPayer,
+        [
+            {pubkey: newMetadata, isSigner: false, isWritable: false},
+            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
 }

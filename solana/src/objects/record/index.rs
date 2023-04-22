@@ -1,19 +1,15 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    msg,
-    program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::{
-    cpi::create::create_pda, objects::record::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
-    NautilusCreate, NautilusData, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer,
-    Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreate, NautilusData,
+    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone, Default)]
 pub struct NautilusIndexData {
     pub index: std::collections::HashMap<String, u32>,
 }
@@ -33,23 +29,14 @@ impl NautilusIndexData {
         }
     }
 
-    pub fn add_record(&mut self, table_name: &str) -> Result<u32, InsertRecordError> {
+    pub fn add_record(&mut self, table_name: &str) -> Result<u32, ProgramError> {
         match self.index.get_mut(&(table_name.to_string())) {
             Some(count) => {
                 *count += 1;
                 Ok(*count)
             }
-            None => Err(InsertRecordError()),
+            None => Err(NautilusError::WriteRecordFailed(table_name.to_string()).into()),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct InsertRecordError();
-
-impl std::fmt::Display for InsertRecordError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Failed to write new record.")
     }
 }
 
@@ -75,73 +62,64 @@ impl NautilusData for NautilusIndexData {
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
     pub account_info: Box<AccountInfo<'a>>,
-    pub data: Option<NautilusIndexData>,
+    pub data: NautilusIndexData,
 }
 
 impl<'a> NautilusIndex<'a> {
-    pub fn new(
-        program_id: &'a Pubkey,
-        account_info: Box<AccountInfo<'a>>,
-        load_data: bool,
-    ) -> Self {
-        let mut obj = Self {
+    pub fn new(program_id: &'a Pubkey, account_info: Box<AccountInfo<'a>>) -> Self {
+        Self {
             program_id,
             account_info,
-            data: None,
-        };
-        if load_data {
-            obj.load_data();
-        };
-        obj
+            data: NautilusIndexData::default(),
+        }
     }
 
-    fn load_data(&mut self) {
-        match NautilusIndexData::try_from_slice(match &self.account_info.try_borrow_data() {
-            Ok(data) => data,
-            Err(e) => {
-                msg!("Could not read data from {}", &self.account_info.key);
-                msg!("Is it empty?");
-                panic!("{}", e);
+    pub fn load(
+        program_id: &'a Pubkey,
+        account_info: Box<AccountInfo<'a>>,
+    ) -> Result<Self, ProgramError> {
+        let data = match NautilusIndexData::try_from_slice(match &account_info.try_borrow_data() {
+            Ok(acct_data) => acct_data,
+            Err(_) => {
+                return Err(NautilusError::LoadDataFailed(
+                    NautilusIndexData::TABLE_NAME.to_string(),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state_data) => state_data,
             Err(_) => {
-                msg!("Error parsing Index state from {}", &self.account_info.key);
-                msg!("Are you sure this is the Index?");
-                self.data = None
+                return Err(NautilusError::DeserializeDataFailed(
+                    NautilusIndexData::TABLE_NAME.to_string(),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
-        }
-    }
-
-    pub fn data(&self) -> NautilusIndexData {
-        match &self.data {
-            Some(data) => data.clone(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        };
+        Ok(Self {
+            program_id,
+            account_info,
+            data,
+        })
     }
 
     pub fn get_count(&self, table_name: &str) -> Option<u32> {
-        self.data().get_count(table_name)
+        self.data.get_count(table_name)
     }
 
     pub fn get_next_count(&self, table_name: &str) -> u32 {
-        self.data().get_next_count(table_name)
+        self.data.get_next_count(table_name)
     }
 
     pub fn add_record(&mut self, table_name: &str) -> Result<u32, ProgramError> {
-        let count = match self.data().add_record(table_name) {
+        let count = match self.data.add_record(table_name) {
             Ok(count) => count,
             Err(e) => return Err(ProgramError::BorshIoError(e.to_string())), // TODO wtf?
         };
-        self.data()
+        self.data
             .serialize(&mut &mut self.account_info.data.borrow_mut()[..])?;
         Ok(count)
-    }
-}
-
-impl<'a> IntoAccountInfo<'a> for NautilusIndex<'a> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        *self.account_info
     }
 }
 
@@ -181,38 +159,23 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
 
 impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
     fn primary_key(&self) -> &'a [u8] {
-        match &self.data {
-            Some(data) => data.primary_key(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.primary_key()
     }
 
     fn seeds(&self) -> [&'a [u8]; 2] {
-        match &self.data {
-            Some(data) => data.seeds(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.seeds()
     }
 
     fn pda(&self) -> (Pubkey, u8) {
-        match &self.data {
-            Some(data) => data.pda(self.program_id),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.pda(self.program_id)
     }
 
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
-        match &self.data {
-            Some(data) => data.check_authorities(accounts),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.check_authorities(accounts)
     }
 
     fn count_authorities(&self) -> u8 {
-        match &self.data {
-            Some(data) => data.count_authorities(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
+        self.data.count_authorities()
     }
 }
 
@@ -231,30 +194,34 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
         });
-        create_pda(
+        let data = NautilusIndexData {
+            index: std::collections::HashMap::new(),
+        };
+        let data_pointer = Box::new(data);
+        cpi::create::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.clone(),
-            NautilusIndexData {
-                index: std::collections::HashMap::new(),
-            },
+            self.system_program.to_owned(),
+            data_pointer.clone(),
         )?;
-        self.self_account.load_data();
+        self.self_account.data = *data_pointer;
         Ok(())
     }
 
     fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        create_pda(
+        let data = NautilusIndexData {
+            index: std::collections::HashMap::new(),
+        };
+        let data_pointer = Box::new(data);
+        cpi::create::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.clone(),
-            NautilusIndexData {
-                index: std::collections::HashMap::new(),
-            },
+            self.system_program.to_owned(),
+            data_pointer.clone(),
         )?;
-        self.self_account.load_data();
+        self.self_account.data = *data_pointer;
         Ok(())
     }
 }

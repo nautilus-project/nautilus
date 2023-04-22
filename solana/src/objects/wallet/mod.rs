@@ -1,7 +1,5 @@
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
@@ -18,21 +16,21 @@ pub struct Wallet<'a> {
 }
 
 impl<'a> Wallet<'a> {
-    pub fn new(
-        account_info: Box<AccountInfo<'a>>,
-        system_program: Box<AccountInfo<'a>>,
-        _load_data: bool,
-    ) -> Self {
+    pub fn new(account_info: Box<AccountInfo<'a>>, system_program: Box<AccountInfo<'a>>) -> Self {
         Self {
             account_info,
             system_program,
         }
     }
-}
 
-impl<'a> IntoAccountInfo<'a> for Wallet<'a> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        *self.account_info
+    pub fn load(
+        account_info: Box<AccountInfo<'a>>,
+        system_program: Box<AccountInfo<'a>>,
+    ) -> Result<Self, ProgramError> {
+        Ok(Self {
+            account_info,
+            system_program,
+        })
     }
 }
 
@@ -67,12 +65,6 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
 
     fn span(&self) -> usize {
         self.account_info.data_len()
-    }
-}
-
-impl<'a> IntoAccountInfo<'a> for Mut<Wallet<'a>> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        self.self_account.into_account_info()
     }
 }
 
@@ -111,12 +103,6 @@ impl<'a> NautilusAccountInfo<'a> for Mut<Wallet<'a>> {
 }
 
 impl<'a> NautilusMut<'a> for Mut<Wallet<'a>> {}
-
-impl<'a> IntoAccountInfo<'a> for Signer<Wallet<'a>> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        self.self_account.into_account_info()
-    }
-}
 
 impl<'a> NautilusAccountInfo<'a> for Signer<Wallet<'a>> {
     fn account_info(&self) -> Box<AccountInfo<'a>> {
@@ -164,14 +150,14 @@ impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
 impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
     fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
-            account_info: self.fee_payer.to_owned(),
-            system_program: self.system_program.to_owned(),
+            account_info: self.fee_payer.clone(),
+            system_program: self.system_program.clone(),
         });
         create_account(
             self.clone(),
             &self.system_program.key,
             payer,
-            self.system_program.to_owned(),
+            self.system_program.clone(),
         )
     }
 
@@ -180,7 +166,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
             self.clone(),
             &self.system_program.key,
             payer,
-            self.system_program.to_owned(),
+            self.system_program.clone(),
         )
     }
 }

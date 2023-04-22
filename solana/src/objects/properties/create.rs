@@ -1,23 +1,27 @@
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
-use crate::{Metadata, Mint, NautilusData};
+use crate::{Mint, NautilusData};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
 #[derive(Clone)]
-pub struct Create<'a, T: NautilusAccountInfo<'a> + 'a> {
+pub struct Create<'a, T>
+where
+    T: NautilusAccountInfo<'a> + 'a,
+{
     pub fee_payer: Box<AccountInfo<'a>>,
     pub system_program: Box<AccountInfo<'a>>,
     pub rent: Box<AccountInfo<'a>>,
     pub self_account: T,
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> Create<'a, T> {
+impl<'a, T> Create<'a, T>
+where
+    T: NautilusAccountInfo<'a> + 'a,
+{
     pub fn new(
         fee_payer: Box<AccountInfo<'a>>,
         system_program: Box<AccountInfo<'a>>,
@@ -33,13 +37,10 @@ impl<'a, T: NautilusAccountInfo<'a>> Create<'a, T> {
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Create<'a, T> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        self.self_account.into_account_info()
-    }
-}
-
-impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
+impl<'a, T> NautilusAccountInfo<'a> for Create<'a, T>
+where
+    T: NautilusAccountInfo<'a> + 'a,
+{
     fn account_info(&self) -> Box<AccountInfo<'a>> {
         self.self_account.account_info()
     }
@@ -73,7 +74,7 @@ impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
     }
 }
 
-impl<'a, T: NautilusAccountInfo<'a> + 'a> NautilusSigner<'a> for Create<'a, T> {}
+impl<'a, T> NautilusSigner<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
 
 pub trait NautilusCreate<'a> {
     fn create(&mut self) -> ProgramResult;
@@ -143,8 +144,6 @@ pub trait NautilusCreateToken<'a> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult;
-
-    fn metadata(&self) -> Metadata<'a>;
 }
 
 pub trait NautilusCreateAssociatedTokenAccount<'a> {

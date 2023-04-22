@@ -1,71 +1,58 @@
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    msg,
-    program_error::ProgramError,
-    program_pack::Pack,
-    pubkey::Pubkey,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
+    program_pack::Pack, pubkey::Pubkey,
 };
 use spl_token::state::Mint as MintState;
 
 use crate::{
-    cpi::create::create_mint, objects::DATA_NOT_SET_MSG, Create, NautilusAccountInfo,
-    NautilusCreateMint, NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner,
+    Signer, Wallet,
 };
 
 #[derive(Clone)]
 pub struct Mint<'a> {
     pub account_info: Box<AccountInfo<'a>>,
     pub token_program: Box<AccountInfo<'a>>,
-    pub data: Option<MintState>,
+    pub data: MintState,
 }
 
 impl<'a> Mint<'a> {
-    pub fn new(
-        account_info: Box<AccountInfo<'a>>,
-        token_program: Box<AccountInfo<'a>>,
-        load_data: bool,
-    ) -> Self {
-        let mut obj = Self {
+    pub fn new(account_info: Box<AccountInfo<'a>>, token_program: Box<AccountInfo<'a>>) -> Self {
+        Self {
             account_info,
             token_program,
-            data: None,
-        };
-        if load_data {
-            obj.load_data();
-        };
-        obj
+            data: MintState::default(),
+        }
     }
 
-    fn load_data(&mut self) {
-        match MintState::unpack(match &self.account_info.try_borrow_data() {
-            Ok(data) => data,
-            Err(e) => {
-                msg!("Could not read data from {}", &self.account_info.key);
-                msg!("Is it empty?");
-                panic!("{}", e);
+    pub fn load(
+        account_info: Box<AccountInfo<'a>>,
+        token_program: Box<AccountInfo<'a>>,
+    ) -> Result<Self, ProgramError> {
+        let data = match MintState::unpack(match &account_info.try_borrow_data() {
+            Ok(acct_data) => acct_data,
+            Err(_) => {
+                return Err(NautilusError::LoadDataFailed(
+                    String::from("token_mint"),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state_data) => state_data,
             Err(_) => {
-                msg!("Error parsing Mint state from {}", &self.account_info.key);
-                msg!("Are you sure this is a Mint?");
-                self.data = None
+                return Err(NautilusError::DeserializeDataFailed(
+                    String::from("token_mint"),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
-        }
-    }
-
-    pub fn data(&self) -> MintState {
-        match self.data {
-            Some(data) => data,
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
-    }
-}
-
-impl<'a> IntoAccountInfo<'a> for Mint<'a> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        *self.account_info
+        };
+        Ok(Self {
+            account_info,
+            token_program,
+            data,
+        })
     }
 }
 
@@ -114,7 +101,7 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        create_mint(
+        cpi::create::create_mint(
             self.clone(),
             decimals,
             mint_authority,
@@ -124,7 +111,10 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
         )?;
-        self.self_account.load_data();
+        self.self_account = Mint::load(
+            self.self_account.account_info.clone(),
+            self.self_account.token_program.clone(),
+        )?;
         Ok(())
     }
 
@@ -135,7 +125,7 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        create_mint(
+        cpi::create::create_mint(
             self.clone(),
             decimals,
             mint_authority,
@@ -145,7 +135,10 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
         )?;
-        self.self_account.load_data();
+        self.self_account = Mint::load(
+            self.self_account.account_info.clone(),
+            self.self_account.token_program.clone(),
+        )?;
         Ok(())
     }
 }

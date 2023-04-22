@@ -6,7 +6,7 @@ import {
     SYSVAR_RENT_PUBKEY, 
     TransactionInstruction 
 } from '@solana/web3.js'
-import { MyInstructions } from "."
+import { createBaseInstruction, MyInstructions } from "."
 import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 
 class CreateAssociatedTokenInstructionData {
@@ -85,6 +85,23 @@ export function createCreateAssociatedTokenInstruction(
     return createInstruction(mint, owner, payer, programId, MyInstructions.CreateAssociatedToken)
 }
 
+export function createReadAssociatedTokenInstruction(
+    mint: PublicKey,
+    owner: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newAssociatedToken = getAssociatedTokenAddressSync(mint, owner)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadAssociatedToken,
+        [
+            {pubkey: newAssociatedToken, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
+}
+
 export function createCreateAssociatedTokenWithPayerInstruction(
     mint: PublicKey,
     owner: PublicKey,
@@ -92,4 +109,21 @@ export function createCreateAssociatedTokenWithPayerInstruction(
     programId: PublicKey,
 ): TransactionInstruction {
     return createInstruction(mint, owner, payer, programId, MyInstructions.CreateAssociatedTokenWithPayer)
+}
+
+export function createReadAssociatedTokenCreatedWithPayerInstruction(
+    mint: PublicKey,
+    owner: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newAssociatedToken = getAssociatedTokenAddressSync(mint, owner)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadAssociatedTokenCreatedWithPayer,
+        [
+            {pubkey: newAssociatedToken, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
 }

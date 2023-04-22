@@ -1,73 +1,61 @@
 use mpl_token_metadata::state::{Metadata as MetadataState, TokenMetadataAccount};
 use solana_program::{
-    account_info::{AccountInfo, IntoAccountInfo},
-    entrypoint::ProgramResult,
-    msg,
-    program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::{
-    cpi::create::create_metadata, objects::DATA_NOT_SET_MSG, Create, Mint, NautilusAccountInfo,
-    NautilusCreateMetadata, NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusCreateMetadata,
+    NautilusSigner, Signer, Wallet,
 };
 
 #[derive(Clone)]
 pub struct Metadata<'a> {
     pub account_info: Box<AccountInfo<'a>>,
     pub token_metadata_program: Box<AccountInfo<'a>>,
-    pub data: Option<MetadataState>,
+    pub data: MetadataState,
 }
 
 impl<'a> Metadata<'a> {
     pub fn new(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,
-        load_data: bool,
     ) -> Self {
-        let mut obj = Self {
+        Self {
             account_info,
             token_metadata_program,
-            data: None,
-        };
-        if load_data {
-            obj.load_data();
-        };
-        obj
+            data: MetadataState::default(),
+        }
     }
 
-    fn load_data(&mut self) {
-        match MetadataState::safe_deserialize(match &self.account_info.try_borrow_data() {
-            Ok(data) => data,
-            Err(e) => {
-                msg!("Could not read data from {}", &self.account_info.key);
-                msg!("Is it empty?");
-                panic!("{}", e);
+    pub fn load(
+        account_info: Box<AccountInfo<'a>>,
+        token_metadata_program: Box<AccountInfo<'a>>,
+    ) -> Result<Self, ProgramError> {
+        let data = match MetadataState::safe_deserialize(match &account_info.try_borrow_data() {
+            Ok(acct_data) => acct_data,
+            Err(_) => {
+                return Err(NautilusError::LoadDataFailed(
+                    String::from("token_metadata"),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
         }) {
-            Ok(state) => self.data = Some(state),
+            Ok(state_data) => state_data,
             Err(_) => {
-                msg!(
-                    "Error parsing Metadata state from {}",
-                    &self.account_info.key
-                );
-                msg!("Are you sure this is a Metadata?");
-                self.data = None
+                return Err(NautilusError::DeserializeDataFailed(
+                    String::from("token_metadata"),
+                    account_info.key.to_string(),
+                )
+                .into())
             }
-        }
-    }
-
-    pub fn data(&self) -> MetadataState {
-        match &self.data {
-            Some(data) => data.clone(),
-            None => panic!("{}", DATA_NOT_SET_MSG),
-        }
-    }
-}
-
-impl<'a> IntoAccountInfo<'a> for Metadata<'a> {
-    fn into_account_info(self) -> AccountInfo<'a> {
-        *self.account_info
+        };
+        Ok(Self {
+            account_info,
+            token_metadata_program,
+            data,
+        })
     }
 }
 
@@ -119,7 +107,7 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        create_metadata(
+        cpi::create::create_metadata(
             self.clone(),
             title,
             symbol,
@@ -131,7 +119,10 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
             self.rent.to_owned(),
             self.self_account.token_metadata_program.to_owned(),
         )?;
-        self.self_account.load_data();
+        self.self_account = Metadata::load(
+            self.self_account.account_info.clone(),
+            self.self_account.token_metadata_program.clone(),
+        )?;
         Ok(())
     }
 
@@ -145,7 +136,7 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
         update_authority: impl NautilusAccountInfo<'a>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        create_metadata(
+        cpi::create::create_metadata(
             self.clone(),
             title,
             symbol,
@@ -157,7 +148,10 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
             self.rent.to_owned(),
             self.self_account.token_metadata_program.to_owned(),
         )?;
-        self.self_account.load_data();
+        self.self_account = Metadata::load(
+            self.self_account.account_info.clone(),
+            self.self_account.token_metadata_program.clone(),
+        )?;
         Ok(())
     }
 }
