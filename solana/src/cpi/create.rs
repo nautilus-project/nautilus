@@ -25,7 +25,11 @@ pub fn create_account<'a>(
             new_account.size(),
             owner,
         ),
-        &[payer.into(), new_account.into(), *system_program],
+        &[
+            *payer.account_info(),
+            *new_account.account_info(),
+            *system_program,
+        ],
     )
 }
 
@@ -46,7 +50,11 @@ pub fn create_pda<'a>(
             new_account.size(),
             owner,
         ),
-        &[payer.into(), new_account.clone().into(), *system_program],
+        &[
+            *payer.account_info(),
+            *new_account.account_info(),
+            *system_program,
+        ],
         &[&seeds, &[&[bump]]],
     )?;
     data.serialize(&mut &mut new_account.into_account_info().data.borrow_mut()[..])?;
@@ -72,7 +80,12 @@ pub fn create_mint<'a>(
             freeze_authority.map(|f| f.key()),
             decimals,
         )?,
-        &[mint.into(), mint_authority.into(), *token_program, *rent],
+        &[
+            *mint.account_info(),
+            *mint_authority.account_info(),
+            *token_program,
+            *rent,
+        ],
     )
 }
 
@@ -108,10 +121,10 @@ pub fn create_metadata<'a>(
             None,
         ),
         &[
-            metadata.into(),
-            mint.into(),
-            mint_authority.into(),
-            payer.into(),
+            *metadata.account_info(),
+            *mint.account_info(),
+            *mint_authority.account_info(),
+            *payer.account_info(),
             *token_metadata_program,
             *rent,
         ],
@@ -135,10 +148,10 @@ pub fn create_associated_token_account<'a>(
             token_program.key,
         ),
         &[
-            mint.into(),
-            new_account.into(),
-            owner.into(),
-            payer.into(),
+            *mint.account_info(),
+            *new_account.account_info(),
+            *owner.account_info(),
+            *payer.account_info(),
             *system_program,
             *token_program,
             *associated_token_program,

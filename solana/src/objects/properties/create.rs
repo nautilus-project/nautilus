@@ -40,6 +40,10 @@ impl<'a, T: NautilusAccountInfo<'a>> IntoAccountInfo<'a> for Create<'a, T> {
 }
 
 impl<'a, T: NautilusAccountInfo<'a>> NautilusAccountInfo<'a> for Create<'a, T> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.self_account.key()
     }

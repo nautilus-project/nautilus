@@ -72,6 +72,10 @@ impl<'a> IntoAccountInfo<'a> for Metadata<'a> {
 }
 
 impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.account_info.clone()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.account_info.key
     }

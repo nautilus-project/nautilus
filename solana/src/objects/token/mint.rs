@@ -70,6 +70,10 @@ impl<'a> IntoAccountInfo<'a> for Mint<'a> {
 }
 
 impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.account_info.clone()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.account_info.key
     }

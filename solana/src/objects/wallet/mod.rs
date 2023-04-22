@@ -37,6 +37,10 @@ impl<'a> IntoAccountInfo<'a> for Wallet<'a> {
 }
 
 impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.account_info.clone()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.account_info.key
     }
@@ -73,6 +77,10 @@ impl<'a> IntoAccountInfo<'a> for Mut<Wallet<'a>> {
 }
 
 impl<'a> NautilusAccountInfo<'a> for Mut<Wallet<'a>> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.self_account.key()
     }
@@ -111,6 +119,10 @@ impl<'a> IntoAccountInfo<'a> for Signer<Wallet<'a>> {
 }
 
 impl<'a> NautilusAccountInfo<'a> for Signer<Wallet<'a>> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.self_account.key()
     }

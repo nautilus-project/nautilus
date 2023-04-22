@@ -78,6 +78,10 @@ impl<'a> IntoAccountInfo<'a> for Token<'a> {
 }
 
 impl<'a> NautilusAccountInfo<'a> for Token<'a> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.mint.account_info()
+    }
+
     fn key(&self) -> &'a Pubkey {
         self.mint.account_info.key
     }

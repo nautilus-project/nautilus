@@ -10,6 +10,6 @@ pub fn transfer_lamports<'a>(
 ) -> ProgramResult {
     invoke(
         &solana_program::system_instruction::transfer(from.key(), to.key(), amount),
-        &[from.into(), to.into(), *system_program],
+        &[*from.account_info(), *to.account_info(), *system_program],
     )
 }
