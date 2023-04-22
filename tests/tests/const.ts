@@ -13,7 +13,7 @@ function loadKeypairFromFile(path: string): Keypair {
     )
 }
 
-const sleepSeconds = async (s: number) => await new Promise(f => setTimeout(f, s))
+const sleepSeconds = async (s: number) => await new Promise(f => setTimeout(f, s * 1000))
 
 type TestConfigs = {
     connection: Connection,
@@ -26,12 +26,7 @@ function getTestConfigs(): TestConfigs {
         fs.readFileSync(os.homedir() + '/.config/solana/cli/config.yml', "utf-8")
     )
     const jsonRpcUrl: string = config['json_rpc_url']
-    let timeDelay = 10
-    let skipMetadata = false
-    if (jsonRpcUrl == "http://localhost:8899") {
-        timeDelay = 0
-        skipMetadata = true
-    }
+    const [timeDelay, skipMetadata] = jsonRpcUrl == "http://localhost:8899" ? [0 , true] : [10, false]
     return { 
         connection: new Connection(jsonRpcUrl, "confirmed"), 
         sleep: () => sleepSeconds(timeDelay), 
