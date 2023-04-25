@@ -1,30 +1,47 @@
-import { FC } from "react"
+import { FC } from "react";
+import Navbar from "./Navbar";
+import styles from "@/styles/Transitions.module.css";
 
 const Hero: FC = () => {
-
-    return (
-        <section className="bg-accent-dark bg-cover bg-hero dark:bg-gray-900">
-            <div className="grid max-w-screen-xl bg-gray-500 bg-opacity-30 pl-24 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12">
-                <div className="mr-auto place-self-center lg:col-span-7">
-                    <h1 className="max-w-2xl mb-8 text-4xl font-bold tracking-tight leading-none md:text-5xl xl:text-6xl text-white">Nautilus</h1>
-                    <p className="max-w-2xl mb-6 font-light lg:mb-8 md:text-lg lg:text-xl text-gray-100">Object-oriented, SQL-native Solana programming framework</p>
-                    <a href="#" className="inline-flex items-center justify-center px-5 py-3 mr-3 text-base font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-900">
-                        Get Started
-                        <svg className="w-5 h-5 ml-2 -mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    </a>
-                    <a href="#" className="inline-flex items-center justify-center px-5 py-3 mr-3 text-base font-medium text-center text-white border border-gray-300 rounded-lg hover:bg-gray-700 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                        Docs
-                    </a> 
-                    <a href="#" className="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-white border border-gray-300 rounded-lg hover:bg-gray-700 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                        How it Works
-                    </a> 
-                </div>
-                <div className="hidden lg:mt-0 lg:col-span-5 lg:flex">
-                    <img src="/nautilus-icon.jpg" alt="mockup"/>
-                </div>                
+  return (
+    <div className="bg-[url(https://i.imgur.com/Fq6zXIb.jpg)] backdrop-blur-md bg-no-repeat bg-cover bg-center bg-fixed">
+      <div className="bg-cover bg-fixed backdrop-blur-md pt-2">
+        <div className={styles.fadeInUp}>
+          <Navbar />
+        </div>
+        <div className="mx-auto max-w-2xl py-32">
+          <div className={styles.fadeInUp}>
+            <div className="hidden sm:mb-8 sm:flex sm:justify-center">
+              <img src="https://i.imgur.com/BwfvrEt.png" alt="Nautilus Logo" />
             </div>
-        </section>
-    )
-}
+            <div className="text-center">
+              <h1 className="text-6xl font-bold tracking-tight text-slate-50 drop-shadow-lg sm:text-6xl">
+                Set Sail With{" "}
+                <span className="text-6xl font-bold tracking-tight text-slate-50 drop-shadow-lg underline decoration-sky-500 sm:text-6xl">
+                  Nautilus
+                </span>
+              </h1>
+              <p className="mt-6 text-lg leading-8 text-slate-200">
+                An object-oriented, SQL-native Solana programming framework
+              </p>
+              <div className="mt-10 mb-12 flex items-center justify-center gap-x-6">
+                <button className="btn btn-primary rounded-md bg-sky-500 outline-none hover:bg-sky-600 focus:ring-cyan-400">
+                  Get Started
+                </button>
+                <button className="btn btn-ghost font-semibold text-slate-50">
+                  Docs{" "}
+                  <span className="text-slate-50" aria-hidden="true">
+                    {" "}
+                     →
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-export default Hero
+export default Hero;
