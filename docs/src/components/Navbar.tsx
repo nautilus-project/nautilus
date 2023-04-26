@@ -20,7 +20,12 @@ const Navbar: FC = () => {
             </a>
           </li>
           <li>
-            <a className="text-slate-50 font-semibold">Documentation</a>
+            <a
+              className="text-slate-50 font-semibold"
+              href="/docs/what-is-nautilus"
+            >
+              Documentation
+            </a>
           </li>
         </ul>
       </div>
