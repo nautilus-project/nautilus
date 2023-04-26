@@ -16,9 +16,12 @@
     "daisyui": "^2.51.5",
     "eslint": "8.37.0",
     "eslint-config-next": "13.2.4",
+    "gray-matter": "^4.0.3",
     "next": "13.2.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "remark": "^14.0.2",
+    "remark-html": "^15.0.2",
     "typescript": "5.0.3"
   },
   "devDependencies": {
