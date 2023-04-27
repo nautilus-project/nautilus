@@ -5,8 +5,8 @@ use solana_program::{
 };
 
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreate, NautilusData,
-    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusData,
+    NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone, Default)]
@@ -29,13 +29,16 @@ impl NautilusIndexData {
         }
     }
 
-    pub fn add_record(&mut self, table_name: &str) -> Result<u32, ProgramError> {
+    pub fn add_record(&mut self, table_name: &str) -> u32 {
         match self.index.get_mut(&(table_name.to_string())) {
             Some(count) => {
                 *count += 1;
-                Ok(*count)
+                *count
             }
-            None => Err(NautilusError::WriteRecordFailed(table_name.to_string()).into()),
+            None => {
+                self.index.insert(table_name.to_string(), 1);
+                1
+            }
         }
     }
 }
@@ -45,8 +48,8 @@ impl NautilusData for NautilusIndexData {
 
     const AUTO_INCREMENT: bool = false;
 
-    fn primary_key<'a>(&self) -> &'a [u8] {
-        &[0]
+    fn primary_key(&self) -> Vec<u8> {
+        vec![0]
     }
 
     fn check_authorities(&self, _accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
@@ -112,11 +115,20 @@ impl<'a> NautilusIndex<'a> {
         self.data.get_next_count(table_name)
     }
 
-    pub fn add_record(&mut self, table_name: &str) -> Result<u32, ProgramError> {
-        let count = match self.data.add_record(table_name) {
-            Ok(count) => count,
-            Err(e) => return Err(ProgramError::BorshIoError(e.to_string())), // TODO wtf?
-        };
+    pub fn add_record(
+        &mut self,
+        table_name: &str,
+        fee_payer: impl NautilusSigner<'a>,
+        system_program: Box<AccountInfo<'a>>,
+    ) -> Result<u32, ProgramError> {
+        let count = self.data.add_record(table_name);
+        cpi::transfer::transfer_lamports(
+            fee_payer,
+            Mut::<Self>::new(self.clone()),
+            self.required_rent()? - self.lamports(),
+            system_program,
+        )?;
+        self.account_info.realloc(self.span()?, true)?;
         self.data
             .serialize(&mut &mut self.account_info.data.borrow_mut()[..])?;
         Ok(count)
@@ -152,17 +164,17 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
         self.account_info.owner
     }
 
-    fn span(&self) -> usize {
-        self.account_info.data_len()
+    fn span(&self) -> Result<usize, ProgramError> {
+        Ok(self.data.try_to_vec()?.len())
     }
 }
 
 impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
-    fn primary_key(&self) -> &'a [u8] {
+    fn primary_key(&self) -> Vec<u8> {
         self.data.primary_key()
     }
 
-    fn seeds(&self) -> [&'a [u8]; 2] {
+    fn seeds(&self) -> [Vec<u8>; 2] {
         self.data.seeds()
     }
 
@@ -178,6 +190,78 @@ impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
         self.data.count_authorities()
     }
 }
+
+impl<'a> NautilusAccountInfo<'a> for Mut<NautilusIndex<'a>> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
+    fn key(&self) -> &'a Pubkey {
+        self.self_account.key()
+    }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.is_signer()
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.is_writable()
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.lamports()
+    }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.self_account.mut_lamports()
+    }
+
+    fn owner(&self) -> &'a Pubkey {
+        self.self_account.owner()
+    }
+
+    fn span(&self) -> Result<usize, ProgramError> {
+        self.self_account.span()
+    }
+}
+
+impl<'a> NautilusMut<'a> for Mut<NautilusIndex<'a>> {}
+
+impl<'a> NautilusAccountInfo<'a> for Signer<NautilusIndex<'a>> {
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
+    fn key(&self) -> &'a Pubkey {
+        self.self_account.key()
+    }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.is_signer()
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.is_writable()
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.lamports()
+    }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.self_account.mut_lamports()
+    }
+
+    fn owner(&self) -> &'a Pubkey {
+        self.self_account.owner()
+    }
+
+    fn span(&self) -> Result<usize, ProgramError> {
+        self.self_account.span()
+    }
+}
+
+impl<'a> NautilusSigner<'a> for Signer<NautilusIndex<'a>> {}
 
 impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
     fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult {

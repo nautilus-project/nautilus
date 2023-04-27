@@ -22,7 +22,7 @@ pub fn create_account<'a>(
             payer.key(),
             new_account.key(),
             new_account.required_rent()?,
-            new_account.size(),
+            new_account.size()?,
             owner,
         ),
         &[
@@ -40,14 +40,21 @@ pub fn create_record<'a, T: NautilusData>(
     system_program: Box<AccountInfo<'a>>,
     data: Box<T>,
 ) -> ProgramResult {
-    let (_, bump) = new_account.pda();
+    let (pda, bump) = new_account.pda();
+    assert_eq!(
+        &pda,
+        new_account.key(),
+        "Derived PDA does not match data for account {:#?}",
+        new_account.key()
+    );
     let seeds = new_account.seeds();
+    let signer_seeds: [&[u8]; 3] = [seeds[0].as_slice(), seeds[1].as_slice(), &[bump]];
     invoke_signed(
         &system_instruction::create_account(
             payer.key(),
             new_account.key(),
             new_account.required_rent()?,
-            new_account.size(),
+            new_account.size()?,
             owner,
         ),
         &[
@@ -55,7 +62,7 @@ pub fn create_record<'a, T: NautilusData>(
             *new_account.account_info(),
             *system_program,
         ],
-        &[&seeds, &[&[bump]]],
+        &[&signer_seeds],
     )?;
     data.serialize(&mut &mut new_account.account_info().data.borrow_mut()[..])?;
     Ok(())

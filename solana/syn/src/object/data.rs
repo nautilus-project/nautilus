@@ -2,6 +2,40 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{token::Colon, Fields, FnArg, Ident, Pat, PatIdent, PatType, Type};
 
+pub fn impl_clone(ident: &Ident, fields: &Fields) -> TokenStream {
+    let clone_constructors = fields.iter().map(|f| {
+        let ident = &f.ident.as_ref().unwrap();
+        quote! { #ident: ::core::clone::Clone::clone(&self.#ident) }
+    });
+    quote! {
+        impl ::core::clone::Clone for #ident {
+            #[inline]
+            fn clone(&self) -> Self {
+                Self {
+                    #(#clone_constructors,)*
+                }
+            }
+        }
+    }
+}
+
+pub fn impl_default(ident: &Ident, fields: &Fields) -> TokenStream {
+    let fields_default = fields.iter().map(|f| {
+        let i = &f.ident.clone().unwrap();
+        quote! { #i: ::core::default::Default::default() }
+    });
+    quote! {
+        impl ::core::default::Default for #ident {
+            #[inline]
+            fn default() -> Self {
+                Self {
+                    #(#fields_default,)*
+                }
+            }
+        }
+    }
+}
+
 pub fn impl_borsh(ident: &Ident, fields: &Fields) -> TokenStream {
     let borsh_ser_where = fields.iter().map(|f| {
         let field_ty = f.ty.clone();
@@ -66,51 +100,44 @@ pub fn impl_nautilus_data(
         get_new_fn_args(fields, autoincrement, primary_key_ident);
 
     let data_new_fn = match autoincrement {
-        true => {
-            let tokens_lookup_primary_key = quote! {let #primary_key_ident = {
-                let primary_key = match self.get_next_count(#ident ::TABLE_NAME) {
-                    std::collections::hash_map::Entry::Occupied(mut entry) => {
-                        let index_pk = entry.get_mut();
-                        *index_pk += 1;
-                        *index_pk as #primary_key_ty
-                    },
-                    std::collections::hash_map::Entry::Vacant(entry) => {
-                        entry.insert(1);
-                        1
-                    },
-                };
-                self.self_account.index.update(index_data)?;
-                primary_key
-            };};
-            quote! {
-                pub fn new(#(#data_new_fn_args,)*) -> ProgramResult {
-                    #tokens_lookup_primary_key
-                    self.create_record(#ident ::new(#(#data_new_call_args,)*))
-                }
+        true => quote! {
+            pub fn new<'a>(
+                mut nautilus_index: NautilusIndex<'a>,
+                fee_payer: impl NautilusSigner<'a>,
+                system_program: Box<AccountInfo<'a>>,
+                #(#data_new_fn_args,)*
+            ) -> Result<Box<Self>, ProgramError> {
+                let #primary_key_ident = nautilus_index.add_record(
+                    Self::TABLE_NAME,
+                    fee_payer,
+                    system_program,
+                )?.try_into().unwrap();
+                Ok(Box::new(Self{ #primary_key_ident, #(#data_new_call_args,)* }))
             }
-        }
+        },
         false => quote! {
-            pub fn new(#(#data_new_fn_args,)*) -> ProgramResult {
-                self.create_record(#ident ::new(#(#data_new_call_args,)*))
+            pub fn new<'a>(
+                _nautilus_index: NautilusIndex<'a>,
+                fee_payer: impl NautilusSigner<'a>,
+                system_program: Box<AccountInfo<'a>>,
+                #(#data_new_fn_args,)*
+            ) -> Result<Box<Self>, ProgramError> {
+                Ok(Box::new(Self{ #(#data_new_call_args,)* }))
             }
         },
     };
-
-    let impl_clone = impl_clone(ident, fields);
 
     quote! {
         impl #ident {
             #data_new_fn
         }
 
-        #impl_clone
-
         impl NautilusData for #ident {
             const TABLE_NAME: &'static str = #table_name;
 
             const AUTO_INCREMENT: bool = #autoincrement;
 
-            fn primary_key<'a>(&self) -> &'a [u8] {
+            fn primary_key(&self) -> Vec<u8> {
                 #tokens_primary_key_seed
             }
 
@@ -130,11 +157,27 @@ pub fn impl_nautilus_data(
 
         impl<'a> #nautilus_create_obj_ident<'a> for Create<'a, Record<'a, #ident>> {
             fn create(&mut self, #(#data_new_fn_args,)*) -> ProgramResult {
-                self.create_record(self, #ident ::new(#(#data_new_call_args,)*))
+                let rent_payer = Signer::new(Wallet {
+                    account_info: self.fee_payer.to_owned(),
+                    system_program: self.system_program.to_owned(),
+                });
+                self.self_account.data = #ident ::new(
+                    self.self_account.index.clone(),
+                    rent_payer,
+                    self.system_program.clone(),
+                    #(#data_new_call_args,)*
+                )?;
+                self.create_record()
             }
 
             fn create_with_payer(&mut self, #(#data_new_fn_args,)* payer: impl NautilusSigner<'a>) -> ProgramResult {
-                self.create_record(self, #ident ::new(#(#data_new_call_args,)*))
+                self.self_account.data = #ident ::new(
+                    self.self_account.index.clone(),
+                    payer.clone(),
+                    self.system_program.clone(),
+                    #(#data_new_call_args,)*
+                )?;
+                self.create_record_with_payer(payer)
             }
         }
     }
@@ -143,16 +186,19 @@ pub fn impl_nautilus_data(
 fn build_tokens_primary_key_seed(key: &syn::Ident, ty: &syn::Type) -> TokenStream {
     match quote::quote!(#ty).to_string().as_str() {
         "String" => quote::quote! {
-            unsafe { self.#key.as_bytes() }
+            self.#key.as_bytes().to_vec()
         },
         "u8" => quote::quote! {
-            unsafe { std::slice::from_raw_parts(&self.#key, 1) }
+            vec![self.#key]
+        },
+        "u16" | "u32" | "u64" => quote::quote! {
+            self.#key.to_le_bytes().to_vec()
         },
         "Pubkey" => quote::quote! {
-            unsafe { self.#key.as_ref() }
+            self.#key.to_vec()
         },
         _ => panic!(
-            "Invalid primary key type! Only `String`, `u8`, and `Pubkey` are supported right now."
+            "Invalid primary key type! Only `String`, `u8`, `u16, `u32`, `u64`, and `Pubkey` are supported."
         ),
     }
 }
@@ -185,20 +231,4 @@ fn get_new_fn_args(
         None => (),
     });
     (data_new_fn_args, data_new_call_args)
-}
-
-fn impl_clone(ident: &Ident, fields: &Fields) -> TokenStream {
-    let clone_constructors = fields.iter().map(|f| {
-        let ident = &f.ident.as_ref().unwrap();
-        quote! { #ident: self.#ident.clone() }
-    });
-    quote! {
-        impl Clone for #ident {
-            fn clone(&self) -> Self {
-                Self {
-                    #(#clone_constructors,)*
-                }
-            }
-        }
-    }
 }

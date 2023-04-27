@@ -35,7 +35,7 @@ import {
     createTransferWalletInstruction,
 } from './instructions'
 
-describe("Nautilus Unit Tests: Source Create", async () => {
+describe("Nautilus Unit Tests: Create Source", async () => {
 
     const skipMetadata = TEST_CONFIGS.skipMetadata // `true` for localnet
 

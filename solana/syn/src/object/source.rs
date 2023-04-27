@@ -3,6 +3,7 @@ use syn::{punctuated::Punctuated, Field, FieldsNamed, Ident, ItemStruct};
 use super::NautilusObject;
 
 enum SourceField {
+    ProgramId,
     AccountInfo,
     Metadata,
     SystemProgram,
@@ -14,6 +15,7 @@ enum SourceField {
 impl From<&SourceField> for Field {
     fn from(value: &SourceField) -> Self {
         match value {
+            SourceField::ProgramId => source_field("program_id"),
             SourceField::AccountInfo => source_field("account_info"),
             SourceField::Metadata => source_field("metadata"),
             SourceField::SystemProgram => source_field("system_program"),
@@ -60,6 +62,10 @@ fn source_struct(name: &str, source_fields: Vec<SourceField>) -> ItemStruct {
 pub fn source_nautilus_objects() -> Vec<NautilusObject> {
     [
         source_struct(
+            "NautilusIndex",
+            vec![SourceField::ProgramId, SourceField::AccountInfo],
+        ),
+        source_struct(
             "Wallet",
             vec![SourceField::AccountInfo, SourceField::SystemProgram],
         ),
@@ -92,4 +98,15 @@ pub fn source_nautilus_objects() -> Vec<NautilusObject> {
     .into_iter()
     .map(|s| s.into())
     .collect()
+}
+
+pub fn source_nautilus_names() -> Vec<String> {
+    vec![
+        "NautilusIndex".to_string(),
+        "Wallet".to_string(),
+        "Mint".to_string(),
+        "Metadata".to_string(),
+        "AssociatedTokenAccount".to_string(),
+        "Token".to_string(),
+    ]
 }

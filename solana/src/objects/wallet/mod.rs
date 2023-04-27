@@ -63,8 +63,8 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
         self.account_info.owner
     }
 
-    fn span(&self) -> usize {
-        self.account_info.data_len()
+    fn span(&self) -> Result<usize, ProgramError> {
+        Ok(0)
     }
 }
 
@@ -97,7 +97,7 @@ impl<'a> NautilusAccountInfo<'a> for Mut<Wallet<'a>> {
         self.self_account.owner()
     }
 
-    fn span(&self) -> usize {
+    fn span(&self) -> Result<usize, ProgramError> {
         self.self_account.span()
     }
 }
@@ -133,7 +133,7 @@ impl<'a> NautilusAccountInfo<'a> for Signer<Wallet<'a>> {
         self.self_account.owner()
     }
 
-    fn span(&self) -> usize {
+    fn span(&self) -> Result<usize, ProgramError> {
         self.self_account.span()
     }
 }

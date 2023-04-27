@@ -1,9 +1,12 @@
 use nautilus_idl::idl_instruction::{IdlInstruction};
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, Span};
 use quote::quote;
 use syn::{Ident, Type};
 
-use crate::{entry::required_account::{RequiredAccountSubtype, to_ident_pointer}, object::NautilusObject};
+use crate::{
+    entry::required_account::{RequiredAccountSubtype, to_ident_pointer}, 
+    object::{NautilusObject, source::source_nautilus_names}
+};
 
 use super::{
     entry_enum::NautilusEntrypointEnum,
@@ -67,6 +70,7 @@ impl NautilusEntrypointEnumVariant {
 
     fn build_match_arm_logic(&self) -> TokenStream {
         let instruction_name = self.variant_ident.to_string();
+        let mut index_init = quote!();
         let all_accounts = self.required_accounts.iter().map(|r| {
             let ident = match &r.account_type {
                 RequiredAccountType::Account(subtype) => match &subtype {
@@ -74,6 +78,10 @@ impl NautilusEntrypointEnumVariant {
                     RequiredAccountSubtype::Metadata => metadata_ident(&r.ident),
                     RequiredAccountSubtype::MintAuthority => mint_authority_ident(&r.ident),
                 },
+                RequiredAccountType::IndexAccount => {
+                    index_init = quote! { let nautilus_index = NautilusIndex::load(program_id, index_pointer)?; }; // TODO
+                    r.ident.clone()
+                }
                 _ => r.ident.clone(),
             };
             let ident_pointer = to_ident_pointer(&ident);
@@ -90,7 +98,17 @@ impl NautilusEntrypointEnumVariant {
                     CallContext::Nautilus(obj) => match &obj.entry_config {
                         Some(config) => {
                             let arg_ident = &config.arg_ident;
-                            let obj_type = &obj.ident;
+                            let (obj_type, arg_ty, is_record) = match source_nautilus_names().contains(&obj.ident.to_string()) {
+                                true => (obj.ident.clone(), quote!(), false),
+                                false => {
+                                    let ty = &obj.ident;
+                                    (
+                                        Ident::new("Record", Span::call_site()), 
+                                        quote! { #ty },
+                                        true,
+                                    )
+                                },
+                            };
                             let required_accounts_for_obj = obj.get_required_accounts();
 
                             let accounts_for_read = required_accounts_for_obj.0;
@@ -107,12 +125,21 @@ impl NautilusEntrypointEnumVariant {
                                         let t: TokenStream = r.into();
                                         t
                                     });
-                                    object_inits.push(
-                                        quote! { let mut #arg_ident = Create::new(
-                                            #(#create_call_idents,)*
-                                            #obj_type::new(#(#read_call_idents,)*)
-                                    ); },
-                                    );
+                                    let create_obj_init = match is_record {
+                                        true => quote! { 
+                                            let mut #arg_ident = Create::new(
+                                                #(#create_call_idents,)*
+                                                #obj_type::< #arg_ty >::new(#(#read_call_idents,)*)
+                                            ); 
+                                        },
+                                        false => quote! { 
+                                            let mut #arg_ident = Create::new(
+                                                #(#create_call_idents,)*
+                                                #obj_type::new(#(#read_call_idents,)*)
+                                            ); 
+                                        },
+                                    };
+                                    object_inits.push(create_obj_init);
                                 },
                                 None => {
                                     if config.is_signer { 
@@ -124,8 +151,10 @@ impl NautilusEntrypointEnumVariant {
                                             quote! { let #arg_ident = Mut::new(#obj_type::load(#(#read_call_idents,)*)?); },
                                         );
                                     } else { 
-                                        object_inits.push(
-                                            quote! { let #arg_ident = #obj_type::load(#(#read_call_idents,)*)?; },
+                                        object_inits.push(match is_record {
+                                                true => quote! { let #arg_ident = #obj_type::< #arg_ty >::load(#(#read_call_idents,)*)?; },
+                                                false => quote! { let #arg_ident = #obj_type::load(#(#read_call_idents,)*)?; },
+                                            }
                                         );
                                     }
                                 },
@@ -147,6 +176,7 @@ impl NautilusEntrypointEnumVariant {
                 msg!("Instruction: {}", #instruction_name);
                 let accounts_iter = &mut accounts.iter();
                 #(#all_accounts)*
+                #index_init
                 #(#object_inits)*
                 #call_ident(#(#call_args,)*)
             }

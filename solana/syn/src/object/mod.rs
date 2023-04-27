@@ -8,7 +8,7 @@ use syn::{Ident, ItemStruct, ItemEnum, parse::Parse};
 
 use crate::entry::required_account::RequiredAccount;
 
-use self::{parser::{parse_item_struct, NautilusObjectConfig}, data::{impl_nautilus_data, impl_borsh}};
+use self::{parser::{parse_item_struct, NautilusObjectConfig}, data::{impl_nautilus_data, impl_borsh, impl_default, impl_clone}};
 
 #[derive(Clone, Debug)]
 pub struct NautilusObject {
@@ -84,8 +84,9 @@ impl From<&NautilusObject> for TokenStream {
         };
         let fields = &object_config.data_fields;
 
+        let impl_clone = impl_clone(ident, fields);
+        let impl_default = impl_default(ident, fields);
         let impl_borsh = impl_borsh(ident, fields);
-
         let impl_nautilus_data = impl_nautilus_data(
             ident, 
             fields,
@@ -96,6 +97,8 @@ impl From<&NautilusObject> for TokenStream {
         );
 
         quote! {
+            #impl_clone
+            #impl_default
             #impl_borsh
             #impl_nautilus_data
         }

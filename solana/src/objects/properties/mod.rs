@@ -18,13 +18,13 @@ pub trait NautilusAccountInfo<'a>: Clone {
     fn lamports(&self) -> u64;
     fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError>;
     fn owner(&self) -> &'a Pubkey;
-    fn span(&self) -> usize;
-    fn size(&self) -> u64 {
-        self.span().try_into().unwrap()
+    fn span(&self) -> Result<usize, ProgramError>;
+    fn size(&self) -> Result<u64, ProgramError> {
+        Ok(self.span()?.try_into().unwrap())
     }
     fn required_rent(&self) -> Result<u64, solana_program::program_error::ProgramError> {
         use solana_program::sysvar::Sysvar;
-        Ok((solana_program::sysvar::rent::Rent::get().unwrap()).minimum_balance(self.span()))
+        Ok((solana_program::sysvar::rent::Rent::get().unwrap()).minimum_balance(self.span()?))
     }
 }
 

@@ -69,7 +69,7 @@ where
         self.self_account.owner()
     }
 
-    fn span(&self) -> usize {
+    fn span(&self) -> Result<usize, ProgramError> {
         self.self_account.span()
     }
 }
@@ -158,10 +158,6 @@ pub trait NautilusCreateAssociatedTokenAccount<'a> {
 }
 
 pub trait NautilusCreateRecord<'a, T: NautilusData> {
-    fn create_record(&mut self, data: T) -> ProgramResult;
-    fn create_record_with_payer(
-        &mut self,
-        data: T,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
+    fn create_record(&mut self) -> ProgramResult;
+    fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
 }

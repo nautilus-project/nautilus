@@ -73,8 +73,8 @@ impl<'a> NautilusAccountInfo<'a> for Token<'a> {
         self.mint.account_info.owner
     }
 
-    fn span(&self) -> usize {
-        self.mint.account_info.data_len()
+    fn span(&self) -> Result<usize, ProgramError> {
+        self.mint.span()
     }
 }
 

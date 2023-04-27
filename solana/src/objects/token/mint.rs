@@ -85,8 +85,8 @@ impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
         self.account_info.owner
     }
 
-    fn span(&self) -> usize {
-        spl_token::state::Mint::LEN
+    fn span(&self) -> Result<usize, ProgramError> {
+        Ok(spl_token::state::Mint::LEN)
     }
 }
 

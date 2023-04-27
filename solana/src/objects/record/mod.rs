@@ -4,8 +4,9 @@ use solana_program::{
 };
 
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
-    NautilusIndex, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreateRecord,
+    NautilusData, NautilusIndex, NautilusMut, NautilusRecord, NautilusSigner,
+    NautilusTransferLamports, Signer, Wallet,
 };
 
 pub mod index;
@@ -18,7 +19,7 @@ where
     pub program_id: &'a Pubkey,
     pub account_info: Box<AccountInfo<'a>>,
     pub index: NautilusIndex<'a>,
-    pub data: T,
+    pub data: Box<T>,
 }
 
 impl<'a, T> Record<'a, T>
@@ -34,7 +35,7 @@ where
             program_id,
             index,
             account_info,
-            data: T::default(),
+            data: Box::new(T::default()),
         }
     }
 
@@ -53,7 +54,7 @@ where
                 .into())
             }
         }) {
-            Ok(state_data) => state_data,
+            Ok(state_data) => Box::new(state_data),
             Err(_) => {
                 return Err(NautilusError::DeserializeDataFailed(
                     T::TABLE_NAME.to_string(),
@@ -103,8 +104,8 @@ where
         self.account_info.owner
     }
 
-    fn span(&self) -> usize {
-        self.account_info.data_len()
+    fn span(&self) -> Result<usize, ProgramError> {
+        Ok(self.data.try_to_vec()?.len())
     }
 }
 
@@ -112,11 +113,11 @@ impl<'a, T> NautilusRecord<'a> for Record<'a, T>
 where
     T: NautilusData,
 {
-    fn primary_key(&self) -> &'a [u8] {
+    fn primary_key(&self) -> Vec<u8> {
         self.data.primary_key()
     }
 
-    fn seeds(&self) -> [&'a [u8]; 2] {
+    fn seeds(&self) -> [Vec<u8>; 2] {
         self.data.seeds()
     }
 
@@ -132,6 +133,84 @@ where
         self.data.count_authorities()
     }
 }
+
+impl<'a, T> NautilusAccountInfo<'a> for Mut<Record<'a, T>>
+where
+    T: NautilusData,
+{
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
+    fn key(&self) -> &'a Pubkey {
+        self.self_account.key()
+    }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.is_signer()
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.is_writable()
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.lamports()
+    }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.self_account.mut_lamports()
+    }
+
+    fn owner(&self) -> &'a Pubkey {
+        self.self_account.owner()
+    }
+
+    fn span(&self) -> Result<usize, ProgramError> {
+        self.self_account.span()
+    }
+}
+
+impl<'a, T> NautilusMut<'a> for Mut<Record<'a, T>> where T: NautilusData {}
+
+impl<'a, T> NautilusAccountInfo<'a> for Signer<Record<'a, T>>
+where
+    T: NautilusData,
+{
+    fn account_info(&self) -> Box<AccountInfo<'a>> {
+        self.self_account.account_info()
+    }
+
+    fn key(&self) -> &'a Pubkey {
+        self.self_account.key()
+    }
+
+    fn is_signer(&self) -> bool {
+        self.self_account.is_signer()
+    }
+
+    fn is_writable(&self) -> bool {
+        self.self_account.is_writable()
+    }
+
+    fn lamports(&self) -> u64 {
+        self.self_account.lamports()
+    }
+
+    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
+        self.self_account.mut_lamports()
+    }
+
+    fn owner(&self) -> &'a Pubkey {
+        self.self_account.owner()
+    }
+
+    fn span(&self) -> Result<usize, ProgramError> {
+        self.self_account.span()
+    }
+}
+
+impl<'a, T> NautilusSigner<'a> for Signer<Record<'a, T>> where T: NautilusData {}
 
 impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
 where
@@ -153,37 +232,29 @@ impl<'a, T> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, T>>
 where
     T: NautilusData,
 {
-    fn create_record(&mut self, data: T) -> ProgramResult {
+    fn create_record(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        let data_pointer = Box::new(data);
         cpi::create::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.system_program.to_owned(),
-            data_pointer.clone(),
+            self.self_account.data.clone(),
         )?;
-        self.self_account.data = *data_pointer;
         Ok(())
     }
 
-    fn create_record_with_payer(
-        &mut self,
-        data: T,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult {
-        let data_pointer = Box::new(data);
+    fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         cpi::create::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.system_program.to_owned(),
-            data_pointer.clone(),
+            self.self_account.data.clone(),
         )?;
-        self.self_account.data = *data_pointer;
         Ok(())
     }
 }

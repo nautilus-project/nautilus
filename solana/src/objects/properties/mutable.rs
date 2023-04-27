@@ -17,4 +17,4 @@ where
     }
 }
 
-pub trait NautilusMut<'a>: NautilusAccountInfo<'a> + 'a {}
+pub trait NautilusMut<'a>: NautilusAccountInfo<'a> {}

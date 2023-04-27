@@ -12,7 +12,14 @@ pub fn nautilus(_: TokenStream, input: TokenStream) -> TokenStream {
         .into()
 }
 
-#[proc_macro_derive(Nautilus, attributes(default_instructions, primary_key, authority))]
+#[proc_macro_derive(Table, attributes(default_instructions, primary_key, authority))]
+pub fn nautilus_table(input: TokenStream) -> TokenStream {
+    parse_macro_input!(input as NautilusObject)
+        .to_token_stream()
+        .into()
+}
+
+#[proc_macro_derive(Object, attributes(seeds, authority))]
 pub fn nautilus_object(input: TokenStream) -> TokenStream {
     parse_macro_input!(input as NautilusObject)
         .to_token_stream()

@@ -37,12 +37,13 @@ pub enum RequiredAccountSubtype {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ObjectType {
-    Table(bool, Vec<Construct>),
+    NautilusIndex,
     Wallet,
     Token(bool),
     Mint(bool),
     Metadata,
     AssociatedTokenAccount,
+    Record(bool, Vec<Construct>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -210,7 +211,9 @@ impl From<Construct> for RequiredAccount {
 //
 impl RequiredAccount {
     pub fn derive_object_type(ty_name: &str, is_mut: bool) -> ObjectType {
-        if ty_name.eq("Wallet") {
+        if ty_name.eq("NautilusIndex") {
+            ObjectType::NautilusIndex
+        } else if ty_name.eq("Wallet") {
             ObjectType::Wallet
         } else if ty_name.eq("Token") {
             ObjectType::Token(false) // TODO: PDA Tokens not supported yet
@@ -221,7 +224,7 @@ impl RequiredAccount {
         } else if ty_name.eq("AssociatedTokenAccount") {
             ObjectType::AssociatedTokenAccount
         } else {
-            ObjectType::Table(is_mut, vec![]) // TODO: PDA authorities not supported yet
+            ObjectType::Record(is_mut, vec![]) // TODO: PDA authorities not supported yet
         }
     }
 
@@ -233,11 +236,10 @@ impl RequiredAccount {
         is_mut: bool,
     ) -> (Vec<Self>, Option<Vec<Self>>) {
         let read = match object_type {
-            ObjectType::Table(is_mut, _) => {
+            ObjectType::NautilusIndex => {
                 vec![
                     Construct::ProgramId.into(),
-                    Construct::Index(is_mut).into(),
-                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, true).into(),
+                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
                 ]
             }
             ObjectType::Wallet => vec![
@@ -278,6 +280,13 @@ impl RequiredAccount {
                     Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
                     Construct::TokenProgram.into(),
                     Construct::AssociatedTokenProgram.into(),
+                ]
+            }
+            ObjectType::Record(is_mut, _) => {
+                vec![
+                    Construct::ProgramId.into(),
+                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
+                    Construct::Index(is_mut).into(),
                 ]
             }
         };
@@ -326,7 +335,7 @@ impl From<&RequiredAccount> for proc_macro2::TokenStream {
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
             RequiredAccountType::ProgramId => quote! { program_id },
-            RequiredAccountType::IndexAccount => quote! { index_pointer.clone() },
+            RequiredAccountType::IndexAccount => quote! { nautilus_index.clone() },
             RequiredAccountType::Account(subtype) => match subtype {
                 RequiredAccountSubtype::SelfAccount => {
                     let ident_pointer = self_account_ident_pointer(&ast.ident);
@@ -365,7 +374,7 @@ impl ToString for RequiredAccountType {
     }
 }
 
-fn appended_ident(ident: &Ident, to_append: &str) -> Ident {
+pub fn appended_ident(ident: &Ident, to_append: &str) -> Ident {
     Ident::new(&(ident.to_string() + to_append), Span::call_site())
 }
 

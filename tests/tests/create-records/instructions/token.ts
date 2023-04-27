@@ -8,7 +8,7 @@ import {
     SYSVAR_RENT_PUBKEY, 
     TransactionInstruction 
 } from '@solana/web3.js'
-import { MyInstructions } from "."
+import { createBaseInstruction, MyInstructions } from "."
 
 class CreateTokenInstructionData {
     instruction: MyInstructions
@@ -47,6 +47,17 @@ const CreateTokenInstructionDataSchema = new Map([
     }]
 ])
 
+function getMetadataAddress(mint: PublicKey): PublicKey {
+    return PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("metadata"),
+            METADATA_PROGRAM_ID.toBuffer(),
+            mint.toBuffer(),
+          ],
+        METADATA_PROGRAM_ID,
+    )[0]
+}
+
 function createInstruction(
     newMint: PublicKey,
     payer: PublicKey,
@@ -55,19 +66,17 @@ function createInstruction(
     title: string,
     symbol: string,
     uri: string,
-    instruction: MyInstructions,
 ): TransactionInstruction {
 
-    const myInstructionObject = new CreateTokenInstructionData({instruction, decimals, title, symbol, uri})
+    const myInstructionObject = new CreateTokenInstructionData({
+        instruction: MyInstructions.CreateToken, 
+        decimals, 
+        title, 
+        symbol, 
+        uri
+    })
 
-    const newMetadata = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("metadata"),
-            METADATA_PROGRAM_ID.toBuffer(),
-            newMint.toBuffer(),
-          ],
-        METADATA_PROGRAM_ID,
-    )[0]
+    const newMetadata = getMetadataAddress(newMint)
 
     const keys = [
         {pubkey: payer, isSigner: true, isWritable: true},
@@ -97,5 +106,22 @@ export function createCreateTokenInstruction(
     symbol: string,
     uri: string,
 ): TransactionInstruction {
-    return createInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateToken)
+    return createInstruction(newMint, payer, programId, decimals, title, symbol, uri)
+}
+
+export function createReadTokenInstruction(
+    mint: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    const newMetadata = getMetadataAddress(mint)
+    return createBaseInstruction(
+        programId, 
+        MyInstructions.ReadToken,
+        [
+            {pubkey: mint, isSigner: false, isWritable: false},
+            {pubkey: newMetadata, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
 }

@@ -88,8 +88,8 @@ impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
         self.account_info.owner
     }
 
-    fn span(&self) -> usize {
-        self.account_info.data_len()
+    fn span(&self) -> Result<usize, ProgramError> {
+        Ok(MetadataState::size())
     }
 }
 

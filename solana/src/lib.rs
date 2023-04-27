@@ -12,7 +12,7 @@ pub mod error;
 pub mod objects;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
-pub use nautilus_derive::{nautilus, Nautilus};
+pub use nautilus_derive::{nautilus, Object, Table};
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo, IntoAccountInfo},
     declare_id, entrypoint,

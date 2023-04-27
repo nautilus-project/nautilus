@@ -44,7 +44,7 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
                         .nested
                         .iter()
                         .any(|nested_meta| match nested_meta {
-                            NestedMeta::Meta(Meta::Path(path)) => path.is_ident("Nautilus"),
+                            NestedMeta::Meta(Meta::Path(path)) => path.is_ident("Table"),
                             _ => false,
                         })
                     {
@@ -120,16 +120,16 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
         if let Some(segment) = path.segments.first() {
             if segment.ident == "Create" {
                 is_create = true;
-                child_type = derive_child_type(&segment.arguments)
+                (child_type, is_pda) = derive_child_type(&segment.arguments)
             } else if segment.ident == "Signer" {
                 is_signer = true;
-                child_type = derive_child_type(&segment.arguments)
+                (child_type, is_pda) = derive_child_type(&segment.arguments)
             } else if segment.ident == "Mut" {
                 is_mut = true;
-                child_type = derive_child_type(&segment.arguments)
+                (child_type, is_pda) = derive_child_type(&segment.arguments)
             } else if segment.ident == "Record" {
                 is_pda = true;
-                child_type = derive_child_type(&segment.arguments) // TODO: Create<Record<T>>
+                (child_type, _) = derive_child_type(&segment.arguments)
             }
         }
     }
@@ -150,17 +150,24 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
     (type_name, is_create, is_signer, is_mut)
 }
 
-fn derive_child_type(arguments: &PathArguments) -> Option<Type> {
+fn derive_child_type(arguments: &PathArguments) -> (Option<Type>, bool) {
     if let PathArguments::AngleBracketed(args) = arguments {
         for arg in &args.args {
-            if let syn::GenericArgument::Type(t) = arg {
-                let mut new_t = t.clone();
-                remove_lifetimes_from_type(&mut new_t);
-                return Some(new_t);
+            if let syn::GenericArgument::Type(ty) = arg {
+                let mut new_ty = ty.clone();
+                remove_lifetimes_from_type(&mut new_ty);
+                if let Type::Path(TypePath { path, .. }) = &new_ty {
+                    if let Some(segment) = path.segments.first() {
+                        if segment.ident == "Record" {
+                            return derive_child_type(&segment.arguments);
+                        }
+                    }
+                }
+                return (Some(new_ty), false);
             }
         }
     }
-    None
+    (None, false)
 }
 
 fn remove_lifetimes_from_type(t: &mut Type) {
