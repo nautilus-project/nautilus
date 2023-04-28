@@ -10,7 +10,7 @@ pub mod mutable;
 pub mod record;
 pub mod signer;
 
-/// The core trait that marks an object in a Nautilus program as being comprised of Solana account.
+/// The core trait that marks an object in a Nautilus program as being comprised of Solana accounts.
 ///
 /// Basically, if a struct implements this trait, that means its built using one or more `Box` pointers to
 /// accounts passed into the program, ie. `Box<AccountInfo<'_>>`
@@ -73,7 +73,7 @@ pub trait NautilusAccountInfo<'a>: Clone {
         Ok(self.span()?.try_into().unwrap())
     }
 
-    /// The amount of Lamports required for the particular data type associated with this Nautilus object.
+    /// The amount of Lamports required to pay rent for the particular data type associated with this Nautilus object.
     fn required_rent(&self) -> Result<u64, solana_program::program_error::ProgramError> {
         use solana_program::sysvar::Sysvar;
         Ok((solana_program::sysvar::rent::Rent::get().unwrap()).minimum_balance(self.span()?))
