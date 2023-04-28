@@ -11,7 +11,7 @@ pub trait NautilusData: BorshDeserialize + BorshSerialize + Clone + Default {
     fn seeds(&self) -> [Vec<u8>; 2] {
         [Self::TABLE_NAME.as_bytes().to_vec(), self.primary_key()]
     }
-    fn pda<'a>(&self, program_id: &'a Pubkey) -> (Pubkey, u8) {
+    fn pda(&self, program_id: &Pubkey) -> (Pubkey, u8) {
         let seeds_vec = &self.seeds();
         let seeds: [&[u8]; 2] = [seeds_vec[0].as_slice(), seeds_vec[1].as_slice()];
         Pubkey::find_program_address(&seeds, program_id)

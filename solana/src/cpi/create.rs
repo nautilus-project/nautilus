@@ -86,12 +86,12 @@ pub fn create_mint<'a>(
     system_program: Box<AccountInfo<'a>>,
     token_program: Box<AccountInfo<'a>>,
 ) -> ProgramResult {
-    create_account(mint.clone(), &token_program.key, payer, system_program)?;
+    create_account(mint.clone(), token_program.key, payer, system_program)?;
     invoke(
         &spl_token::instruction::initialize_mint(
-            &token_program.key,
-            &mint.key(),
-            &mint_authority.key(),
+            token_program.key,
+            mint.key(),
+            mint_authority.key(),
             freeze_authority.map(|f| f.key()),
             decimals,
         )?,

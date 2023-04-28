@@ -45,7 +45,7 @@ where
             program_id,
             index,
             account_info,
-            data: Box::new(T::default()),
+            data: Box::<T>::default(),
         }
     }
 

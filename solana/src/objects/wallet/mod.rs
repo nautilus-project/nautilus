@@ -96,7 +96,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
         });
         create_account(
             self.clone(),
-            &self.system_program.key,
+            self.system_program.key,
             payer,
             self.system_program.clone(),
         )
@@ -105,7 +105,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
     fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         create_account(
             self.clone(),
-            &self.system_program.key,
+            self.system_program.key,
             payer,
             self.system_program.clone(),
         )

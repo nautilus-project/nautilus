@@ -23,10 +23,7 @@ pub struct NautilusIndexData {
 impl NautilusIndexData {
     /// Get the current record count for a table.
     pub fn get_count(&self, table_name: &str) -> Option<u32> {
-        match self.index.get(&(table_name.to_string())) {
-            Some(u) => Some(*u),
-            None => None,
-        }
+        self.index.get(&(table_name.to_string())).copied()
     }
 
     /// Get the next record count for a table.
