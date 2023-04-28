@@ -12,6 +12,7 @@ use crate::{
 };
 
 /// Cross-Program-Invocation (CPI) to create any account via the System Program.
+#[allow(clippy::boxed_local)]
 pub fn create_account<'a>(
     new_account: impl NautilusSigner<'a>,
     owner: &Pubkey,
@@ -38,6 +39,7 @@ pub fn create_account<'a>(
 ///
 /// This CPI is signed using the signer seeds of the record (PDA), and also
 /// makes sure to serialized the provided data into the new account.
+#[allow(clippy::boxed_local)]
 pub fn create_record<'a, T: NautilusData>(
     new_account: impl NautilusRecord<'a>,
     owner: &Pubkey,
@@ -76,6 +78,7 @@ pub fn create_record<'a, T: NautilusData>(
 /// Cross-Program-Invocation (CPI) to create a new mint account via the Token Program.
 ///
 /// Leverages the `create_account(..)` CPI call before invoking the Token Program.
+#[allow(clippy::boxed_local)]
 pub fn create_mint<'a>(
     mint: Create<'a, Mint<'a>>,
     decimals: u8,
@@ -105,6 +108,7 @@ pub fn create_mint<'a>(
 }
 
 /// Cross-Program-Invocation (CPI) to create a new metadata account via the Token Metadata Program.
+#[allow(clippy::boxed_local)]
 pub fn create_metadata<'a>(
     metadata: Create<'a, Metadata<'a>>,
     title: String,
@@ -148,6 +152,7 @@ pub fn create_metadata<'a>(
 }
 
 /// Cross-Program-Invocation (CPI) to create a new mint account via the Token Program and Assocaited Token Program.
+#[allow(clippy::boxed_local)]
 pub fn create_associated_token_account<'a>(
     new_account: AssociatedTokenAccount<'a>,
     mint: impl NautilusAccountInfo<'a>,
