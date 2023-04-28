@@ -7,6 +7,112 @@ use crate::{Mint, NautilusData};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
+/// The trait that allow for creation of new on-chain instances of the Nautilus object.
+///
+/// `NautilusCreate<'_>` is meant to be dynamic for any implementing object to use to create new instances.
+///
+/// Object-specific create traits then drive this trait's c
+pub trait NautilusCreate<'a> {
+    /// Creates a new on-chain instance of this Nautilus object with the **transaction fee payer** as the rent payer.
+    fn create(&mut self) -> ProgramResult;
+
+    /// Creates a new on-chain instance of this Nautilus object with a provided rent payer.
+    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
+}
+
+/// * This documentation will be updated when this trait is updated *
+pub trait NautilusCreateMint<'a> {
+    fn create(
+        &mut self,
+        decimals: u8,
+        mint_authority: impl NautilusSigner<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+    ) -> ProgramResult;
+
+    fn create_with_payer(
+        &mut self,
+        decimals: u8,
+        mint_authority: impl NautilusSigner<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+/// * This documentation will be updated when this trait is updated *
+pub trait NautilusCreateMetadata<'a> {
+    fn create(
+        &mut self,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint: Mint<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+    ) -> ProgramResult;
+
+    fn create_with_payer(
+        &mut self,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint: Mint<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+/// * This documentation will be updated when this trait is updated *
+pub trait NautilusCreateToken<'a> {
+    fn create(
+        &mut self,
+        decimals: u8,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+    ) -> ProgramResult;
+
+    fn create_with_payer(
+        &mut self,
+        decimals: u8,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusAccountInfo<'a>,
+        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+/// * This documentation will be updated when this trait is updated *
+pub trait NautilusCreateAssociatedTokenAccount<'a> {
+    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
+
+    fn create_with_payer(
+        &mut self,
+        mint: Mint<'a>,
+        owner: impl NautilusAccountInfo<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult;
+}
+
+/// * This documentation will be updated when this trait is updated *
+pub trait NautilusCreateRecord<'a, T: NautilusData> {
+    fn create_record(&mut self) -> ProgramResult;
+    fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
+}
+
+/// The struct to wrap an object so that it has the necessary accounts to create an on-chain instance of itself.
+/// A user wraps their object `T` in `Create<'_, T>` in order to make accessible the transaction fee payer,
+/// the System Program, and the Rent Sysvar.
+///
+/// The transaction fee payer can be included by default whenever they provide a signature for transaction fees, and
+/// the System Program and Rent Sysvar are always read-only, which means the addition of these accounts will never hinder
+/// Sealevel parallel execution.
 #[derive(Clone)]
 pub struct Create<'a, T>
 where
@@ -75,89 +181,3 @@ where
 }
 
 impl<'a, T> NautilusSigner<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
-
-pub trait NautilusCreate<'a> {
-    fn create(&mut self) -> ProgramResult;
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
-}
-
-pub trait NautilusCreateMint<'a> {
-    fn create(
-        &mut self,
-        decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-    ) -> ProgramResult;
-
-    fn create_with_payer(
-        &mut self,
-        decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-pub trait NautilusCreateMetadata<'a> {
-    fn create(
-        &mut self,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-    ) -> ProgramResult;
-
-    fn create_with_payer(
-        &mut self,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-pub trait NautilusCreateToken<'a> {
-    fn create(
-        &mut self,
-        decimals: u8,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-    ) -> ProgramResult;
-
-    fn create_with_payer(
-        &mut self,
-        decimals: u8,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-pub trait NautilusCreateAssociatedTokenAccount<'a> {
-    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
-
-    fn create_with_payer(
-        &mut self,
-        mint: Mint<'a>,
-        owner: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-pub trait NautilusCreateRecord<'a, T: NautilusData> {
-    fn create_record(&mut self) -> ProgramResult;
-    fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
-}

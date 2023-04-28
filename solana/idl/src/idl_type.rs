@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+/// An IDL type enum for converting from Rust types to IDL type.
+///
+/// Copied from Shank: https://github.com/metaplex-foundation/shank
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum IdlType {

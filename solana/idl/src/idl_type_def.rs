@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{idl_nautilus_config::IdlTypeDefNautilusConfig, idl_type::IdlType};
 
+/// An IDL type definition.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdlTypeDef {

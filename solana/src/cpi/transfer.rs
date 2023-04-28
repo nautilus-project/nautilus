@@ -2,6 +2,7 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, progr
 
 use crate::{NautilusMut, NautilusSigner};
 
+/// Cross-Program-Invocation (CPI) to conduct a transfer via the System Program.
 pub fn transfer_lamports<'a>(
     from: impl NautilusSigner<'a>,
     to: impl NautilusMut<'a>,

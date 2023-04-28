@@ -2,11 +2,15 @@ use std::fmt;
 
 use solana_program::{msg, program_error::ProgramError};
 
+/// Custom errors for Nautilus functionality. Convertible to `solana_program::program_error::ProgramError`.
 #[derive(Clone, Debug)]
 #[repr(u32)]
 pub enum NautilusError {
+    /// The inner data of an account could not be loaded. This usually means the account is empty.
     LoadDataFailed(String, String),
+    /// The inner data of an account could not be deserialized. This usually means an account type mismatch.
     DeserializeDataFailed(String, String),
+    /// Nautilus couldn't write a new record to a table. This usually means an error with the primary key provided.
     WriteRecordFailed(String),
 }
 

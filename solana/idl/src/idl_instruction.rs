@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::idl_type::IdlType;
 
+/// An IDL instruction.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdlInstruction {
@@ -27,6 +28,7 @@ impl IdlInstruction {
     }
 }
 
+/// An account listed in an IDL instruction.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdlInstructionAccount {

@@ -1,9 +1,11 @@
+///! The module for determining accounts required for a Nautilus object.
 use case::CaseExt;
 use convert_case::{Case, Casing};
 use proc_macro2::Span;
 use quote::quote;
 use syn::Ident;
 
+/// The details of a required account for a Nautilus object.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RequiredAccount {
     pub ident: Ident,
@@ -14,6 +16,7 @@ pub struct RequiredAccount {
     pub account_type: RequiredAccountType,
 }
 
+/// The type of account required.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RequiredAccountType {
     ProgramId,
@@ -35,6 +38,7 @@ pub enum RequiredAccountSubtype {
     MintAuthority,
 }
 
+/// The type of Nautilus object
 #[derive(Clone, Debug, PartialEq)]
 pub enum ObjectType {
     NautilusIndex,
@@ -46,6 +50,7 @@ pub enum ObjectType {
     Record(bool, Vec<Construct>),
 }
 
+/// A construct shell enum used to map variants with provided args into required accounts.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Construct {
     ProgramId,
@@ -69,6 +74,7 @@ pub enum SysvarType {
 }
 
 impl From<Construct> for RequiredAccount {
+    /// Converts a Construct into the proper RequiredAccount using the provided variant arguments.
     fn from(value: Construct) -> Self {
         match value {
             Construct::ProgramId => {
@@ -228,6 +234,9 @@ impl RequiredAccount {
         }
     }
 
+    /// Resolves the required accounts for an object name and ObjectType.
+    /// The object name, as declared in the user's function signature, is used to append as a
+    /// prefix to certain accounts where necessary.
     pub fn resolve_accounts(
         obj_name: String,
         object_type: ObjectType,
@@ -303,6 +312,7 @@ impl RequiredAccount {
         )
     }
 
+    /// De-duplication of required accounts. Used to aggregate all accounts required for an instruction.
     pub fn condense(all_required_accounts: Vec<Vec<Self>>) -> Vec<Self> {
         let flattened = all_required_accounts
             .into_iter()
@@ -332,6 +342,9 @@ impl RequiredAccount {
 }
 
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
+    /// Converts a required account into the tokens used to instantiate a Nautilus object.
+    /// Each required account for a Nautilus object can use `Into<TokenStream>` to generate the
+    /// cloning of the `Box` pointers in the processor match arm, to be passed into the object's initializer.
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
             RequiredAccountType::ProgramId => quote! { program_id },

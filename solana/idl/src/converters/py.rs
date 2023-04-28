@@ -1,3 +1,4 @@
+///! Converts a JSON IDL to Python bindings.
 use std::{
     fs::{self, File},
     io::Write,

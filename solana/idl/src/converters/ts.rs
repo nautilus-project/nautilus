@@ -1,3 +1,4 @@
+///! Converts a JSON IDL to TypeScript bindings.
 use std::{
     fs::{self, File},
     io::Write,

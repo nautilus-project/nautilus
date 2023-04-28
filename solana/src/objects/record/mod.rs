@@ -4,13 +4,22 @@ use solana_program::{
 };
 
 use crate::{
-    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreateRecord,
-    NautilusData, NautilusIndex, NautilusMut, NautilusRecord, NautilusSigner,
-    NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
+    NautilusIndex, NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer,
+    Wallet,
 };
 
 pub mod index;
 
+/// The struct that allows you to treat a Program-Derived-Address (PDA) account as a table record.
+///
+/// A user wraps their data type `T` with `Record<'_, T>` in order to combine the data stored within the
+/// record and the accounts required to operate on it.
+///
+/// The `account_info` field represents the PDA itself, while the `index` field is one single account that accompanies
+/// a Nautilus program and keeps an index of every table.
+///
+/// For more information on the `NautilusIndex<'_>` see the docs for that struct.
 #[derive(Clone)]
 pub struct Record<'a, T>
 where
@@ -26,6 +35,7 @@ impl<'a, T> Record<'a, T>
 where
     T: NautilusData,
 {
+    /// Instantiate a new record without loading the account inner data from on-chain.
     pub fn new(
         program_id: &'a Pubkey,
         account_info: Box<AccountInfo<'a>>,
@@ -39,6 +49,7 @@ where
         }
     }
 
+    /// Instantiate a new record and load the account inner data from on-chain.
     pub fn load(
         program_id: &'a Pubkey,
         account_info: Box<AccountInfo<'a>>,
@@ -134,91 +145,13 @@ where
     }
 }
 
-impl<'a, T> NautilusAccountInfo<'a> for Mut<Record<'a, T>>
-where
-    T: NautilusData,
-{
-    fn account_info(&self) -> Box<AccountInfo<'a>> {
-        self.self_account.account_info()
-    }
-
-    fn key(&self) -> &'a Pubkey {
-        self.self_account.key()
-    }
-
-    fn is_signer(&self) -> bool {
-        self.self_account.is_signer()
-    }
-
-    fn is_writable(&self) -> bool {
-        self.self_account.is_writable()
-    }
-
-    fn lamports(&self) -> u64 {
-        self.self_account.lamports()
-    }
-
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.self_account.mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
-        self.self_account.owner()
-    }
-
-    fn span(&self) -> Result<usize, ProgramError> {
-        self.self_account.span()
-    }
-}
-
-impl<'a, T> NautilusMut<'a> for Mut<Record<'a, T>> where T: NautilusData {}
-
-impl<'a, T> NautilusAccountInfo<'a> for Signer<Record<'a, T>>
-where
-    T: NautilusData,
-{
-    fn account_info(&self) -> Box<AccountInfo<'a>> {
-        self.self_account.account_info()
-    }
-
-    fn key(&self) -> &'a Pubkey {
-        self.self_account.key()
-    }
-
-    fn is_signer(&self) -> bool {
-        self.self_account.is_signer()
-    }
-
-    fn is_writable(&self) -> bool {
-        self.self_account.is_writable()
-    }
-
-    fn lamports(&self) -> u64 {
-        self.self_account.lamports()
-    }
-
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.self_account.mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
-        self.self_account.owner()
-    }
-
-    fn span(&self) -> Result<usize, ProgramError> {
-        self.self_account.span()
-    }
-}
-
-impl<'a, T> NautilusSigner<'a> for Signer<Record<'a, T>> where T: NautilusData {}
-
 impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
 where
     T: NautilusData,
 {
     fn transfer_lamports(
         self,
-        to: impl NautilusAccountInfo<'a>,
+        to: impl NautilusMut<'a>,
         amount: u64,
     ) -> solana_program::entrypoint::ProgramResult {
         let from = self.account_info;

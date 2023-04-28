@@ -9,6 +9,12 @@ use crate::{
     NautilusSigner, Signer, Wallet,
 };
 
+/// The Nautilus object representing a token metadata account.
+///
+/// The underlying account - designated in field `account_info` - is the token metadata account.
+///
+/// We also include the read-only Token Metadata Program for any CPI operations necessary, since we do not
+/// own this account.
 #[derive(Clone)]
 pub struct Metadata<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -17,6 +23,7 @@ pub struct Metadata<'a> {
 }
 
 impl<'a> Metadata<'a> {
+    /// Instantiate a new `Metadata` without loading the account inner data from on-chain.
     pub fn new(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,
@@ -28,6 +35,7 @@ impl<'a> Metadata<'a> {
         }
     }
 
+    /// Instantiate a new `Metadata` and load the account inner data from on-chain.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,

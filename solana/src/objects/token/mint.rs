@@ -9,6 +9,12 @@ use crate::{
     Signer, Wallet,
 };
 
+/// The Nautilus object representing a mint account.
+///
+/// The underlying account - designated in field `account_info` - is the mint account.
+///
+/// We also include the read-only Token Program for any CPI operations necessary, since we do not
+/// own this account.
 #[derive(Clone)]
 pub struct Mint<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -17,6 +23,7 @@ pub struct Mint<'a> {
 }
 
 impl<'a> Mint<'a> {
+    /// Instantiate a new `Mint` without loading the account inner data from on-chain.
     pub fn new(account_info: Box<AccountInfo<'a>>, token_program: Box<AccountInfo<'a>>) -> Self {
         Self {
             account_info,
@@ -25,6 +32,7 @@ impl<'a> Mint<'a> {
         }
     }
 
+    /// Instantiate a new `Mint` and load the account inner data from on-chain.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         token_program: Box<AccountInfo<'a>>,

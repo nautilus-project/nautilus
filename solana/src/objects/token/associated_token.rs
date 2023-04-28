@@ -9,6 +9,12 @@ use crate::{
     NautilusCreateAssociatedTokenAccount, NautilusSigner, Signer, Wallet,
 };
 
+/// The Nautilus object representing an associated token account.
+///
+/// The underlying account - designated in field `account_info` - is the associated token account.
+///
+/// We also include the read-only Token Program and Associated Token Program for any CPI operations necessary, since we do not
+/// own this account.
 #[derive(Clone)]
 pub struct AssociatedTokenAccount<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -18,6 +24,7 @@ pub struct AssociatedTokenAccount<'a> {
 }
 
 impl<'a> AssociatedTokenAccount<'a> {
+    /// Instantiate a new `AssociatedTokenAccount` without loading the account inner data from on-chain.
     pub fn new(
         account_info: Box<AccountInfo<'a>>,
         token_program: Box<AccountInfo<'a>>,
@@ -31,6 +38,7 @@ impl<'a> AssociatedTokenAccount<'a> {
         }
     }
 
+    /// Instantiate a new `AssociatedTokenAccount` and load the account inner data from on-chain.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         token_program: Box<AccountInfo<'a>>,

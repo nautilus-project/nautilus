@@ -9,12 +9,19 @@ use crate::{
     NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
+/// The account inner data for the `NautilusIndex`.
+///
+/// This `index` is simply a Hash Map that stores the current record count for each table, where
+/// the `String` key is the table name and the `u32` value is the current count.
+///
+/// This data is kept in one single account and used as a reference to enable autoincrementing of records.
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone, Default)]
 pub struct NautilusIndexData {
     pub index: std::collections::HashMap<String, u32>,
 }
 
 impl NautilusIndexData {
+    /// Get the current record count for a table.
     pub fn get_count(&self, table_name: &str) -> Option<u32> {
         match self.index.get(&(table_name.to_string())) {
             Some(u) => Some(*u),
@@ -22,6 +29,7 @@ impl NautilusIndexData {
         }
     }
 
+    /// Get the next record count for a table.
     pub fn get_next_count(&self, table_name: &str) -> u32 {
         match self.index.get(&(table_name.to_string())) {
             Some(count) => count + 1,
@@ -29,6 +37,7 @@ impl NautilusIndexData {
         }
     }
 
+    /// Add a new record to the index.
     pub fn add_record(&mut self, table_name: &str) -> u32 {
         match self.index.get_mut(&(table_name.to_string())) {
             Some(count) => {
@@ -61,6 +70,11 @@ impl NautilusData for NautilusIndexData {
     }
 }
 
+/// The special Nautilus object representing the accompanying index for a Nautilus program.
+///
+/// The underlying account - designated in field `account_info` - is the Nautilus Index.
+///
+/// This single account is used as a reference to enable autoincrementing of records.
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
@@ -69,6 +83,7 @@ pub struct NautilusIndex<'a> {
 }
 
 impl<'a> NautilusIndex<'a> {
+    /// Instantiate a new `NautilusIndex` without loading the account inner data from on-chain.
     pub fn new(program_id: &'a Pubkey, account_info: Box<AccountInfo<'a>>) -> Self {
         Self {
             program_id,
@@ -77,6 +92,7 @@ impl<'a> NautilusIndex<'a> {
         }
     }
 
+    /// Instantiate a new `NautilusIndex` and load the account inner data from on-chain.
     pub fn load(
         program_id: &'a Pubkey,
         account_info: Box<AccountInfo<'a>>,
@@ -191,80 +207,8 @@ impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for Mut<NautilusIndex<'a>> {
-    fn account_info(&self) -> Box<AccountInfo<'a>> {
-        self.self_account.account_info()
-    }
-
-    fn key(&self) -> &'a Pubkey {
-        self.self_account.key()
-    }
-
-    fn is_signer(&self) -> bool {
-        self.self_account.is_signer()
-    }
-
-    fn is_writable(&self) -> bool {
-        self.self_account.is_writable()
-    }
-
-    fn lamports(&self) -> u64 {
-        self.self_account.lamports()
-    }
-
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.self_account.mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
-        self.self_account.owner()
-    }
-
-    fn span(&self) -> Result<usize, ProgramError> {
-        self.self_account.span()
-    }
-}
-
-impl<'a> NautilusMut<'a> for Mut<NautilusIndex<'a>> {}
-
-impl<'a> NautilusAccountInfo<'a> for Signer<NautilusIndex<'a>> {
-    fn account_info(&self) -> Box<AccountInfo<'a>> {
-        self.self_account.account_info()
-    }
-
-    fn key(&self) -> &'a Pubkey {
-        self.self_account.key()
-    }
-
-    fn is_signer(&self) -> bool {
-        self.self_account.is_signer()
-    }
-
-    fn is_writable(&self) -> bool {
-        self.self_account.is_writable()
-    }
-
-    fn lamports(&self) -> u64 {
-        self.self_account.lamports()
-    }
-
-    fn mut_lamports(&self) -> Result<std::cell::RefMut<'_, &'a mut u64>, ProgramError> {
-        self.self_account.mut_lamports()
-    }
-
-    fn owner(&self) -> &'a Pubkey {
-        self.self_account.owner()
-    }
-
-    fn span(&self) -> Result<usize, ProgramError> {
-        self.self_account.span()
-    }
-}
-
-impl<'a> NautilusSigner<'a> for Signer<NautilusIndex<'a>> {}
-
 impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
-    fn transfer_lamports(self, to: impl NautilusAccountInfo<'a>, amount: u64) -> ProgramResult {
+    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
         let from = self.account_info;
         **from.try_borrow_mut_lamports()? -= amount;
         **to.mut_lamports()? += amount;

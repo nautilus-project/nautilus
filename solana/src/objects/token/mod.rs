@@ -12,6 +12,12 @@ pub mod associated_token;
 pub mod metadata;
 pub mod mint;
 
+/// The Nautilus object representing the combination of a mint account and a token metadata account.
+///
+/// This Nautilus object is designed for easily working with tokens and metadata together.
+///
+/// It's comprised of both a `Mint` and `Metadata` struct, which allows you to access either individually, and
+/// most of it's implemented methods access the mint account.
 #[derive(Clone)]
 pub struct Token<'a> {
     pub mint: Mint<'a>,
@@ -19,6 +25,7 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
+    /// Instantiate a new `Token` without loading the account inner data from on-chain.
     pub fn new(
         mint_account: Box<AccountInfo<'a>>,
         metadata_account: Box<AccountInfo<'a>>,
@@ -31,6 +38,7 @@ impl<'a> Token<'a> {
         }
     }
 
+    /// Instantiate a new `Token` and load the account inner data from on-chain.
     pub fn load(
         mint_account: Box<AccountInfo<'a>>,
         metadata_account: Box<AccountInfo<'a>>,

@@ -4,6 +4,15 @@
 //                          Nautilus IDL
 // ----------------------------------------------------------------
 //
+// Much of this IDL crate is inspired by or borrowed directly from Metaplex's Shank.
+//
+// Nautilus and its contributors intend to introduce a shared, dynamic IDL crate to be used
+// by anyone across the Solana community.
+//
+// All credit to contributors at Metaplex for anything borrowed in this crate.
+//
+// Shank: https://github.com/metaplex-foundation/shank
+//
 //
 use std::{
     fs::{self, File},
@@ -23,6 +32,7 @@ pub mod idl_type;
 pub mod idl_type_def;
 pub mod util;
 
+/// The entire IDL itself.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Idl {
@@ -60,13 +70,10 @@ impl Idl {
         if dir_path != "." {
             fs::create_dir_all(dir_path)?;
         }
-
         let idl_path = Path::join(Path::new(dir_path), &format!("{}.json", &self.name));
-
         let mut file = File::create(idl_path)?;
         let json_string = serde_json::to_string(&self)?;
         file.write_all(json_string.as_bytes())?;
-
         Ok(())
     }
 }

@@ -13,6 +13,7 @@ use crate::object::ObjectEntryConfig;
 
 use super::entry_variant::CallContext;
 
+/// Parses metadata from the user's `Cargo.toml`
 pub fn parse_manifest() -> (String, String) {
     let manifest = Manifest::from_path("Cargo.toml")
         .expect("Failed to detect `Cargo.toml`. Is your Cargo.toml file structured properly ?");
@@ -26,6 +27,15 @@ pub fn parse_manifest() -> (String, String) {
     (String::from(crate_version), package.name)
 }
 
+/// Uses Metaplex's `shank_macro_impl` to parse all of the contents of the user's crate.
+///
+/// It uses this information to build the rest of the IDL (accounts and types), and return all
+/// defined Nautilus objects annotated with a Nautilus derive macro.
+///
+/// Consider the return type: (`Vec<NautilusObject>`, `Vec<IdlTypeDef>`, `Vec<IdlTypeDef>`):
+/// * `Vec<NautilusObject>`: All Nautilus objects defined in the crate using Nautilus derive macros.
+/// * `Vec<IdlTypeDef>` (first): All accounts for the IDL (Nautilus objects).
+/// * `Vec<IdlTypeDef>` (second): All types for the IDL (non-Nautilus objects defined in the crate).
 pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTypeDef>) {
     let root = std::env::current_dir().unwrap().join("src/lib.rs");
     let crate_context = CrateContext::parse(root).expect(
@@ -66,6 +76,18 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
     (nautilus_objects, idl_accounts, idl_types)
 }
 
+/// Parses all required information from a user's defined function.
+///
+/// All Nautilus objects - both from the source crate itself and the user's crate - are provided
+/// as a parameter in order to decipher whether or not a function's parameter is a Nautilus object.
+///
+/// Consider the return type: (`Ident`, `Vec<(Ident, Type)>`, `Ident`, `Vec<CallContext>`):
+/// * `Ident` (first): The identifier of this instruction's variant in the program instruction enum.
+/// * `Vec<(Ident, Type)>` (second): The arguments required for this instruction's variant in the program instruction enum.
+/// * `Ident` (second): The "call context" of each declared parameter in the user's defined function signature.
+/// * `Vec<CallContext>`: The "call context" of each declared parameter in the user's defined function signature.
+///
+/// You can see these return values are directly used to build a `NautilusEntrypointEnumVariant`.
 pub fn parse_function(
     nautilus_objects: &Vec<NautilusObject>,
     function: ItemFn,
@@ -76,7 +98,6 @@ pub fn parse_function(
     );
     let call_ident = function.sig.ident.clone();
     let mut variant_args = vec![];
-
     let call_context = function
         .sig
         .inputs
@@ -105,17 +126,16 @@ pub fn parse_function(
             _ => panic!("Error parsing function."),
         })
         .collect();
-
     (variant_ident, variant_args, call_ident, call_context)
 }
 
+/// Parses the type of a parameter of a user's defined function signature.
 pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
     let mut is_create = false;
     let mut is_signer = false;
     let mut is_mut = false;
     let mut is_pda = false;
     let mut child_type = None;
-
     if let Type::Path(TypePath { path, .. }) = &ty {
         if let Some(segment) = path.segments.first() {
             if segment.ident == "Create" {
@@ -134,7 +154,6 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
         }
     }
     is_mut = is_create || is_signer || is_mut;
-
     let type_name = if is_create || is_signer || is_mut || is_pda {
         if let Some(t) = &child_type {
             format!("{}", quote! { #t })
@@ -146,10 +165,11 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
         remove_lifetimes_from_type(&mut new_t);
         format!("{}", quote! { #new_t })
     };
-
     (type_name, is_create, is_signer, is_mut)
 }
 
+/// Derives the child type of a compound object with angle-bracket generic arguments,
+/// ie: `Object<T>`.
 fn derive_child_type(arguments: &PathArguments) -> (Option<Type>, bool) {
     if let PathArguments::AngleBracketed(args) = arguments {
         for arg in &args.args {
@@ -170,6 +190,9 @@ fn derive_child_type(arguments: &PathArguments) -> (Option<Type>, bool) {
     (None, false)
 }
 
+/// Removes all lifetime specifiers from a `syn::Type`.
+///
+/// This is not currently used to replace code but to generate a string representation of a type.
 fn remove_lifetimes_from_type(t: &mut Type) {
     match t {
         Type::Path(ref mut tp) => {
@@ -202,6 +225,7 @@ fn remove_lifetimes_from_type(t: &mut Type) {
     }
 }
 
+/// Is the item `use super::*;`
 pub fn is_use_super_star(item: &Item) -> bool {
     if let Item::Use(use_item) = item {
         if let UseTree::Path(use_path) = &use_item.tree {
