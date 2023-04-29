@@ -4,9 +4,10 @@ use solana_program::{
 };
 pub use spl_token::state::Mint as MintState;
 
+use crate::cpi;
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner,
-    Signer, Wallet,
+    error::NautilusError, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner, Signer,
+    Wallet,
 };
 
 /// The Nautilus object representing a mint account.
@@ -109,7 +110,7 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::create::create_mint(
+        cpi::nautilus::create_mint(
             self.clone(),
             decimals,
             mint_authority,
@@ -133,7 +134,7 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        cpi::create::create_mint(
+        cpi::nautilus::create_mint(
             self.clone(),
             decimals,
             mint_authority,

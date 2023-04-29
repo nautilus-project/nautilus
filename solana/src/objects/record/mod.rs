@@ -3,8 +3,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
+use crate::cpi;
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
+    error::NautilusError, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
     NautilusIndex, NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer,
     Wallet,
 };
@@ -170,7 +171,7 @@ where
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::create::create_record(
+        cpi::nautilus::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
@@ -181,7 +182,7 @@ where
     }
 
     fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        cpi::create::create_record(
+        cpi::nautilus::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,

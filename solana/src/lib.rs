@@ -24,6 +24,12 @@ pub use solana_program::{
     system_instruction, system_program, sysvar,
 };
 
+pub use mpl_token_metadata;
+pub use solana_program;
+pub use spl_associated_token_account;
+pub use spl_token;
+pub use spl_token_2022;
+
 pub use objects::{
     properties::{create::*, mutable::*, record::*, signer::*, *},
     record::{index::*, *},

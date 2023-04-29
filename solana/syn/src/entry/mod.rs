@@ -1,4 +1,4 @@
-///! Builds the entrypoint, processor, and IDL for a Nautilus program.
+//! Builds the entrypoint, processor, and IDL for a Nautilus program.
 pub mod entry_enum;
 pub mod entry_variant;
 pub mod idl;

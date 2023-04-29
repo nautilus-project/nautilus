@@ -4,8 +4,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
+use crate::cpi;
 use crate::{
-    cpi, error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusCreateMetadata,
+    error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusCreateMetadata,
     NautilusSigner, Signer, Wallet,
 };
 
@@ -115,7 +116,7 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::create::create_metadata(
+        cpi::nautilus::create_metadata(
             self.clone(),
             title,
             symbol,
@@ -144,7 +145,7 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
         update_authority: impl NautilusAccountInfo<'a>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        cpi::create::create_metadata(
+        cpi::nautilus::create_metadata(
             self.clone(),
             title,
             symbol,

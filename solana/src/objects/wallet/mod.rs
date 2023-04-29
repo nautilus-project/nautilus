@@ -3,8 +3,8 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
+use crate::cpi;
 use crate::{
-    cpi::{create::create_account, transfer::transfer_lamports},
     Create, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
     NautilusTransferLamports, Signer,
 };
@@ -84,7 +84,7 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
 impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
     fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
         let system_program = self.self_account.system_program.clone();
-        transfer_lamports(self, to, amount, system_program)
+        cpi::system::transfer(self, to, amount, system_program)
     }
 }
 
@@ -94,7 +94,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
         });
-        create_account(
+        cpi::system::create_account(
             self.clone(),
             self.system_program.key,
             payer,
@@ -103,7 +103,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
     }
 
     fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        create_account(
+        cpi::system::create_account(
             self.clone(),
             self.system_program.key,
             payer,
