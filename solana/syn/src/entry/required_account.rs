@@ -1,4 +1,4 @@
-///! The module for determining accounts required for a Nautilus object.
+//! The module for determining accounts required for a Nautilus object.
 use case::CaseExt;
 use convert_case::{Case, Casing};
 use proc_macro2::Span;

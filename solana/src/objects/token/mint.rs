@@ -4,9 +4,10 @@ use solana_program::{
 };
 pub use spl_token::state::Mint as MintState;
 
+use crate::cpi;
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner,
-    Signer, Wallet,
+    error::NautilusError, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner, Signer,
+    Wallet,
 };
 
 /// The Nautilus object representing a mint account.
@@ -109,15 +110,14 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::create::create_mint(
+        cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
+        cpi::token::initialize_mint(
+            self.self_account.token_program.key,
             self.clone(),
+            mint_authority.key(),
+            freeze_authority.map(|f| f.key()),
             decimals,
-            mint_authority,
-            freeze_authority,
-            payer,
             self.rent.to_owned(),
-            self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
         )?;
         self.self_account = Mint::load(
             self.self_account.account_info.clone(),
@@ -133,15 +133,14 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        cpi::create::create_mint(
+        cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
+        cpi::token::initialize_mint(
+            self.self_account.token_program.key,
             self.clone(),
+            mint_authority.key(),
+            freeze_authority.map(|f| f.key()),
             decimals,
-            mint_authority,
-            freeze_authority,
-            payer,
             self.rent.to_owned(),
-            self.system_program.to_owned(),
-            self.self_account.token_program.to_owned(),
         )?;
         self.self_account = Mint::load(
             self.self_account.account_info.clone(),

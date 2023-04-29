@@ -1,6 +1,6 @@
-///! Converters to allow for dissolving of Nautilus token-generation configuration structs,
-/// such as `NautilusEntrypointEnum` and `NautilusEntrypointEnumVariant`,
-/// into IDL components.
+//! Converters to allow for dissolving of Nautilus token-generation configuration structs,
+// such as `NautilusEntrypointEnum` and `NautilusEntrypointEnumVariant`,
+// into IDL components.
 use nautilus_idl::{
     idl_instruction::{
         IdlInstruction, IdlInstructionAccount, IdlInstructionArg, IdlInstructionDiscriminant,

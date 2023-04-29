@@ -3,7 +3,7 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{Mint, NautilusData};
+use crate::{Mint, NautilusData, NautilusMut};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
@@ -40,6 +40,7 @@ pub trait NautilusCreateMint<'a> {
 
 /// * This documentation will be updated when this trait is updated *
 pub trait NautilusCreateMetadata<'a> {
+    #[allow(clippy::too_many_arguments)]
     fn create(
         &mut self,
         title: String,
@@ -50,6 +51,7 @@ pub trait NautilusCreateMetadata<'a> {
         update_authority: impl NautilusAccountInfo<'a>,
     ) -> ProgramResult;
 
+    #[allow(clippy::too_many_arguments)]
     fn create_with_payer(
         &mut self,
         title: String,
@@ -64,6 +66,7 @@ pub trait NautilusCreateMetadata<'a> {
 
 /// * This documentation will be updated when this trait is updated *
 pub trait NautilusCreateToken<'a> {
+    #[allow(clippy::too_many_arguments)]
     fn create(
         &mut self,
         decimals: u8,
@@ -75,6 +78,7 @@ pub trait NautilusCreateToken<'a> {
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
     ) -> ProgramResult;
 
+    #[allow(clippy::too_many_arguments)]
     fn create_with_payer(
         &mut self,
         decimals: u8,
@@ -179,5 +183,7 @@ where
         self.self_account.span()
     }
 }
+
+impl<'a, T> NautilusMut<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
 
 impl<'a, T> NautilusSigner<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}

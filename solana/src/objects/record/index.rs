@@ -4,8 +4,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
+use crate::cpi;
 use crate::{
-    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusData,
+    error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusData,
     NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
@@ -132,14 +133,12 @@ impl<'a> NautilusIndex<'a> {
         &mut self,
         table_name: &str,
         fee_payer: impl NautilusSigner<'a>,
-        system_program: Box<AccountInfo<'a>>,
     ) -> Result<u32, ProgramError> {
         let count = self.data.add_record(table_name);
-        cpi::transfer::transfer_lamports(
+        cpi::system::transfer(
             fee_payer,
             Mut::<Self>::new(self.clone()),
             self.required_rent()? - self.lamports(),
-            system_program,
         )?;
         self.account_info.realloc(self.span()?, true)?;
         self.data
@@ -223,7 +222,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             index: std::collections::HashMap::new(),
         };
         let data_pointer = Box::new(data);
-        cpi::create::create_record(
+        cpi::system::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
@@ -239,7 +238,7 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             index: std::collections::HashMap::new(),
         };
         let data_pointer = Box::new(data);
-        cpi::create::create_record(
+        cpi::system::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
