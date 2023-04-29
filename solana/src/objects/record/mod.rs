@@ -171,7 +171,7 @@ where
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::nautilus::create_record(
+        cpi::system::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
@@ -182,7 +182,7 @@ where
     }
 
     fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        cpi::nautilus::create_record(
+        cpi::system::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,

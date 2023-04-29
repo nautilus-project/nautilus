@@ -83,8 +83,7 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
 
 impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
     fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        let system_program = self.self_account.system_program.clone();
-        cpi::system::transfer(self, to, amount, system_program)
+        cpi::system::transfer(self, to, amount)
     }
 }
 
@@ -94,20 +93,10 @@ impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
         });
-        cpi::system::create_account(
-            self.clone(),
-            self.system_program.key,
-            payer,
-            self.system_program.clone(),
-        )
+        cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }
 
     fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        cpi::system::create_account(
-            self.clone(),
-            self.system_program.key,
-            payer,
-            self.system_program.clone(),
-        )
+        cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }
 }

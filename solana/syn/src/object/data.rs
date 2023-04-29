@@ -104,13 +104,11 @@ pub fn impl_nautilus_data(
             pub fn new<'a>(
                 mut nautilus_index: NautilusIndex<'a>,
                 fee_payer: impl NautilusSigner<'a>,
-                system_program: Box<AccountInfo<'a>>,
                 #(#data_new_fn_args,)*
             ) -> Result<Box<Self>, ProgramError> {
                 let #primary_key_ident = nautilus_index.add_record(
                     Self::TABLE_NAME,
                     fee_payer,
-                    system_program,
                 )?.try_into().unwrap();
                 Ok(Box::new(Self{ #primary_key_ident, #(#data_new_call_args,)* }))
             }
@@ -119,7 +117,6 @@ pub fn impl_nautilus_data(
             pub fn new<'a>(
                 _nautilus_index: NautilusIndex<'a>,
                 fee_payer: impl NautilusSigner<'a>,
-                system_program: Box<AccountInfo<'a>>,
                 #(#data_new_fn_args,)*
             ) -> Result<Box<Self>, ProgramError> {
                 Ok(Box::new(Self{ #(#data_new_call_args,)* }))
@@ -164,7 +161,6 @@ pub fn impl_nautilus_data(
                 self.self_account.data = #ident ::new(
                     self.self_account.index.clone(),
                     rent_payer,
-                    self.system_program.clone(),
                     #(#data_new_call_args,)*
                 )?;
                 self.create_record()
@@ -174,7 +170,6 @@ pub fn impl_nautilus_data(
                 self.self_account.data = #ident ::new(
                     self.self_account.index.clone(),
                     payer.clone(),
-                    self.system_program.clone(),
                     #(#data_new_call_args,)*
                 )?;
                 self.create_record_with_payer(payer)

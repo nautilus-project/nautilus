@@ -114,10 +114,10 @@ impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedToken
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::nautilus::create_associated_token_account(
+        cpi::associated_token::create_associated_token_account(
             self.self_account.clone(),
-            mint,
             owner,
+            mint,
             payer,
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
@@ -137,10 +137,10 @@ impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedToken
         owner: impl NautilusAccountInfo<'a>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        cpi::nautilus::create_associated_token_account(
+        cpi::associated_token::create_associated_token_account(
             self.self_account.clone(),
-            mint,
             owner,
+            mint,
             payer,
             self.system_program.to_owned(),
             self.self_account.token_program.to_owned(),
