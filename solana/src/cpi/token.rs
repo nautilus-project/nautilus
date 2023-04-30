@@ -323,6 +323,27 @@ pub fn initialize_mint<'a>(
     )
 }
 
+#[allow(clippy::boxed_local)]
+pub fn initialize_mint_token22<'a>(
+    token_program_id: &Pubkey,
+    mint: impl NautilusMut<'a>,
+    mint_authority: &Pubkey,
+    freeze_authority: Option<&Pubkey>,
+    decimals: u8,
+    rent: Box<AccountInfo<'a>>,
+) -> ProgramResult {
+    invoke(
+        &spl_token_2022::instruction::initialize_mint(
+            token_program_id,
+            mint.key(),
+            mint_authority,
+            freeze_authority,
+            decimals,
+        )?,
+        &[*mint.account_info(), *rent],
+    )
+}
+
 /// Like InitializeMint, but does not require the Rent sysvar to be provided
 pub fn initialize_mint2<'a>(
     token_program_id: &Pubkey,
@@ -583,6 +604,37 @@ pub fn transfer<'a>(
     };
     invoke(
         &spl_token::instruction::transfer(
+            token_program_id,
+            from.key(),
+            to.key(),
+            authority.key(),
+            signer_pubkeys.as_slice(),
+            amount,
+        )?,
+        &accounts,
+    )
+}
+
+/// This instruction is deprecated, please une tranfer_checked instead.
+pub fn transfer_token22<'a>(
+    token_program_id: &Pubkey,
+    from: impl NautilusMut<'a>,
+    to: impl NautilusMut<'a>,
+    authority: impl NautilusSigner<'a>,
+    multisigs: Option<Vec<impl NautilusSigner<'a>>>,
+    amount: u64,
+) -> ProgramResult {
+    let mut accounts = vec![
+        *from.account_info(),
+        *to.account_info(),
+        *authority.account_info(),
+    ];
+    let signer_pubkeys = match multisigs {
+        Some(sigs) => append_multisig_accounts_and_return_keys(&mut accounts, sigs),
+        None => vec![],
+    };
+    invoke(
+        &spl_token_2022::instruction::transfer(
             token_program_id,
             from.key(),
             to.key(),

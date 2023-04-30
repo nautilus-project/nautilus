@@ -133,7 +133,12 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
     ) -> ProgramResult {
         let mut create_mint: Create<Mint> = self.clone().into();
         let mut create_metadata: Create<Metadata> = self.clone().into();
-        create_mint.create(decimals, mint_authority.clone(), freeze_authority)?;
+        create_mint.create(
+            decimals,
+            mint_authority.clone(),
+            freeze_authority,
+            Some(false),
+        )?;
         create_metadata.create(
             title,
             symbol,
@@ -162,6 +167,7 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
             decimals,
             mint_authority.clone(),
             freeze_authority,
+            Some(false),
             payer.clone(),
         )?;
         create_metadata.create_with_payer(

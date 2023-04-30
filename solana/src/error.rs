@@ -12,6 +12,8 @@ pub enum NautilusError {
     DeserializeDataFailed(String, String),
     /// Nautilus couldn't write a new record to a table. This usually means an error with the primary key provided.
     WriteRecordFailed(String),
+    /// The token program ID provided is invalid.
+    InvalidTokenProgram,
 }
 
 impl std::error::Error for NautilusError {}
@@ -52,6 +54,9 @@ impl fmt::Display for NautilusError {
                     table_name
                 )
             }
+            NautilusError::InvalidTokenProgram => {
+                write!(f, "  [Error]: Invalid token program ID")
+            }
         }
     }
 }
@@ -62,6 +67,7 @@ impl From<NautilusError> for ProgramError {
             NautilusError::LoadDataFailed(..) => 0x200,
             NautilusError::DeserializeDataFailed(..) => 0x201,
             NautilusError::WriteRecordFailed(..) => 0x202,
+            NautilusError::InvalidTokenProgram => 0x203,
         })
     }
 }

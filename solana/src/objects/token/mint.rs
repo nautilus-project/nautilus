@@ -105,20 +105,43 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        token_22: Option<bool>,
     ) -> ProgramResult {
+        // If the token program is the token 2022 program id, verify that token_22 is true
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         });
-        cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
-        cpi::token::initialize_mint(
-            self.self_account.token_program.key,
-            self.clone(),
-            mint_authority.key(),
-            freeze_authority.map(|f| f.key()),
-            decimals,
-            self.rent.to_owned(),
-        )?;
+        if self.self_account.token_program.key == &spl_token_2022::id() {
+            if token_22.is_none() || !token_22.unwrap() {
+                return Err(NautilusError::InvalidTokenProgram.into());
+            } else {
+                cpi::system::create_account(
+                    self.clone(),
+                    self.self_account.token_program.key,
+                    payer,
+                )?;
+                cpi::token::initialize_mint_token22(
+                    self.self_account.token_program.key,
+                    self.clone(),
+                    mint_authority.key(),
+                    freeze_authority.map(|f| f.key()),
+                    decimals,
+                    self.rent.to_owned(),
+                )?;
+            }
+        } else {
+            cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
+            cpi::token::initialize_mint(
+                self.self_account.token_program.key,
+                self.clone(),
+                mint_authority.key(),
+                freeze_authority.map(|f| f.key()),
+                decimals,
+                self.rent.to_owned(),
+            )?;
+        }
+
         self.self_account = Mint::load(
             self.self_account.account_info.clone(),
             self.self_account.token_program.clone(),
@@ -131,17 +154,39 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        token_22: Option<bool>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult {
-        cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
-        cpi::token::initialize_mint(
-            self.self_account.token_program.key,
-            self.clone(),
-            mint_authority.key(),
-            freeze_authority.map(|f| f.key()),
-            decimals,
-            self.rent.to_owned(),
-        )?;
+        // If the token program is the token 2022 program id, verify that token_22 is true
+        if self.self_account.token_program.key == &spl_token_2022::id() {
+            if token_22.is_none() || !token_22.unwrap() {
+                return Err(NautilusError::InvalidTokenProgram.into());
+            } else {
+                cpi::system::create_account(
+                    self.clone(),
+                    self.self_account.token_program.key,
+                    payer,
+                )?;
+                cpi::token::initialize_mint_token22(
+                    self.self_account.token_program.key,
+                    self.clone(),
+                    mint_authority.key(),
+                    freeze_authority.map(|f| f.key()),
+                    decimals,
+                    self.rent.to_owned(),
+                )?;
+            }
+        } else {
+            cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
+            cpi::token::initialize_mint(
+                self.self_account.token_program.key,
+                self.clone(),
+                mint_authority.key(),
+                freeze_authority.map(|f| f.key()),
+                decimals,
+                self.rent.to_owned(),
+            )?;
+        }
         self.self_account = Mint::load(
             self.self_account.account_info.clone(),
             self.self_account.token_program.clone(),

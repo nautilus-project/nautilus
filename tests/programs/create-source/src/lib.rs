@@ -37,7 +37,7 @@ mod program_nautilus {
         mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         msg!("-- New Mint Public Key: {}", &new_mint.key());
-        new_mint.create(decimals, mint_authority.clone(), Some(mint_authority))
+        new_mint.create(decimals, mint_authority.clone(), Some(mint_authority), None)
     }
 
     fn read_mint(new_mint: Mint) -> ProgramResult {
@@ -58,6 +58,7 @@ mod program_nautilus {
             decimals,
             mint_authority.clone(),
             Some(mint_authority),
+            None,
             rent_payer,
         )
     }

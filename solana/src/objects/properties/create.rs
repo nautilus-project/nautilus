@@ -27,6 +27,7 @@ pub trait NautilusCreateMint<'a> {
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        token_22: Option<bool>,
     ) -> ProgramResult;
 
     fn create_with_payer(
@@ -34,6 +35,7 @@ pub trait NautilusCreateMint<'a> {
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
         freeze_authority: Option<impl NautilusAccountInfo<'a>>,
+        token_22: Option<bool>,
         payer: impl NautilusSigner<'a>,
     ) -> ProgramResult;
 }
