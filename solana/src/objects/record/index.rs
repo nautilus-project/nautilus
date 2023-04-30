@@ -4,9 +4,8 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusData, NautilusMut,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusData, NautilusMut,
     NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
@@ -204,8 +203,8 @@ impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
 }
 
 impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        let from = self.account_info;
+    fn transfer_lamports(&self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
+        let from = self.account_info();
         **from.try_borrow_mut_lamports()? -= amount;
         **to.mut_lamports()? += amount;
         Ok(())

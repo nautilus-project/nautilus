@@ -4,8 +4,9 @@ use solana_program::{
 };
 pub use spl_token::state::Mint as MintState;
 
-use crate::cpi;
-use crate::{error::NautilusError, Create, NautilusAccountInfo, NautilusSigner, Signer, Wallet};
+use crate::{
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
+};
 
 /// The Nautilus object representing a mint account.
 ///

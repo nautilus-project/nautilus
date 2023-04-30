@@ -4,9 +4,8 @@ use solana_program::{
 };
 pub use spl_token::state::Account as AssociatedTokenAccountState;
 
-use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing an associated token account.

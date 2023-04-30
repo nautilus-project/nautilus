@@ -3,9 +3,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{cpi, NautilusAssignable};
 use crate::{
-    Create, NautilusAccountInfo, NautilusMut, NautilusSigner, NautilusTransferLamports, Signer,
+    cpi, Create, NautilusAccountInfo, NautilusAssignable, NautilusMut, NautilusSigner,
+    NautilusTransferLamports, Signer,
 };
 
 /// The Nautilus object representing a Solana system account.
@@ -81,14 +81,14 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
 }
 
 impl<'a> NautilusAssignable<'a> for Signer<Wallet<'a>> {
-    fn assign(&self, owner: &'a Pubkey) -> ProgramResult {
-        cpi::system::assign(self.clone(), owner)
+    fn assign(&self, owner: Pubkey) -> ProgramResult {
+        cpi::system::assign(self.clone(), &owner)
     }
 }
 
 impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        cpi::system::transfer(self, to, amount)
+    fn transfer_lamports(&self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
+        cpi::system::transfer(self.clone(), to, amount)
     }
 }
 

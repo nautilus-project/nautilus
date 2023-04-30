@@ -3,10 +3,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{cpi, NautilusAssignable};
 use crate::{
-    error::NautilusError, Create, NautilusAccountInfo, NautilusData, NautilusIndex, NautilusMut,
-    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusData, NautilusIndex,
+    NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 pub mod index;
@@ -145,27 +144,16 @@ where
     }
 }
 
-impl<'a, T> NautilusAssignable<'a> for Record<'a, T>
-where
-    T: NautilusData,
-{
-    fn assign(&self, owner: &'a Pubkey) -> ProgramResult {
-        let mut account_info = *self.account_info();
-        account_info.owner = owner;
-        Ok(())
-    }
-}
-
 impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
 where
     T: NautilusData,
 {
     fn transfer_lamports(
-        self,
+        &self,
         to: impl NautilusMut<'a>,
         amount: u64,
     ) -> solana_program::entrypoint::ProgramResult {
-        let from = self.account_info;
+        let from = self.account_info();
         **from.try_borrow_mut_lamports()? -= amount;
         **to.mut_lamports()? += amount;
         Ok(())

@@ -86,7 +86,7 @@ pub trait NautilusAccountInfo<'a>: Clone {
 /// have unwanted consequences and/or can be irreversible.
 pub trait NautilusAssignable<'a>: NautilusAccountInfo<'a> {
     /// Assign ownership of an account to some program.
-    fn assign(&self, owner: &'a Pubkey) -> ProgramResult;
+    fn assign(&self, owner: Pubkey) -> ProgramResult;
 }
 
 /// Since different types of Solana accounts vary in how they conduct transfers depending on their designated owner,
@@ -95,5 +95,5 @@ pub trait NautilusAssignable<'a>: NautilusAccountInfo<'a> {
 /// For example, a system account would have to CPI to the System Program to conduct a transfer, but a PDA would not.
 pub trait NautilusTransferLamports<'a>: NautilusAccountInfo<'a> {
     /// Conducts a transfer of Lamports from this object (its underlying account) to the designated recipient.
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult;
+    fn transfer_lamports(&self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult;
 }

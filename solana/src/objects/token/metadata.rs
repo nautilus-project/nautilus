@@ -4,9 +4,8 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing a token metadata account.
