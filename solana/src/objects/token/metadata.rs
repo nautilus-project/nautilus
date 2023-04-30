@@ -103,6 +103,7 @@ impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
 
 impl<'a> Create<'a, Metadata<'a>> {
     /// Create a new SPL metadata account with Token Metadata Program.
+    #[allow(clippy::too_many_arguments)]
     pub fn create(
         &mut self,
         title: String,
@@ -136,6 +137,7 @@ impl<'a> Create<'a, Metadata<'a>> {
     }
 
     /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    #[allow(clippy::too_many_arguments)]
     pub fn create_with_payer(
         &mut self,
         title: String,

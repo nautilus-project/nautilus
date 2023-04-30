@@ -46,6 +46,7 @@ pub fn create_account<'a>(
 ///
 /// This CPI is signed using the signer seeds of the record (PDA), and also
 /// makes sure to serialized the provided data into the new account.
+#[allow(clippy::boxed_local)]
 pub fn create_record<'a, T: NautilusData>(
     new_account: impl NautilusRecord<'a>,
     owner: &Pubkey,

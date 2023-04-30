@@ -118,6 +118,9 @@ impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
 }
 
 impl<'a> Create<'a, Token<'a>> {
+    /// Create a new SPL mint with a Token Program and
+    /// a new SPL metadata account with Token Metadata Program.
+    #[allow(clippy::too_many_arguments)]
     pub fn create(
         &mut self,
         decimals: u8,
@@ -142,6 +145,8 @@ impl<'a> Create<'a, Token<'a>> {
         Ok(())
     }
 
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    #[allow(clippy::too_many_arguments)]
     pub fn create_with_payer(
         &mut self,
         decimals: u8,
