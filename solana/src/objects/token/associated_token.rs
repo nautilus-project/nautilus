@@ -112,7 +112,7 @@ impl<'a> Create<'a, AssociatedTokenAccount<'a>> {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
-        });
+        })?;
         cpi::associated_token::create_associated_token_account(
             self.self_account.clone(),
             owner,

@@ -177,7 +177,7 @@ where
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
-        });
+        })?;
         cpi::system::create_record(
             self.self_account.clone(),
             self.self_account.program_id,

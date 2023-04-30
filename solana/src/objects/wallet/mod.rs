@@ -103,7 +103,7 @@ impl<'a> Create<'a, Wallet<'a>> {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
-        });
+        })?;
         cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }
 

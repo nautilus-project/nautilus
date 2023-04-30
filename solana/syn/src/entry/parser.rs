@@ -140,6 +140,8 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
         if let Some(segment) = path.segments.first() {
             if segment.ident == "Create" {
                 is_create = true;
+                is_signer = true;
+                is_mut = true;
                 (child_type, is_pda) = derive_child_type(&segment.arguments)
             } else if segment.ident == "Signer" {
                 is_signer = true;
@@ -154,6 +156,9 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
         }
     }
     is_mut = is_create || is_signer || is_mut;
+    if is_pda {
+        is_signer = false;
+    }
     let type_name = if is_create || is_signer || is_mut || is_pda {
         if let Some(t) = &child_type {
             format!("{}", quote! { #t })

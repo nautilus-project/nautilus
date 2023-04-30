@@ -112,7 +112,7 @@ impl<'a> Create<'a, Mint<'a>> {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
-        });
+        })?;
         cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
         cpi::token::initialize_mint(
             self.self_account.token_program.key,

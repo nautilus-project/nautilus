@@ -79,6 +79,65 @@ mod program_nautilus {
         print_wallet_details(&to, "To acct post-transfer");
         Ok(())
     }
+
+    /// A simluated "complex" program instruction to test Nautilus.
+    /// The logic herein is just for example.
+    fn complex<'a>(
+        _authority1: Signer<Wallet<'a>>, // Marking this as `Signer` will ensure it's a signer on the tx.
+        authority2: Signer<Wallet<'a>>,
+        rent_payer1: Signer<Wallet<'a>>,
+        rent_payer2: Signer<Wallet<'a>>,
+        wallet_to_allocate: Create<'a, Wallet<'a>>, // Marking this as `Create` will ensure it hasn't been created.
+        mut wallet_to_create: Create<'a, Wallet<'a>>,
+        wallet_to_create_with_transfer_safe: Create<'a, Wallet<'a>>,
+        wallet_to_create_with_transfer_unsafe: Mut<Wallet<'a>>,
+        some_other_transfer_recipient: Mut<Wallet<'a>>,
+        amount_to_fund: u64,
+        amount_to_transfer: u64,
+    ) -> ProgramResult {
+        //
+        // /* Business Logic */
+        //
+
+        // Some random checks to simulate how custom checks might look.
+        assert!(rent_payer1
+            .owner()
+            .eq(&nautilus::solana_program::system_program::ID));
+        assert!(rent_payer2
+            .owner()
+            .eq(&nautilus::solana_program::system_program::ID));
+
+        // Even though the check will be applied via `Signer` in the function sig, you can still
+        // check yourself if you choose to.
+        assert!(authority2.is_signer());
+
+        // Even though the check will be applied via `Create` in the function sig, you can still
+        // check yourself if you choose to.
+        assert!(wallet_to_allocate.lamports() == 0);
+        assert!(wallet_to_allocate.is_writable());
+        wallet_to_allocate.allocate()?;
+
+        assert!(wallet_to_create.lamports() == 0);
+        assert!(wallet_to_create.is_writable());
+        wallet_to_create.create()?;
+
+        // Safe - checked at entry with `Create`.
+        rent_payer1.transfer_lamports(wallet_to_create_with_transfer_safe, amount_to_fund)?;
+
+        // Unsafe - not marked with `Create`.
+        rent_payer2.transfer_lamports(wallet_to_create_with_transfer_unsafe, amount_to_fund)?;
+
+        // Transfer with balance assertions
+        let from_beg_balance = authority2.lamports();
+        let to_beg_balance = some_other_transfer_recipient.lamports();
+        authority2.transfer_lamports(some_other_transfer_recipient.clone(), amount_to_transfer)?;
+        let from_end_balance = authority2.lamports();
+        let to_end_balance = some_other_transfer_recipient.lamports();
+        assert!(from_beg_balance - from_end_balance == amount_to_transfer);
+        assert!(to_end_balance - to_beg_balance == amount_to_transfer);
+        //
+        Ok(())
+    }
 }
 
 fn print_wallet_details<'a>(wallet: &impl NautilusAccountInfo<'a>, desc: &str) {

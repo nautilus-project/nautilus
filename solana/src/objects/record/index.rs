@@ -136,7 +136,7 @@ impl<'a> NautilusIndex<'a> {
         let count = self.data.add_record(table_name);
         cpi::system::transfer(
             fee_payer,
-            Mut::<Self>::new(self.clone()),
+            Mut::<Self>::new(self.clone())?,
             self.required_rent()? - self.lamports(),
         )?;
         self.account_info.realloc(self.span()?, true)?;
@@ -222,7 +222,7 @@ impl<'a> Create<'a, NautilusIndex<'a>> {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
-        });
+        })?;
         let data = NautilusIndexData {
             index: std::collections::HashMap::new(),
         };

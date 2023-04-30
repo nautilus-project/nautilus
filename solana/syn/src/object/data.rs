@@ -157,7 +157,7 @@ pub fn impl_nautilus_data(
                 let rent_payer = Signer::new(Wallet {
                     account_info: self.fee_payer.to_owned(),
                     system_program: self.system_program.to_owned(),
-                });
+                })?;
                 self.self_account.data = #ident ::new(
                     self.self_account.index.clone(),
                     rent_payer,

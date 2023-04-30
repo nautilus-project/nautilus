@@ -115,7 +115,7 @@ impl<'a> Create<'a, Metadata<'a>> {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
-        });
+        })?;
         cpi::token_metadata::create_metadata_v3(
             self.self_account.token_metadata_program.key,
             self.clone(),

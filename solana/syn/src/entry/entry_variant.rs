@@ -166,13 +166,13 @@ impl NautilusEntrypointEnumVariant {
                                             let mut #arg_ident = Create::new(
                                                 #(#create_call_idents,)*
                                                 #obj_type::< #arg_ty >::new(#(#read_call_idents,)*)
-                                            ); 
+                                            )?;
                                         },
                                         false => quote! { 
                                             let mut #arg_ident = Create::new(
                                                 #(#create_call_idents,)*
                                                 #obj_type::new(#(#read_call_idents,)*)
-                                            ); 
+                                            )?;
                                         },
                                     };
                                     object_inits.push(create_obj_init);
@@ -180,11 +180,11 @@ impl NautilusEntrypointEnumVariant {
                                 None => {
                                     if config.is_signer { 
                                         object_inits.push(
-                                            quote! { let #arg_ident = Signer::new(#obj_type::load(#(#read_call_idents,)*)?); },
+                                            quote! { let #arg_ident = Signer::new(#obj_type::load(#(#read_call_idents,)*)?)?; },
                                         );
                                     } else if config.is_mut {
                                         object_inits.push(
-                                            quote! { let #arg_ident = Mut::new(#obj_type::load(#(#read_call_idents,)*)?); },
+                                            quote! { let #arg_ident = Mut::new(#obj_type::load(#(#read_call_idents,)*)?)?; },
                                         );
                                     } else { 
                                         object_inits.push(match is_record {

@@ -13,6 +13,7 @@ import {
 import { PAYER, PROGRAM_WALLETS, TEST_CONFIGS } from '../const'
 import { 
     createAllocateWalletInstruction,
+    createComplexInstruction,
     createCreateWalletInstruction, 
     createCreateWalletWithPayerInstruction,
     createReadWalletInstruction,
@@ -32,8 +33,20 @@ describe("Nautilus Unit Tests: Wallets", async () => {
     const newWalletToBeAllocated = Keypair.generate()
     const newWalletToBeAssignedAway = Keypair.generate()
     const newWalletWithPayer = Keypair.generate()
+    const transferAmount = LAMPORTS_PER_SOL / 1000
 
-    const transferAmount = LAMPORTS_PER_SOL / 100
+    // Complex instruction
+    const compAuthority1 = Keypair.generate()
+    const compAuthority2 = Keypair.generate()
+    const compRentPayer1 = Keypair.generate()
+    const compRentPayer2 = Keypair.generate()
+    const compTransferRecipient = Keypair.generate()
+    const compWalletToAllocate = Keypair.generate()
+    const compWalletToCreate = Keypair.generate()
+    const compWalletToCreateWithTransferSafe = Keypair.generate()
+    const compWalletToCreateWithTransferUnsafe = Keypair.generate()
+    const compFundAmount = LAMPORTS_PER_SOL / 1000
+    const compTransferAmount = LAMPORTS_PER_SOL / 1000
 
     async function initAccount(publicKey: PublicKey) {
         connection.confirmTransaction(
@@ -43,6 +56,9 @@ describe("Nautilus Unit Tests: Wallets", async () => {
 
     async function initTestAccounts() {
         initAccount(rent_payer.publicKey)
+        initAccount(compRentPayer1.publicKey)
+        initAccount(compRentPayer2.publicKey)
+        initAccount(compAuthority2.publicKey)
     }
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
@@ -101,6 +117,33 @@ describe("Nautilus Unit Tests: Wallets", async () => {
     it("Transfer", async () => test(
         createTransferInstruction(payer.publicKey, newWallet.publicKey, program.publicKey, transferAmount),
         [payer],
+    ))
+
+    it("Complex", async () => test(
+        createComplexInstruction(
+            compAuthority1.publicKey, 
+            compAuthority2.publicKey, 
+            compRentPayer1.publicKey, 
+            compRentPayer2.publicKey,
+            compTransferRecipient.publicKey,
+            compWalletToAllocate.publicKey,
+            compWalletToCreate.publicKey,
+            compWalletToCreateWithTransferSafe.publicKey,
+            compWalletToCreateWithTransferUnsafe.publicKey,
+            payer.publicKey,
+            program.publicKey,
+            compFundAmount,
+            compTransferAmount,
+        ),
+        [
+            payer,
+            compAuthority1,
+            compAuthority2,
+            compRentPayer1,
+            compRentPayer2,
+            compWalletToAllocate,
+            compWalletToCreate,
+        ],
     ))
   })
   

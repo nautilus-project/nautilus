@@ -1,6 +1,6 @@
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::NautilusMut;
+use crate::{error::NautilusError, NautilusMut};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
@@ -31,12 +31,15 @@ where
         system_program: Box<AccountInfo<'a>>,
         rent: Box<AccountInfo<'a>>,
         self_account: T,
-    ) -> Self {
-        Self {
-            fee_payer,
-            system_program,
-            rent,
-            self_account,
+    ) -> Result<Self, ProgramError> {
+        match check_account_does_not_exist(&self_account) {
+            true => Ok(Self {
+                fee_payer,
+                system_program,
+                rent,
+                self_account,
+            }),
+            false => Err(NautilusError::AccountExists(self_account.key().to_string()).into()),
         }
     }
 }
@@ -81,3 +84,10 @@ where
 impl<'a, T> NautilusMut<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
 
 impl<'a, T> NautilusSigner<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
+
+fn check_account_does_not_exist<'a>(account: &impl NautilusAccountInfo<'a>) -> bool {
+    let account_info = account.account_info();
+    account_info.lamports() == 0
+        && account_info.owner.eq(&solana_program::system_program::ID)
+        && account_info.data_is_empty()
+}

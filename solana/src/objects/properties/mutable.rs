@@ -1,5 +1,7 @@
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
+use crate::error::NautilusError;
+
 use super::NautilusAccountInfo;
 
 /// The trait that ensures an object's underlying `AccountInfo` must be mutable.
@@ -15,12 +17,15 @@ where
     pub self_account: T,
 }
 
-impl<T> Mut<T>
+impl<'a, T> Mut<T>
 where
-    T: Clone,
+    T: Clone + NautilusAccountInfo<'a>,
 {
-    pub fn new(self_account: T) -> Self {
-        Self { self_account }
+    pub fn new(self_account: T) -> Result<Self, ProgramError> {
+        match self_account.is_writable() {
+            true => Ok(Self { self_account }),
+            false => Err(NautilusError::AccountNotMutable(self_account.key().to_string()).into()),
+        }
     }
 }
 
