@@ -3,11 +3,10 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::cpi;
+use crate::{cpi, NautilusAssignable};
 use crate::{
-    error::NautilusError, Create, NautilusAccountInfo, NautilusCreateRecord, NautilusData,
-    NautilusIndex, NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer,
-    Wallet,
+    error::NautilusError, Create, NautilusAccountInfo, NautilusData, NautilusIndex, NautilusMut,
+    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 pub mod index;
@@ -146,6 +145,17 @@ where
     }
 }
 
+impl<'a, T> NautilusAssignable<'a> for Record<'a, T>
+where
+    T: NautilusData,
+{
+    fn assign(&self, owner: &'a Pubkey) -> ProgramResult {
+        let mut account_info = *self.account_info();
+        account_info.owner = owner;
+        Ok(())
+    }
+}
+
 impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
 where
     T: NautilusData,
@@ -162,11 +172,20 @@ where
     }
 }
 
-impl<'a, T> NautilusCreateRecord<'a, T> for Create<'a, Record<'a, T>>
+impl<'a, T> Create<'a, Record<'a, T>>
 where
     T: NautilusData,
 {
-    fn create_record(&mut self) -> ProgramResult {
+    /// Allocate space for a record using the System Program.
+    pub fn allocate(&self) -> ProgramResult {
+        cpi::system::allocate(self.clone())
+    }
+
+    /// Create a new record.
+    ///
+    /// This function is specifically not named `create` because `create(&mut self, ..)` is added by
+    /// the derive macro `#[derive(nautilus::Table)]`, which then drives this function.
+    pub fn create_record(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
@@ -175,18 +194,17 @@ where
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
             self.self_account.data.clone(),
         )?;
         Ok(())
     }
 
-    fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    /// This function is the same as `create_record(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         cpi::system::create_record(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
             self.self_account.data.clone(),
         )?;
         Ok(())

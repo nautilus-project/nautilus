@@ -80,6 +80,15 @@ pub trait NautilusAccountInfo<'a>: Clone {
     }
 }
 
+/// This is a standalone trait since its really only available to system accounts or PDAs owned by your program.
+///
+/// One should be careful when conducting `assign` operations, as changing the program owner of an account can
+/// have unwanted consequences and/or can be irreversible.
+pub trait NautilusAssignable<'a>: NautilusAccountInfo<'a> {
+    /// Assign ownership of an account to some program.
+    fn assign(&self, owner: &'a Pubkey) -> ProgramResult;
+}
+
 /// Since different types of Solana accounts vary in how they conduct transfers depending on their designated owner,
 /// this trait allows for varying implementations depending on the type of account associated with a Nautilus object.
 ///

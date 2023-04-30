@@ -6,8 +6,7 @@ use solana_program::{
 
 use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusCreateMetadata,
-    NautilusSigner, Signer, Wallet,
+    error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing a token metadata account.
@@ -102,8 +101,9 @@ impl<'a> NautilusAccountInfo<'a> for Metadata<'a> {
     }
 }
 
-impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
-    fn create(
+impl<'a> Create<'a, Metadata<'a>> {
+    /// Create a new SPL metadata account with Token Metadata Program.
+    pub fn create(
         &mut self,
         title: String,
         symbol: String,
@@ -135,7 +135,8 @@ impl<'a> NautilusCreateMetadata<'a> for Create<'a, Metadata<'a>> {
         Ok(())
     }
 
-    fn create_with_payer(
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_with_payer(
         &mut self,
         title: String,
         symbol: String,

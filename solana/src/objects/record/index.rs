@@ -6,8 +6,8 @@ use solana_program::{
 
 use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusData,
-    NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusData, NautilusMut,
+    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 /// The account inner data for the `NautilusIndex`.
@@ -212,8 +212,14 @@ impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
     }
 }
 
-impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
-    fn create(&mut self) -> ProgramResult {
+impl<'a> Create<'a, NautilusIndex<'a>> {
+    /// Allocate space for the Nautilus Index account using the System Program.
+    pub fn allocate(&self) -> ProgramResult {
+        cpi::system::allocate(self.clone())
+    }
+
+    /// Create a new Nautilus Index account. This should only be run once in your program's lifetime.
+    pub fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
@@ -226,14 +232,14 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
             data_pointer.clone(),
         )?;
         self.self_account.data = *data_pointer;
         Ok(())
     }
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         let data = NautilusIndexData {
             index: std::collections::HashMap::new(),
         };
@@ -242,7 +248,6 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
             data_pointer.clone(),
         )?;
         self.self_account.data = *data_pointer;

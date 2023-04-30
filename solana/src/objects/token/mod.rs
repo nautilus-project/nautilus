@@ -3,10 +3,7 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{
-    Create, Metadata, Mint, NautilusAccountInfo, NautilusCreateMetadata, NautilusCreateMint,
-    NautilusCreateToken, NautilusSigner,
-};
+use crate::{Create, Metadata, Mint, NautilusAccountInfo, NautilusSigner};
 
 pub mod associated_token;
 pub mod metadata;
@@ -120,8 +117,8 @@ impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
     }
 }
 
-impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
-    fn create(
+impl<'a> Create<'a, Token<'a>> {
+    pub fn create(
         &mut self,
         decimals: u8,
         title: String,
@@ -145,7 +142,7 @@ impl<'a> NautilusCreateToken<'a> for Create<'a, Token<'a>> {
         Ok(())
     }
 
-    fn create_with_payer(
+    pub fn create_with_payer(
         &mut self,
         decimals: u8,
         title: String,

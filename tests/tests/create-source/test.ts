@@ -10,7 +10,7 @@ import {
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
-import { PAYER, PROGRAM_SOURCE_CREATE, TEST_CONFIGS } from '../const'
+import { PAYER, PROGRAM_CREATE_SOURCE, TEST_CONFIGS } from '../const'
 import { 
     createCreateAssociatedTokenInstruction,
     createCreateAssociatedTokenWithPayerInstruction,
@@ -41,7 +41,7 @@ describe("Nautilus Unit Tests: Create Source", async () => {
 
     const connection = TEST_CONFIGS.connection
     const payer = PAYER
-    const program = PROGRAM_SOURCE_CREATE
+    const program = PROGRAM_CREATE_SOURCE
     
     const rent_payer = Keypair.generate()
 
