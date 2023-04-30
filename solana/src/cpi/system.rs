@@ -82,7 +82,16 @@ pub fn create_record<'a, T: NautilusData>(
         ],
         &[&signer_seeds],
     )?;
-    data.serialize(&mut &mut new_account.account_info().data.borrow_mut()[..])?;
+    let mut discriminator = [0u8; 8];
+    let preimage = format!("{}:{}", "global", T::TABLE_NAME);
+    // get first 8 bytes of hash
+    discriminator.copy_from_slice(&solana_program::hash::hash(preimage.as_bytes()).to_bytes()[..8]);
+    let account_info = new_account.account_info();
+    let mut account_data = account_info.data.borrow_mut();
+    // add discriminator to first 8 bytes of account data
+    account_data[..8].copy_from_slice(&discriminator);
+    // add account data
+    data.serialize(&mut &mut account_data[8..])?;
     Ok(())
 }
 
