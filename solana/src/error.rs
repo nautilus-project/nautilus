@@ -12,6 +12,12 @@ pub enum NautilusError {
     DeserializeDataFailed(String, String),
     /// Nautilus couldn't write a new record to a table. This usually means an error with the primary key provided.
     WriteRecordFailed(String),
+    /// The underlying account for a `Mut<T>` declared object was not marked as mutable.
+    AccountNotMutable(String),
+    /// The underlying account for a `Signer<T>` declared object was not marked as signer.
+    AccountNotSigner(String),
+    /// The underlying account for a `Create<T>` declared object already exists.
+    AccountExists(String),
 }
 
 impl std::error::Error for NautilusError {}
@@ -52,6 +58,21 @@ impl fmt::Display for NautilusError {
                     table_name
                 )
             }
+            NautilusError::AccountNotMutable(pubkey) => write!(
+                f,
+                "  [Error]: This account was marked with `Mut<T>` but was not passed in as mutable: {}",
+                pubkey
+            ),
+            NautilusError::AccountNotSigner(pubkey) => write!(
+                f,
+                "  [Error]: This account was marked with `Signer<T>` but was not passed in as signer: {}",
+                pubkey
+            ),
+            NautilusError::AccountExists(pubkey) => write!(
+                f,
+                "  [Error]: This account was marked with `Create<T>` but it exists already: {}",
+                pubkey
+            )
         }
     }
 }
@@ -62,6 +83,9 @@ impl From<NautilusError> for ProgramError {
             NautilusError::LoadDataFailed(..) => 0x200,
             NautilusError::DeserializeDataFailed(..) => 0x201,
             NautilusError::WriteRecordFailed(..) => 0x202,
+            NautilusError::AccountNotMutable(..) => 0x203,
+            NautilusError::AccountNotSigner(..) => 0x204,
+            NautilusError::AccountExists(..) => 0x205,
         })
     }
 }

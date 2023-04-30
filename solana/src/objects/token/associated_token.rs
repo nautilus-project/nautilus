@@ -4,10 +4,8 @@ use solana_program::{
 };
 pub use spl_token::state::Account as AssociatedTokenAccountState;
 
-use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusCreateAssociatedTokenAccount,
-    NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing an associated token account.
@@ -108,12 +106,13 @@ impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
     }
 }
 
-impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedTokenAccount<'a>> {
-    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
+impl<'a> Create<'a, AssociatedTokenAccount<'a>> {
+    /// Create a new Associated Token Account using the Associated Token Program.
+    pub fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
-        });
+        })?;
         cpi::associated_token::create_associated_token_account(
             self.self_account.clone(),
             owner,
@@ -131,7 +130,8 @@ impl<'a> NautilusCreateAssociatedTokenAccount<'a> for Create<'a, AssociatedToken
         Ok(())
     }
 
-    fn create_with_payer(
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_with_payer(
         &mut self,
         mint: Mint<'a>,
         owner: impl NautilusAccountInfo<'a>,

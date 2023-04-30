@@ -4,8 +4,9 @@ import os from 'os'
 import { parse as yamlParse, stringify as yamlStringify } from 'yaml'
 
 export const PAYER = loadKeypairFromFile(os.homedir() + '/.config/solana/id.json')
-export const PROGRAM_SOURCE_CREATE = loadKeypairFromFile('./programs/create-source/target/deploy/program_nautilus-keypair.json')
-export const PROGRAM_SOURCE_ROBUST = loadKeypairFromFile('./programs/create-records/target/deploy/program_nautilus-keypair.json')
+export const PROGRAM_WALLETS = loadKeypairFromFile('./programs/wallets/target/deploy/program_nautilus-keypair.json')
+export const PROGRAM_CREATE_SOURCE = loadKeypairFromFile('./programs/create-source/target/deploy/program_nautilus-keypair.json')
+export const PROGRAM_CREATE_RECORDS = loadKeypairFromFile('./programs/create-records/target/deploy/program_nautilus-keypair.json')
 
 function loadKeypairFromFile(path: string): Keypair {
     return Keypair.fromSecretKey(

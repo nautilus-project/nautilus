@@ -4,10 +4,8 @@ use solana_program::{
 };
 pub use spl_token::state::Mint as MintState;
 
-use crate::cpi;
 use crate::{
-    error::NautilusError, Create, NautilusAccountInfo, NautilusCreateMint, NautilusSigner, Signer,
-    Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing a mint account.
@@ -24,6 +22,8 @@ pub struct Mint<'a> {
 }
 
 impl<'a> Mint<'a> {
+    // Inner data state associated functions
+
     /// Instantiate a new `Mint` without loading the account inner data from on-chain.
     pub fn new(account_info: Box<AccountInfo<'a>>, token_program: Box<AccountInfo<'a>>) -> Self {
         Self {
@@ -63,6 +63,8 @@ impl<'a> Mint<'a> {
             data,
         })
     }
+
+    // Token program capabilities
 }
 
 impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
@@ -99,8 +101,9 @@ impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
     }
 }
 
-impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
-    fn create(
+impl<'a> Create<'a, Mint<'a>> {
+    /// Create a new SPL mint with a Token Program.
+    pub fn create(
         &mut self,
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,
@@ -109,7 +112,7 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
-        });
+        })?;
         cpi::system::create_account(self.clone(), self.self_account.token_program.key, payer)?;
         cpi::token::initialize_mint(
             self.self_account.token_program.key,
@@ -126,7 +129,8 @@ impl<'a> NautilusCreateMint<'a> for Create<'a, Mint<'a>> {
         Ok(())
     }
 
-    fn create_with_payer(
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_with_payer(
         &mut self,
         decimals: u8,
         mint_authority: impl NautilusSigner<'a>,

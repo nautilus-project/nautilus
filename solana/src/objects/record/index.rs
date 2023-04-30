@@ -4,10 +4,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::cpi;
 use crate::{
-    error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusCreate, NautilusData,
-    NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusData, NautilusMut,
+    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 /// The account inner data for the `NautilusIndex`.
@@ -16,7 +15,7 @@ use crate::{
 /// the `String` key is the table name and the `u32` value is the current count.
 ///
 /// This data is kept in one single account and used as a reference to enable autoincrementing of records.
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct NautilusIndexData {
     pub index: std::collections::HashMap<String, u32>,
 }
@@ -47,6 +46,31 @@ impl NautilusIndexData {
                 1
             }
         }
+    }
+}
+
+impl borsh::de::BorshDeserialize for NautilusIndexData
+where
+    std::collections::HashMap<String, u32>: borsh::BorshDeserialize,
+{
+    fn deserialize(buf: &mut &[u8]) -> ::core::result::Result<Self, borsh::maybestd::io::Error> {
+        let _discrim: [u8; 8] = borsh::BorshDeserialize::deserialize(buf)?; // Skip the first 8 bytes for discriminator
+        Ok(Self {
+            index: borsh::BorshDeserialize::deserialize(buf)?,
+        })
+    }
+}
+impl borsh::ser::BorshSerialize for NautilusIndexData
+where
+    std::collections::HashMap<String, u32>: borsh::BorshSerialize,
+{
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> ::core::result::Result<(), borsh::maybestd::io::Error> {
+        borsh::BorshSerialize::serialize(&self.discriminator(), writer)?; // Serialize the discriminator first
+        borsh::BorshSerialize::serialize(&self.index, writer)?;
+        Ok(())
     }
 }
 
@@ -111,7 +135,7 @@ impl<'a> NautilusIndex<'a> {
                     NautilusIndexData::TABLE_NAME.to_string(),
                     account_info.key.to_string(),
                 )
-                .into())
+                .into());
             }
         };
         Ok(Self {
@@ -137,7 +161,7 @@ impl<'a> NautilusIndex<'a> {
         let count = self.data.add_record(table_name);
         cpi::system::transfer(
             fee_payer,
-            Mut::<Self>::new(self.clone()),
+            Mut::<Self>::new(self.clone())?,
             self.required_rent()? - self.lamports(),
         )?;
         self.account_info.realloc(self.span()?, true)?;
@@ -204,20 +228,26 @@ impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
 }
 
 impl<'a> NautilusTransferLamports<'a> for NautilusIndex<'a> {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        let from = self.account_info;
+    fn transfer_lamports(&self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
+        let from = self.account_info();
         **from.try_borrow_mut_lamports()? -= amount;
         **to.mut_lamports()? += amount;
         Ok(())
     }
 }
 
-impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
-    fn create(&mut self) -> ProgramResult {
+impl<'a> Create<'a, NautilusIndex<'a>> {
+    /// Allocate space for the Nautilus Index account using the System Program.
+    pub fn allocate(&self) -> ProgramResult {
+        cpi::system::allocate(self.clone())
+    }
+
+    /// Create a new Nautilus Index account. This should only be run once in your program's lifetime.
+    pub fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
-        });
+        })?;
         let data = NautilusIndexData {
             index: std::collections::HashMap::new(),
         };
@@ -226,14 +256,14 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
             data_pointer.clone(),
         )?;
         self.self_account.data = *data_pointer;
         Ok(())
     }
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         let data = NautilusIndexData {
             index: std::collections::HashMap::new(),
         };
@@ -242,7 +272,6 @@ impl<'a> NautilusCreate<'a> for Create<'a, NautilusIndex<'a>> {
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
-            self.system_program.to_owned(),
             data_pointer.clone(),
         )?;
         self.self_account.data = *data_pointer;

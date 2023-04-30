@@ -1,114 +1,8 @@
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::{Mint, NautilusData, NautilusMut};
+use crate::{error::NautilusError, NautilusMut};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
-
-/// The trait that allow for creation of new on-chain instances of the Nautilus object.
-///
-/// `NautilusCreate<'_>` is meant to be dynamic for any implementing object to use to create new instances.
-///
-/// Object-specific create traits then drive this trait's c
-pub trait NautilusCreate<'a> {
-    /// Creates a new on-chain instance of this Nautilus object with the **transaction fee payer** as the rent payer.
-    fn create(&mut self) -> ProgramResult;
-
-    /// Creates a new on-chain instance of this Nautilus object with a provided rent payer.
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
-}
-
-/// * This documentation will be updated when this trait is updated *
-pub trait NautilusCreateMint<'a> {
-    fn create(
-        &mut self,
-        decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-    ) -> ProgramResult;
-
-    fn create_with_payer(
-        &mut self,
-        decimals: u8,
-        mint_authority: impl NautilusSigner<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-/// * This documentation will be updated when this trait is updated *
-pub trait NautilusCreateMetadata<'a> {
-    #[allow(clippy::too_many_arguments)]
-    fn create(
-        &mut self,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-    ) -> ProgramResult;
-
-    #[allow(clippy::too_many_arguments)]
-    fn create_with_payer(
-        &mut self,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint: Mint<'a>,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-/// * This documentation will be updated when this trait is updated *
-pub trait NautilusCreateToken<'a> {
-    #[allow(clippy::too_many_arguments)]
-    fn create(
-        &mut self,
-        decimals: u8,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-    ) -> ProgramResult;
-
-    #[allow(clippy::too_many_arguments)]
-    fn create_with_payer(
-        &mut self,
-        decimals: u8,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint_authority: impl NautilusSigner<'a>,
-        update_authority: impl NautilusAccountInfo<'a>,
-        freeze_authority: Option<impl NautilusAccountInfo<'a>>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-/// * This documentation will be updated when this trait is updated *
-pub trait NautilusCreateAssociatedTokenAccount<'a> {
-    fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult;
-
-    fn create_with_payer(
-        &mut self,
-        mint: Mint<'a>,
-        owner: impl NautilusAccountInfo<'a>,
-        payer: impl NautilusSigner<'a>,
-    ) -> ProgramResult;
-}
-
-/// * This documentation will be updated when this trait is updated *
-pub trait NautilusCreateRecord<'a, T: NautilusData> {
-    fn create_record(&mut self) -> ProgramResult;
-    fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult;
-}
 
 /// The struct to wrap an object so that it has the necessary accounts to create an on-chain instance of itself.
 /// A user wraps their object `T` in `Create<'_, T>` in order to make accessible the transaction fee payer,
@@ -137,12 +31,15 @@ where
         system_program: Box<AccountInfo<'a>>,
         rent: Box<AccountInfo<'a>>,
         self_account: T,
-    ) -> Self {
-        Self {
-            fee_payer,
-            system_program,
-            rent,
-            self_account,
+    ) -> Result<Self, ProgramError> {
+        match check_account_does_not_exist(&self_account) {
+            true => Ok(Self {
+                fee_payer,
+                system_program,
+                rent,
+                self_account,
+            }),
+            false => Err(NautilusError::AccountExists(self_account.key().to_string()).into()),
         }
     }
 }
@@ -187,3 +84,10 @@ where
 impl<'a, T> NautilusMut<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
 
 impl<'a, T> NautilusSigner<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
+
+fn check_account_does_not_exist<'a>(account: &impl NautilusAccountInfo<'a>) -> bool {
+    let account_info = account.account_info();
+    account_info.lamports() == 0
+        && account_info.owner.eq(&solana_program::system_program::ID)
+        && account_info.data_is_empty()
+}

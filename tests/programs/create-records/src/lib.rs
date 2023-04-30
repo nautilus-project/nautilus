@@ -38,6 +38,7 @@ mod program_nautilus {
     // Perhaps we can do this with the CLI.
 
     fn initialize<'a>(mut nautilus_index: Create<'a, NautilusIndex<'a>>) -> ProgramResult {
+        msg!("Index size: {}", nautilus_index.span()?);
         nautilus_index.create()
     }
 

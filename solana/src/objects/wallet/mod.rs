@@ -3,9 +3,8 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::cpi;
 use crate::{
-    Create, NautilusAccountInfo, NautilusCreate, NautilusMut, NautilusSigner,
+    cpi, Create, NautilusAccountInfo, NautilusAssignable, NautilusMut, NautilusSigner,
     NautilusTransferLamports, Signer,
 };
 
@@ -81,22 +80,35 @@ impl<'a> NautilusAccountInfo<'a> for Wallet<'a> {
     }
 }
 
-impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
-    fn transfer_lamports(self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
-        cpi::system::transfer(self, to, amount)
+impl<'a> NautilusAssignable<'a> for Signer<Wallet<'a>> {
+    fn assign(&self, owner: Pubkey) -> ProgramResult {
+        cpi::system::assign(self.clone(), &owner)
     }
 }
 
-impl<'a> NautilusCreate<'a> for Create<'a, Wallet<'a>> {
-    fn create(&mut self) -> ProgramResult {
+impl<'a> NautilusTransferLamports<'a> for Signer<Wallet<'a>> {
+    fn transfer_lamports(&self, to: impl NautilusMut<'a>, amount: u64) -> ProgramResult {
+        cpi::system::transfer(self.clone(), to, amount)
+    }
+}
+
+impl<'a> Create<'a, Wallet<'a>> {
+    /// Allocate space for a system account using the System Program.
+    pub fn allocate(&self) -> ProgramResult {
+        cpi::system::allocate(self.clone())
+    }
+
+    /// Create a new system account with the System Program.
+    pub fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.clone(),
             system_program: self.system_program.clone(),
-        });
+        })?;
         cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }
 
-    fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
+    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    pub fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }
 }

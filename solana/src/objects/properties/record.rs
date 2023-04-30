@@ -7,6 +7,15 @@ use super::NautilusAccountInfo;
 pub trait NautilusData: BorshDeserialize + BorshSerialize + Clone + Default {
     const TABLE_NAME: &'static str;
     const AUTO_INCREMENT: bool;
+
+    fn discriminator(&self) -> [u8; 8] {
+        let mut discriminator = [0u8; 8];
+        let preimage = format!("{}:{}", "global", Self::TABLE_NAME);
+        discriminator
+            .copy_from_slice(&solana_program::hash::hash(preimage.as_bytes()).to_bytes()[..8]); // First 8 bytes
+        discriminator
+    }
+
     fn primary_key(&self) -> Vec<u8>;
     fn seeds(&self) -> [Vec<u8>; 2] {
         [Self::TABLE_NAME.as_bytes().to_vec(), self.primary_key()]
