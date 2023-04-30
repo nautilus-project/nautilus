@@ -75,6 +75,7 @@ export async function fetchIndex(programId: PublicKey): Promise<[PublicKey, Map<
 
 export function createInitializeInstruction(payer: PublicKey, programId: PublicKey): TransactionInstruction {
     const indexPubkey = deriveIndexAddress(programId)
+    console.log(`  [INFO]: Index: ${indexPubkey.toBase58()}`)
     return createBaseInstruction(
         programId,
         MyInstructions.Initialize,

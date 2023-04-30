@@ -15,7 +15,7 @@ use crate::{
 /// the `String` key is the table name and the `u32` value is the current count.
 ///
 /// This data is kept in one single account and used as a reference to enable autoincrementing of records.
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct NautilusIndexData {
     pub index: std::collections::HashMap<String, u32>,
 }
@@ -46,6 +46,31 @@ impl NautilusIndexData {
                 1
             }
         }
+    }
+}
+
+impl borsh::de::BorshDeserialize for NautilusIndexData
+where
+    std::collections::HashMap<String, u32>: borsh::BorshDeserialize,
+{
+    fn deserialize(buf: &mut &[u8]) -> ::core::result::Result<Self, borsh::maybestd::io::Error> {
+        let _discrim: [u8; 8] = borsh::BorshDeserialize::deserialize(buf)?; // Skip the first 8 bytes for discriminator
+        Ok(Self {
+            index: borsh::BorshDeserialize::deserialize(buf)?,
+        })
+    }
+}
+impl borsh::ser::BorshSerialize for NautilusIndexData
+where
+    std::collections::HashMap<String, u32>: borsh::BorshSerialize,
+{
+    fn serialize<W: borsh::maybestd::io::Write>(
+        &self,
+        writer: &mut W,
+    ) -> ::core::result::Result<(), borsh::maybestd::io::Error> {
+        borsh::BorshSerialize::serialize(&self.discriminator(), writer)?; // Serialize the discriminator first
+        borsh::BorshSerialize::serialize(&self.index, writer)?;
+        Ok(())
     }
 }
 
@@ -110,7 +135,7 @@ impl<'a> NautilusIndex<'a> {
                     NautilusIndexData::TABLE_NAME.to_string(),
                     account_info.key.to_string(),
                 )
-                .into())
+                .into());
             }
         };
         Ok(Self {

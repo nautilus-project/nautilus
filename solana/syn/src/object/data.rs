@@ -62,6 +62,7 @@ pub fn impl_borsh(ident: &Ident, fields: &Fields) -> TokenStream {
                 &self,
                 writer: &mut W,
             ) -> ::core::result::Result<(), nautilus::borsh::maybestd::io::Error> {
+                borsh::BorshSerialize::serialize(&self.discriminator(), writer)?; // Serialize the discriminator first
                 #(#borsh_ser_impl;)*
                 Ok(())
             }
@@ -73,6 +74,7 @@ pub fn impl_borsh(ident: &Ident, fields: &Fields) -> TokenStream {
             fn deserialize(
                 buf: &mut &[u8],
             ) -> ::core::result::Result<Self, nautilus::borsh::maybestd::io::Error> {
+                let _discrim: [u8; 8] = borsh::BorshDeserialize::deserialize(buf)?; // Skip the first 8 bytes for discriminator
                 Ok(Self {
                     #(#borsh_deser_impl,)*
                 })
