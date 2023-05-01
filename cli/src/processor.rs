@@ -7,11 +7,11 @@ use crate::Cli;
 
 #[derive(Subcommand)]
 pub enum NautilusCommand {
-    /// Builds the Nautilus program 🛠️
+    /// 🛠️ Builds the Nautilus program
     Build,
-    /// Ships (deploys) the Nautilus program ⛴️
+    /// ⛴️ Ships (deploys) the Nautilus program
     Deploy,
-    /// Ships (deploys) the Nautilus program ⛴️
+    /// ⛴️ Ships (deploys) the Nautilus program
     Ship,
 }
 
