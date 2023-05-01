@@ -179,7 +179,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     )})
 
     it("Read Token", async () => {if (!skipMetadata) return test(
-        createReadTokenInstruction(newMint.publicKey, program.publicKey),
+        createReadTokenInstruction(newTokenMint.publicKey, program.publicKey),
         [payer],
     )})
 
@@ -189,7 +189,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     )})
 
     it("Read Token Created With Payer", async () => {if (!skipMetadata) return test(
-        createReadTokenInstruction(newMintWithPayer.publicKey, program.publicKey),
+        createReadTokenInstruction(newTokenMintWithPayer.publicKey, program.publicKey),
         [payer],
     )})
 
@@ -219,6 +219,11 @@ describe("Nautilus Unit Tests: Tokens", async () => {
         createMintDisableMintingInstruction(MyInstructions.MintDisableMinting, newMint.publicKey, payer.publicKey, program.publicKey),
         [payer],
     ))
+
+    it("Create Associated Token For MintTo", async () => {if (!skipMetadata) return test(
+        createCreateAssociatedTokenInstruction(newTokenMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    )})
 
     it("Token: Mint To", async () => {if (!skipMetadata) return test(
         createTokenMintToInstruction(newTokenMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey, tokenMintAmount),
