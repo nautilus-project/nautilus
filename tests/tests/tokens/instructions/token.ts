@@ -214,6 +214,7 @@ export function createTokenDisableMintingInstruction(
             {pubkey: metadata, isSigner: false, isWritable: true},
             {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
             {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
         ],
     )
 }
