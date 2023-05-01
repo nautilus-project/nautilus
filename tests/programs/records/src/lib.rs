@@ -126,6 +126,14 @@ pub trait TestPrint {
     fn print(&self);
 }
 
+impl TestPrint for Token<'_> {
+    fn print(&self) {
+        info!("-- Token: {}", self.key());
+        print_mint_data(&self.mint.data);
+        print_metadata_data(&self.metadata.data);
+    }
+}
+
 impl TestPrint for Record<'_, Person> {
     fn print(&self) {
         info!("-- Person: {}", self.key());
@@ -153,4 +161,24 @@ impl TestPrint for Record<'_, Car> {
         info!("      Purchase Auth:  {}", self.data.purchase_authority);
         info!("      Operating Auth: {}", self.data.operating_authority);
     }
+}
+
+fn print_mint_data(data: &MintState) {
+    info!("-- Mint Data:");
+    info!("  Mint Authority:         {:#?}", data.mint_authority);
+    info!("  Supply:                 {}", data.supply);
+    info!("  Decimals:               {}", data.decimals);
+    info!("  Is Initialized:         {}", data.is_initialized);
+    info!("  Freeze Authority:       {:#?}", data.freeze_authority);
+}
+
+fn print_metadata_data(data: &MetadataState) {
+    info!("-- Metadata Data:");
+    info!("  Mint:                   {:#?}", data.mint);
+    info!("  Primary Sale Happened:  {}", data.primary_sale_happened);
+    info!("  Is Mutable:             {}", data.is_mutable);
+    info!("  Edition Nonce:          {:#?}", data.edition_nonce);
+    info!("  Title:                  {}", data.data.name);
+    info!("  Symbol:                 {}", data.data.symbol);
+    info!("  URI:                    {}", data.data.uri);
 }
