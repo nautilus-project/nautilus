@@ -6,8 +6,7 @@ use spl_token::instruction::AuthorityType;
 pub use spl_token::state::Mint as MintState;
 
 use crate::{
-    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusMut, NautilusSigner,
-    Signer, Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing a mint account.
@@ -65,6 +64,8 @@ impl<'a> Mint<'a> {
             data,
         })
     }
+
+    // Token program capabilities
 }
 
 impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
