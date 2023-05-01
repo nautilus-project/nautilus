@@ -4,8 +4,6 @@ import {
 } from 'mocha'
 import {
     Keypair,
-    LAMPORTS_PER_SOL,
-    PublicKey,
     sendAndConfirmTransaction,
     Transaction,
     TransactionInstruction,
@@ -14,31 +12,18 @@ import { PAYER, PROGRAM_RECORDS, TEST_CONFIGS } from '../const'
 import { 
     createCreateCarInstruction,
     createCreateHomeInstruction,
-    createCreatePersonInstruction,
-    createCreateTokenInstruction, 
+    createCreatePersonInstruction, 
     createInitializeInstruction, 
     createReadCarInstruction,
     createReadHomeInstruction,
     createReadPersonInstruction,
-    createReadTokenInstruction, 
 } from './instructions'
 
 describe("Nautilus Unit Tests: Create Records", async () => {
 
-    const skipMetadata = TEST_CONFIGS.skipMetadata // Enabled for localnet
-
     const connection = TEST_CONFIGS.connection
     const payer = PAYER
     const program = PROGRAM_RECORDS
-    
-    const rent_payer = Keypair.generate()
-
-    const newTokenMint = Keypair.generate()
-
-    const decimals = 9
-    const title = "Nautilus Token"
-    const symbol = "NTLS"
-    const uri = "NTLS"
 
     const personName = "Joe"
     const homeId = 1
@@ -46,17 +31,6 @@ describe("Nautilus Unit Tests: Create Records", async () => {
     const homeStreet = "Solana St."
     const carMake = "Chevrolet"
     const carModel = "Corvette"
-
-    async function initAccount(publicKey: PublicKey) {
-        await TEST_CONFIGS.sleep()
-        connection.confirmTransaction(
-            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL / 100)
-        )
-    }
-
-    async function initTestAccounts() {
-        initAccount(rent_payer.publicKey)
-    }
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
         TEST_CONFIGS.sleep()
@@ -68,21 +42,6 @@ describe("Nautilus Unit Tests: Create Records", async () => {
         )
         console.log(`\n\n  [INFO]: sig: ${sx}\n`)
     }
-
-    before(async () => {
-        if (skipMetadata) console.log("  [WARN]: `skipMetadata` is set to `true`, so tests for Metadata and Token will not execute & automatically pass.")
-        initTestAccounts()
-    })
-
-    it("Create Token", async () => {if (!skipMetadata) return test(
-        createCreateTokenInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
-        [payer, newTokenMint],
-    )})
-
-    it("Read Token", async () => {if (!skipMetadata) return test(
-        createReadTokenInstruction(newTokenMint.publicKey, program.publicKey),
-        [payer],
-    )})
 
     it("Initialize Nautilus Index", async () => test(
         createInitializeInstruction(payer.publicKey, program.publicKey),
