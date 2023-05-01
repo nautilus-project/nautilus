@@ -64,7 +64,7 @@ mod program_nautilus {
     fn transfer<'a>(from: Signer<Wallet<'a>>, to: Mut<Wallet<'a>>, amount: u64) -> ProgramResult {
         print_wallet_details(&from, "From acct pre-transfer");
         print_wallet_details(&to, "To acct pre-transfer");
-        msg!(
+        splog_info!(
             "Transferring {} From: {} to: {}",
             amount,
             from.key(),
@@ -141,9 +141,9 @@ mod program_nautilus {
 }
 
 fn print_wallet_details<'a>(wallet: &impl NautilusAccountInfo<'a>, desc: &str) {
-    msg!(" * Wallet info for: {}:", desc);
-    msg!("      Address:    {}", wallet.key());
-    msg!("      Owner:      {}", wallet.owner());
-    msg!("      Size:       {}", wallet.size().unwrap());
-    msg!("      Lamports:   {}", wallet.lamports());
+    splog_info!(" * Wallet info for: {}:", desc);
+    splog_info!("      Address:    {}", wallet.key());
+    splog_info!("      Owner:      {}", wallet.owner());
+    splog_info!("      Size:       {}", wallet.size().unwrap());
+    splog_info!("      Lamports:   {}", wallet.lamports());
 }

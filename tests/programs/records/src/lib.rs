@@ -2,43 +2,10 @@ use nautilus::*;
 
 #[nautilus]
 mod program_nautilus {
-    fn create_token<'a>(
-        mut new_token: Create<'a, Token<'a>>,
-        decimals: u8,
-        title: String,
-        symbol: String,
-        uri: String,
-        mint_authority: Signer<Wallet<'a>>,
-        update_authority: Signer<Wallet<'a>>,
-    ) -> ProgramResult {
-        msg!("-- Token:             {}", &new_token.key());
-        msg!(
-            "-- Metadata:          {}",
-            &new_token.self_account.metadata.key()
-        );
-        msg!("-- Mint Authority:    {}", &mint_authority.key());
-        msg!("-- Update Authority:  {:#?}", &update_authority.key());
-        new_token.create(
-            decimals,
-            title,
-            symbol,
-            uri,
-            mint_authority.clone(),
-            update_authority,
-            Some(mint_authority),
-        )
-    }
-
-    fn read_token(token: Token) -> ProgramResult {
-        token.print();
-        Ok(())
-    }
-
     // Right now, the Nautilus Index must be initialized ahead of time.
     // Perhaps we can do this with the CLI.
-
     fn initialize<'a>(mut nautilus_index: Create<'a, NautilusIndex<'a>>) -> ProgramResult {
-        msg!("Index size: {}", nautilus_index.span()?);
+        splog_info!("Index size: {}", nautilus_index.span()?);
         nautilus_index.create()
     }
 
@@ -47,8 +14,8 @@ mod program_nautilus {
         name: String,
         authority: Pubkey,
     ) -> ProgramResult {
-        msg!("-- New Person:        {}", &new_person.key());
-        msg!("-- Authority:         {}", &authority);
+        splog_info!("-- New Person:        {}", &new_person.key());
+        splog_info!("-- Authority:         {}", &authority);
         new_person.create(name, authority)
     }
 
@@ -63,7 +30,7 @@ mod program_nautilus {
         house_number: u8,
         street: String,
     ) -> ProgramResult {
-        msg!("-- New Home: {}", &new_home.key());
+        splog_info!("-- New Home: {}", &new_home.key());
         new_home.create(id, house_number, street)
     }
 
@@ -79,7 +46,7 @@ mod program_nautilus {
         purchase_authority: Pubkey,
         operating_authority: Pubkey,
     ) -> ProgramResult {
-        msg!("-- New Car: {}", &new_car.key());
+        splog_info!("-- New Car: {}", &new_car.key());
         new_car.create(make, model, purchase_authority, operating_authority)
     }
 
@@ -127,7 +94,7 @@ pub trait TestPrint {
 
 impl TestPrint for Token<'_> {
     fn print(&self) {
-        msg!("-- Token: {}", self.key());
+        splog_info!("-- Token: {}", self.key());
         print_mint_data(&self.mint.data);
         print_metadata_data(&self.metadata.data);
     }
@@ -135,49 +102,49 @@ impl TestPrint for Token<'_> {
 
 impl TestPrint for Record<'_, Person> {
     fn print(&self) {
-        msg!("-- Person: {}", self.key());
-        msg!("      ID:             {}", self.data.id);
-        msg!("      Name:           {}", self.data.name);
-        msg!("      Authority:      {}", self.data.authority);
+        splog_info!("-- Person: {}", self.key());
+        splog_info!("      ID:             {}", self.data.id);
+        splog_info!("      Name:           {}", self.data.name);
+        splog_info!("      Authority:      {}", self.data.authority);
     }
 }
 
 impl TestPrint for Record<'_, Home> {
     fn print(&self) {
-        msg!("-- Home: {}", self.key());
-        msg!("      ID:             {}", self.data.id);
-        msg!("      House Number:   {}", self.data.house_number);
-        msg!("      Street:         {}", self.data.street);
+        splog_info!("-- Home: {}", self.key());
+        splog_info!("      ID:             {}", self.data.id);
+        splog_info!("      House Number:   {}", self.data.house_number);
+        splog_info!("      Street:         {}", self.data.street);
     }
 }
 
 impl TestPrint for Record<'_, Car> {
     fn print(&self) {
-        msg!("-- Car: {}", self.key());
-        msg!("      ID:             {}", self.data.id);
-        msg!("      Make:           {}", self.data.make);
-        msg!("      Model:          {}", self.data.model);
-        msg!("      Purchase Auth:  {}", self.data.purchase_authority);
-        msg!("      Operating Auth: {}", self.data.operating_authority);
+        splog_info!("-- Car: {}", self.key());
+        splog_info!("      ID:             {}", self.data.id);
+        splog_info!("      Make:           {}", self.data.make);
+        splog_info!("      Model:          {}", self.data.model);
+        splog_info!("      Purchase Auth:  {}", self.data.purchase_authority);
+        splog_info!("      Operating Auth: {}", self.data.operating_authority);
     }
 }
 
 fn print_mint_data(data: &MintState) {
-    msg!("-- Mint Data:");
-    msg!("  Mint Authority:         {:#?}", data.mint_authority);
-    msg!("  Supply:                 {}", data.supply);
-    msg!("  Decimals:               {}", data.decimals);
-    msg!("  Is Initialized:         {}", data.is_initialized);
-    msg!("  Freeze Authority:       {:#?}", data.freeze_authority);
+    splog_info!("-- Mint Data:");
+    splog_info!("  Mint Authority:         {:#?}", data.mint_authority);
+    splog_info!("  Supply:                 {}", data.supply);
+    splog_info!("  Decimals:               {}", data.decimals);
+    splog_info!("  Is Initialized:         {}", data.is_initialized);
+    splog_info!("  Freeze Authority:       {:#?}", data.freeze_authority);
 }
 
 fn print_metadata_data(data: &MetadataState) {
-    msg!("-- Metadata Data:");
-    msg!("  Mint:                   {:#?}", data.mint);
-    msg!("  Primary Sale Happened:  {}", data.primary_sale_happened);
-    msg!("  Is Mutable:             {}", data.is_mutable);
-    msg!("  Edition Nonce:          {:#?}", data.edition_nonce);
-    msg!("  Title:                  {}", data.data.name);
-    msg!("  Symbol:                 {}", data.data.symbol);
-    msg!("  URI:                    {}", data.data.uri);
+    splog_info!("-- Metadata Data:");
+    splog_info!("  Mint:                   {:#?}", data.mint);
+    splog_info!("  Primary Sale Happened:  {}", data.primary_sale_happened);
+    splog_info!("  Is Mutable:             {}", data.is_mutable);
+    splog_info!("  Edition Nonce:          {:#?}", data.edition_nonce);
+    splog_info!("  Title:                  {}", data.data.name);
+    splog_info!("  Symbol:                 {}", data.data.symbol);
+    splog_info!("  URI:                    {}", data.data.uri);
 }

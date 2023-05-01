@@ -1,7 +1,6 @@
 export * from './car'
 export * from './home'
 export * from './person'
-export * from './token'
 
 import { PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionInstruction } from '@solana/web3.js'
 import * as borsh from "borsh"
@@ -9,8 +8,6 @@ import { Buffer } from "buffer"
 import { TEST_CONFIGS } from '../../const'
 
 export enum MyInstructions {
-    CreateToken,
-    ReadToken,
     Initialize,
     CreatePerson,
     ReadPerson,

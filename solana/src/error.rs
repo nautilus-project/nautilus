@@ -1,9 +1,9 @@
 use num_traits::{FromPrimitive, ToPrimitive};
 use solana_program::{
     decode_error::DecodeError,
-    msg,
     program_error::{PrintProgramError, ProgramError},
 };
+use splogger::{splog_error, Splog};
 use thiserror::Error;
 
 /// Custom errors for Nautilus functionality. Convertible to `solana_program::program_error::ProgramError`.
@@ -79,49 +79,48 @@ impl PrintProgramError for NautilusError {
         E: 'static + std::error::Error + DecodeError<E> + PrintProgramError + FromPrimitive,
     {
         match self {
-                Self::LoadDataFailed(state_type, pubkey) => {
-                    msg!(
-                        "  [Error]: Failed to load {} data from account: {}",
-                        state_type,
-                        pubkey
-                    );
-                    msg!("  [Error]: Could not borrow account data");
-                    msg!(
-                        "Failed to load {} data from account: {}",
-                        state_type, pubkey
-                    );
-                }
-                Self::DeserializeDataFailed(state_type, pubkey) => {
-                    msg!(
-                        "  [Error]: Failed to deserialize {} data from account: {}",
-                        state_type,
-                        pubkey
-                    );
-                    msg!("  [Error]: Could not deserialize");
-                    msg!(
-                        "Failed to deserialize {} data from account: {}",
-                        state_type, pubkey
-                    );
-                }
-                Self::WriteRecordFailed(table_name) => {
-                    msg!(
-                        "  [Error]: Failed to create a new record for table: {}",
-                        table_name
-                    );
-                }
-                Self::AccountNotMutable(pubkey) => msg!(
-                    "  [Error]: This account was marked with `Mut<T>` but was not passed in as mutable: {}",
+            Self::LoadDataFailed(state_type, pubkey) => {
+                splog_error!(
+                    "Failed to load {} data from account: {}",
+                    state_type,
                     pubkey
-                ),
-                Self::AccountNotSigner(pubkey) => msg!(
-                    "  [Error]: This account was marked with `Signer<T>` but was not passed in as signer: {}",
+                );
+                splog_error!("Could not borrow account data");
+                splog_error!(
+                    "Failed to load {} data from account: {}",
+                    state_type,
                     pubkey
-                ),
-                Self::AccountExists(pubkey) => msg!(
-                    "  [Error]: This account was marked with `Create<T>` but it exists already: {}",
-                    pubkey
-                )
+                );
             }
+            Self::DeserializeDataFailed(state_type, pubkey) => {
+                splog_error!(
+                    "Failed to deserialize {} data from account: {}",
+                    state_type,
+                    pubkey
+                );
+                splog_error!("Could not deserialize");
+                splog_error!(
+                    "Failed to deserialize {} data from account: {}",
+                    state_type,
+                    pubkey
+                );
+            }
+            Self::WriteRecordFailed(table_name) => {
+                splog_error!("Failed to create a new record for table: {}", table_name);
+            }
+            Self::AccountNotMutable(pubkey) => splog_error!(
+                "This account was marked with `Mut<T>` but was not passed in as mutable: {}",
+                pubkey
+            ),
+            Self::AccountNotSigner(pubkey) => splog_error!(
+                "This account was marked with `Signer<T>` but was not passed in as signer: {}",
+                pubkey
+            ),
+            Self::AccountExists(pubkey) => splog_error!(
+                "This account was marked with `Create<T>` but it exists already: {}",
+                pubkey
+            ),
+        }
     }
 }
 

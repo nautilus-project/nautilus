@@ -209,7 +209,7 @@ impl NautilusEntrypointEnumVariant {
         let call_ident = &self.call_ident;
         quote::quote! {
             {
-                msg!("Instruction: {}", #instruction_name);
+                splog_info!("Instruction: {}", #instruction_name);
                 let accounts_iter = &mut accounts.iter();
                 #(#all_accounts)*
                 #index_init
