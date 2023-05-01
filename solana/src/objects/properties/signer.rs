@@ -1,6 +1,6 @@
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::error::NautilusError;
+use crate::{error::NautilusError, NautilusMut};
 
 use super::NautilusAccountInfo;
 
@@ -65,5 +65,7 @@ where
         self.self_account.span()
     }
 }
+
+impl<'a, T> NautilusMut<'a> for Signer<T> where T: NautilusAccountInfo<'a> {}
 
 impl<'a, T> NautilusSigner<'a> for Signer<T> where T: NautilusAccountInfo<'a> {}

@@ -10,7 +10,7 @@ import {
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
-import { PAYER, PROGRAM_CREATE_RECORDS, TEST_CONFIGS } from '../const'
+import { PAYER, PROGRAM_RECORDS, TEST_CONFIGS } from '../const'
 import { 
     createCreateCarInstruction,
     createCreateHomeInstruction,
@@ -29,7 +29,7 @@ describe("Nautilus Unit Tests: Create Records", async () => {
 
     const connection = TEST_CONFIGS.connection
     const payer = PAYER
-    const program = PROGRAM_CREATE_RECORDS
+    const program = PROGRAM_RECORDS
     
     const rent_payer = Keypair.generate()
 
@@ -48,8 +48,9 @@ describe("Nautilus Unit Tests: Create Records", async () => {
     const carModel = "Corvette"
 
     async function initAccount(publicKey: PublicKey) {
+        await TEST_CONFIGS.sleep()
         connection.confirmTransaction(
-            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL)
+            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL / 100)
         )
     }
 

@@ -21,8 +21,8 @@
   },
   "scripts": {
     "test-wallets": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/wallets/test.ts",
-    "test-create-source": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/create-source/test.ts",
-    "test-create-records": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/create-records/test.ts",
+    "test-tokens": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/tokens/test.ts",
+    "test-records": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/records/test.ts",
     "all": "sh ./tests/all-tests.sh"
   }
 }

@@ -5,7 +5,8 @@ use solana_program::{
 pub use spl_token::state::Account as AssociatedTokenAccountState;
 
 use crate::{
-    cpi, error::NautilusError, Create, Mint, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mint, Mut, NautilusAccountInfo, NautilusMut, NautilusSigner,
+    Signer, Wallet,
 };
 
 /// The Nautilus object representing an associated token account.
@@ -103,6 +104,76 @@ impl<'a> NautilusAccountInfo<'a> for AssociatedTokenAccount<'a> {
 
     fn span(&self) -> Result<usize, ProgramError> {
         Ok(AssociatedTokenAccountState::LEN)
+    }
+}
+
+impl<'a> Mut<AssociatedTokenAccount<'a>> {
+    /// Burn tokens from this associated token account.
+    pub fn burn(
+        &self,
+        mint: impl NautilusAccountInfo<'a>,
+        authority: impl NautilusSigner<'a>,
+        amount: u64,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::burn(
+            self.self_account.token_program.key,
+            self.clone(),
+            mint,
+            authority,
+            multisigs,
+            amount,
+        )
+    }
+
+    /// Freeze token movement from this associated token account.
+    pub fn freeze(
+        &self,
+        mint: impl NautilusAccountInfo<'a>,
+        freeze_authority: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::freeze_account(
+            self.self_account.token_program.key,
+            self.clone(),
+            mint,
+            freeze_authority,
+            multisigs,
+        )
+    }
+
+    /// Thaw this associated token account. It should be already frozen.
+    pub fn thaw(
+        &self,
+        mint: impl NautilusAccountInfo<'a>,
+        freeze_authority: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::thaw_account(
+            self.self_account.token_program.key,
+            self.clone(),
+            mint,
+            freeze_authority,
+            multisigs,
+        )
+    }
+
+    /// Transfer tokens from this associated token account to another.
+    pub fn transfer(
+        &self,
+        to: impl NautilusMut<'a>,
+        authority: impl NautilusSigner<'a>,
+        amount: u64,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::transfer(
+            self.self_account.token_program.key,
+            self.clone(),
+            to,
+            authority,
+            multisigs,
+            amount,
+        )
     }
 }
 

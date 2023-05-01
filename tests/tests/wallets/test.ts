@@ -49,8 +49,9 @@ describe("Nautilus Unit Tests: Wallets", async () => {
     const compTransferAmount = LAMPORTS_PER_SOL / 1000
 
     async function initAccount(publicKey: PublicKey) {
+        await TEST_CONFIGS.sleep()
         connection.confirmTransaction(
-            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL)
+            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL / 100)
         )
     }
 

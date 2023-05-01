@@ -2,35 +2,33 @@ export * from './associated-token'
 export * from './mint'
 export * from './metadata'
 export * from './token'
-export * from './transfer'
-export * from './wallet'
 
-import { PublicKey, TransactionInstruction } from '@solana/web3.js'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
 import * as borsh from "borsh"
 import { Buffer } from "buffer"
 
 export enum MyInstructions {
-    CreateWallet,
-    ReadWallet,
-    CreateWalletWithPayer,
-    ReadWalletCreatedWithPayer,
     CreateMint,
-    ReadMint,
     CreateMintWithPayer,
-    ReadMintCreatedWithPayer,
+    MintMintTo,
+    MintDisableMinting,
+    ReadMint,
     CreateMetadata,
-    ReadMetadata,
     CreateMetadataWithPayer,
-    ReadMetadataCreatedWithPayer,
+    ReadMetadata,
     CreateAssociatedToken,
-    ReadAssociatedToken,
     CreateAssociatedTokenWithPayer,
-    ReadAssociatedTokenCreatedWithPayer,
+    ReadAssociatedToken,
+    BurnTokens,
+    TransferTokens,
+    FreezeAccount,
+    ThawAccount,
     CreateToken,
-    ReadToken,
     CreateTokenWithPayer,
-    ReadTokenCreatedWithPayer,
-    TransferWallet,
+    TokenMintTo,
+    TokenDisableMinting,
+    ReadToken,
 }
 
 export class BaseInstructionData {

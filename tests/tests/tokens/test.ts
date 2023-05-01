@@ -10,8 +10,10 @@ import {
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
-import { PAYER, PROGRAM_CREATE_SOURCE, TEST_CONFIGS } from '../const'
+import { PAYER, PROGRAM_TOKENS, TEST_CONFIGS } from '../const'
 import { 
+    MyInstructions,
+    createBurnTokensInstruction,
     createCreateAssociatedTokenInstruction,
     createCreateAssociatedTokenWithPayerInstruction,
     createCreateMetadataInstruction,
@@ -20,53 +22,60 @@ import {
     createCreateMintWithPayerInstruction, 
     createCreateTokenInstruction, 
     createCreateTokenWithPayerInstruction, 
-    createCreateWalletInstruction, 
-    createCreateWalletWithPayerInstruction,
-    createReadAssociatedTokenCreatedWithPayerInstruction,
+    createFreezeAssociatedTokenInstruction, 
+    createMintDisableMintingInstruction, 
+    createMintMintToInstruction, 
     createReadAssociatedTokenInstruction,
-    createReadMetadataCreatedWithPayerInstruction,
     createReadMetadataInstruction,
-    createReadMintCreatedWithPayerInstruction,
     createReadMintInstruction,
-    createReadTokenCreatedWithPayerInstruction,
     createReadTokenInstruction,
-    createReadWalletCreatedWithPayerInstruction,
-    createReadWalletInstruction,
-    createTransferWalletInstruction,
+    createThawAssociatedTokenInstruction,
+    createTokenDisableMintingInstruction,
+    createTokenMintToInstruction,
+    createTransferTokensInstruction,
 } from './instructions'
 
-describe("Nautilus Unit Tests: Create Source", async () => {
+describe("Nautilus Unit Tests: Tokens", async () => {
 
     const skipMetadata = TEST_CONFIGS.skipMetadata // `true` for localnet
 
     const connection = TEST_CONFIGS.connection
     const payer = PAYER
-    const program = PROGRAM_CREATE_SOURCE
+    const program = PROGRAM_TOKENS
     
     const rent_payer = Keypair.generate()
 
-    const newWallet = Keypair.generate()
-    const newWalletWithPayer = Keypair.generate()
+    const testWallet1 = Keypair.generate()
+    const testWallet2 = Keypair.generate()
+
     const newMint = Keypair.generate()
     const newMintWithPayer = Keypair.generate()
+    const mintMintAmount = 20
+    const mintTransferAmount = 5
+    const mintBurnAmount = 5
+    
     const newTokenMint = Keypair.generate()
     const newTokenMintWithPayer = Keypair.generate()
+    const tokenMintAmount = 20
+    const tokenTransferAmount = 5
+    const tokenBurnAmount = 5
 
     const decimals = 9
     const title = "Nautilus Token"
     const symbol = "NTLS"
     const uri = "NTLS"
 
-    const transferAmount = LAMPORTS_PER_SOL / 100
-
     async function initAccount(publicKey: PublicKey) {
+        await TEST_CONFIGS.sleep()
         connection.confirmTransaction(
-            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL)
+            await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL / 100)
         )
     }
 
     async function initTestAccounts() {
         initAccount(rent_payer.publicKey)
+        initAccount(testWallet1.publicKey)
+        initAccount(testWallet2.publicKey)
     }
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
@@ -86,28 +95,6 @@ describe("Nautilus Unit Tests: Create Source", async () => {
         initTestAccounts()
     })
 
-    // Wallets
-
-    it("Create Wallet", async () => test(
-        createCreateWalletInstruction(newWallet.publicKey, payer.publicKey, program.publicKey),
-        [payer, newWallet],
-    ))
-
-    it("Read Wallet", async () => test(
-        createReadWalletInstruction(newWallet.publicKey, program.publicKey),
-        [payer],
-    ))
-
-    it("Create Wallet with Payer", async () => test(
-        createCreateWalletWithPayerInstruction(newWalletWithPayer.publicKey, payer.publicKey, program.publicKey),
-        [payer, newWalletWithPayer],
-    ))
-
-    it("Read Wallet Created With Payer", async () => test(
-        createReadWalletCreatedWithPayerInstruction(newWalletWithPayer.publicKey, program.publicKey),
-        [payer],
-    ))
-
     // Mints
 
     it("Create Mint", async () => test(
@@ -126,7 +113,7 @@ describe("Nautilus Unit Tests: Create Source", async () => {
     ))
 
     it("Read Mint Created With Payer", async () => test(
-        createReadMintCreatedWithPayerInstruction(newMintWithPayer.publicKey, program.publicKey),
+        createReadMintInstruction(newMintWithPayer.publicKey, program.publicKey),
         [payer],
     ))
 
@@ -148,29 +135,39 @@ describe("Nautilus Unit Tests: Create Source", async () => {
     )})
 
     it("Read Metadata Created With Payer", async () => {if (!skipMetadata) return test(
-        createReadMetadataCreatedWithPayerInstruction(newMintWithPayer.publicKey, program.publicKey),
+        createReadMetadataInstruction(newMintWithPayer.publicKey, program.publicKey),
         [payer],
     )})
 
     // Associated Token Accounts
 
     it("Create Associated Token", async () => test(
-        createCreateAssociatedTokenInstruction(newMint.publicKey, newWallet.publicKey, payer.publicKey, program.publicKey),
+        createCreateAssociatedTokenInstruction(newMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
         [payer],
     ))
 
     it("Read Associated Token", async () => test(
-        createReadAssociatedTokenInstruction(newMint.publicKey, newWallet.publicKey, program.publicKey),
+        createReadAssociatedTokenInstruction(newMint.publicKey, testWallet1.publicKey, program.publicKey),
+        [payer],
+    ))
+
+    it("Freeze Associated Token", async () => test(
+        createFreezeAssociatedTokenInstruction(newMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    ))
+
+    it("Thaw Associated Token", async () => test(
+        createThawAssociatedTokenInstruction(newMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
         [payer],
     ))
 
     it("Create Associated Token with Payer", async () => test(
-        createCreateAssociatedTokenWithPayerInstruction(newMintWithPayer.publicKey, newWalletWithPayer.publicKey, payer.publicKey, program.publicKey),
+        createCreateAssociatedTokenWithPayerInstruction(newMintWithPayer.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
         [payer],
     ))
 
     it("Read Associated Token Created With Payer", async () => test(
-        createReadAssociatedTokenCreatedWithPayerInstruction(newMintWithPayer.publicKey, newWalletWithPayer.publicKey, program.publicKey),
+        createReadAssociatedTokenInstruction(newMintWithPayer.publicKey, testWallet1.publicKey, program.publicKey),
         [payer],
     ))
 
@@ -192,15 +189,60 @@ describe("Nautilus Unit Tests: Create Source", async () => {
     )})
 
     it("Read Token Created With Payer", async () => {if (!skipMetadata) return test(
-        createReadTokenCreatedWithPayerInstruction(newMintWithPayer.publicKey, program.publicKey),
+        createReadTokenInstruction(newMintWithPayer.publicKey, program.publicKey),
         [payer],
     )})
 
-    // Transfers
+    // Minting & Transferring
 
-    it("Transfer Wallet", async () => test(
-        createTransferWalletInstruction(payer.publicKey, newWallet.publicKey, program.publicKey, transferAmount),
+    it("Mint: Mint To", async () => test(
+        createMintMintToInstruction(newMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey, mintMintAmount),
         [payer],
     ))
+
+    it("Mint: Burn", async () => test(
+        createBurnTokensInstruction(newMint.publicKey, testWallet1.publicKey, program.publicKey, mintBurnAmount),
+        [payer, testWallet1],
+    ))
+
+    it("Create Associated Token For Transfer", async () => test(
+        createCreateAssociatedTokenInstruction(newMint.publicKey, testWallet2.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    ))
+
+    it("Mint: Transfer", async () => test(
+        createTransferTokensInstruction(newMint.publicKey, testWallet1.publicKey, testWallet2.publicKey, program.publicKey, mintTransferAmount),
+        [payer, testWallet1],
+    ))
+
+    it("Mint: Disable Minting", async () => test(
+        createMintDisableMintingInstruction(MyInstructions.MintDisableMinting, newMint.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    ))
+
+    it("Token: Mint To", async () => {if (!skipMetadata) return test(
+        createTokenMintToInstruction(newTokenMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey, tokenMintAmount),
+        [payer],
+    )})
+
+    it("Token: Burn", async () => {if (!skipMetadata) return test(
+        createBurnTokensInstruction(newTokenMint.publicKey, testWallet1.publicKey, program.publicKey, tokenBurnAmount),
+        [payer, testWallet1],
+    )})
+
+    it("Create Associated Token For Transfer", async () => {if (!skipMetadata) return test(
+        createCreateAssociatedTokenInstruction(newTokenMint.publicKey, testWallet2.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    )})
+
+    it("Token: Transfer", async () => {if (!skipMetadata) return test(
+        createTransferTokensInstruction(newTokenMint.publicKey, testWallet1.publicKey, testWallet2.publicKey, program.publicKey, tokenTransferAmount),
+        [payer, testWallet1],
+    )})
+
+    it("Token: Disable Minting", async () => {if (!skipMetadata) return test(
+        createTokenDisableMintingInstruction(MyInstructions.TokenDisableMinting, newTokenMint.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    )})
   })
   

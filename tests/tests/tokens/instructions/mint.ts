@@ -1,6 +1,6 @@
 import * as borsh from "borsh"
 import { Buffer } from "buffer"
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { 
     PublicKey, 
     SystemProgram, 
@@ -8,6 +8,8 @@ import {
     TransactionInstruction 
 } from '@solana/web3.js'
 import { createBaseInstruction, MyInstructions } from "."
+
+// Create
 
 class CreateMintInstructionData {
     instruction: MyInstructions
@@ -34,7 +36,7 @@ const CreateMintInstructionDataSchema = new Map([
     }]
 ])
 
-function createInstruction(
+function createCreateInstruction(
     newMint: PublicKey,
     payer: PublicKey,
     programId: PublicKey,
@@ -80,21 +82,7 @@ export function createCreateMintInstruction(
     programId: PublicKey,
     decimals: number,
 ): TransactionInstruction {
-    return createInstruction(newMint, payer, programId, decimals, MyInstructions.CreateMint)
-}
-
-export function createReadMintInstruction(
-    newMint: PublicKey,
-    programId: PublicKey,
-): TransactionInstruction {
-    return createBaseInstruction(
-        programId, 
-        MyInstructions.ReadMint,
-        [
-            {pubkey: newMint, isSigner: false, isWritable: false},
-            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-        ],
-    )
+    return createCreateInstruction(newMint, payer, programId, decimals, MyInstructions.CreateMint)
 }
 
 export function createCreateMintWithPayerInstruction(
@@ -103,16 +91,96 @@ export function createCreateMintWithPayerInstruction(
     programId: PublicKey,
     decimals: number,
 ): TransactionInstruction {
-    return createInstruction(newMint, payer, programId, decimals, MyInstructions.CreateMintWithPayer)
+    return createCreateInstruction(newMint, payer, programId, decimals, MyInstructions.CreateMintWithPayer)
 }
 
-export function createReadMintCreatedWithPayerInstruction(
+// Mint To
+
+class MintMintToInstructionData {
+    instruction: MyInstructions
+    amount: number
+    constructor(props: {
+        instruction: MyInstructions,
+        amount: number,
+    }) {
+        this.instruction = props.instruction
+        this.amount = props.amount
+    }
+    toBuffer() { 
+        return Buffer.from(borsh.serialize(MintMintToInstructionDataSchema, this)) 
+    }
+}
+
+const MintMintToInstructionDataSchema = new Map([
+    [ MintMintToInstructionData, { 
+        kind: 'struct', 
+        fields: [ 
+            ['instruction', 'u8'],
+            ['amount', 'u64'],
+        ],
+    }]
+])
+
+export function createMintMintToInstruction(
+    mint: PublicKey,
+    recipient: PublicKey,
+    authority: PublicKey,
+    programId: PublicKey,
+    amount: number,
+): TransactionInstruction {
+
+    const myInstructionObject = new MintMintToInstructionData({
+        instruction: MyInstructions.MintMintTo, 
+        amount,
+    })
+
+    const recipientAssociatedToken = getAssociatedTokenAddressSync(mint, recipient)
+
+    const keys = [
+        {pubkey: authority, isSigner: true, isWritable: true},
+        {pubkey: mint, isSigner: false, isWritable: true},
+        {pubkey: recipientAssociatedToken, isSigner: false, isWritable: true},
+        {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+        {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+    ]
+
+    return new TransactionInstruction({
+        keys,
+        programId,
+        data: myInstructionObject.toBuffer(),
+    })
+}
+
+// Disable Minting
+
+export function createMintDisableMintingInstruction(
+    instruction: MyInstructions,
+    mint: PublicKey,
+    authority: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+    return createBaseInstruction(
+        programId, 
+        instruction,
+        [
+            {pubkey: authority, isSigner: true, isWritable: true},
+            {pubkey: mint, isSigner: false, isWritable: true},
+            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
+}
+
+// Read
+
+export function createReadMintInstruction(
     newMint: PublicKey,
     programId: PublicKey,
 ): TransactionInstruction {
     return createBaseInstruction(
         programId, 
-        MyInstructions.ReadMintCreatedWithPayer,
+        MyInstructions.ReadMint,
         [
             {pubkey: newMint, isSigner: false, isWritable: false},
             {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},

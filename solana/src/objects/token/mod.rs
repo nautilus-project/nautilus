@@ -2,8 +2,12 @@ use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
+use spl_token::instruction::AuthorityType;
 
-use crate::{Create, Metadata, Mint, NautilusAccountInfo, NautilusSigner};
+use crate::{
+    cpi, Create, Metadata, Mint, Mut, NautilusAccountInfo, NautilusMut, NautilusSigner, Signer,
+    Wallet,
+};
 
 pub mod associated_token;
 pub mod metadata;
@@ -22,6 +26,8 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
+    // Inner data state associated functions
+
     /// Instantiate a new `Token` without loading the account inner data from on-chain.
     pub fn new(
         mint_account: Box<AccountInfo<'a>>,
@@ -83,37 +89,41 @@ impl<'a> NautilusAccountInfo<'a> for Token<'a> {
     }
 }
 
-impl<'a> From<Token<'a>> for Mint<'a> {
-    fn from(value: Token<'a>) -> Self {
-        value.mint
+impl<'a> Mut<Token<'a>> {
+    /// Mint new tokens to an associated token account.
+    pub fn mint_to(
+        &self,
+        recipient: impl NautilusMut<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        amount: u64,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::mint_to(
+            self.self_account.mint.token_program.key,
+            self.clone(),
+            recipient,
+            mint_authority,
+            multisigs,
+            amount,
+        )
     }
-}
 
-impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Mint<'a>> {
-    fn from(value: Create<'a, Token<'a>>) -> Self {
-        Self {
-            self_account: value.self_account.into(),
-            fee_payer: value.fee_payer,
-            rent: value.rent,
-            system_program: value.system_program,
-        }
-    }
-}
-
-impl<'a> From<Token<'a>> for Metadata<'a> {
-    fn from(value: Token<'a>) -> Self {
-        value.metadata
-    }
-}
-
-impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
-    fn from(value: Create<'a, Token<'a>>) -> Self {
-        Self {
-            self_account: value.self_account.into(),
-            fee_payer: value.fee_payer,
-            rent: value.rent,
-            system_program: value.system_program,
-        }
+    /// Change the mint's authority.
+    pub fn set_authority(
+        &self,
+        new_authority: Option<&Pubkey>,
+        authority_type: AuthorityType,
+        current_authority: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::set_authority(
+            self.self_account.mint.token_program.key,
+            self.clone(),
+            new_authority,
+            authority_type,
+            current_authority,
+            multisigs,
+        )
     }
 }
 
@@ -176,5 +186,41 @@ impl<'a> Create<'a, Token<'a>> {
             payer,
         )?;
         Ok(())
+    }
+}
+
+// Converters
+
+impl<'a> From<Token<'a>> for Mint<'a> {
+    fn from(value: Token<'a>) -> Self {
+        value.mint
+    }
+}
+
+impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Mint<'a>> {
+    fn from(value: Create<'a, Token<'a>>) -> Self {
+        Self {
+            self_account: value.self_account.into(),
+            fee_payer: value.fee_payer,
+            rent: value.rent,
+            system_program: value.system_program,
+        }
+    }
+}
+
+impl<'a> From<Token<'a>> for Metadata<'a> {
+    fn from(value: Token<'a>) -> Self {
+        value.metadata
+    }
+}
+
+impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
+    fn from(value: Create<'a, Token<'a>>) -> Self {
+        Self {
+            self_account: value.self_account.into(),
+            fee_payer: value.fee_payer,
+            rent: value.rent,
+            system_program: value.system_program,
+        }
     }
 }

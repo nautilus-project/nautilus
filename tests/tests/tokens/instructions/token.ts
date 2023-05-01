@@ -1,7 +1,7 @@
 import * as borsh from "borsh"
 import { Buffer } from "buffer"
 import { PROGRAM_ID as METADATA_PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { 
     PublicKey, 
     SystemProgram, 
@@ -9,6 +9,8 @@ import {
     TransactionInstruction 
 } from '@solana/web3.js'
 import { createBaseInstruction, MyInstructions } from "."
+
+// Create
 
 class CreateTokenInstructionData {
     instruction: MyInstructions
@@ -58,7 +60,7 @@ function getMetadataAddress(mint: PublicKey): PublicKey {
     )[0]
 }
 
-function createInstruction(
+function createCreateInstruction(
     newMint: PublicKey,
     payer: PublicKey,
     programId: PublicKey,
@@ -116,24 +118,7 @@ export function createCreateTokenInstruction(
     symbol: string,
     uri: string,
 ): TransactionInstruction {
-    return createInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateToken)
-}
-
-export function createReadTokenInstruction(
-    mint: PublicKey,
-    programId: PublicKey,
-): TransactionInstruction {
-    const newMetadata = getMetadataAddress(mint)
-    return createBaseInstruction(
-        programId, 
-        MyInstructions.ReadToken,
-        [
-            {pubkey: mint, isSigner: false, isWritable: false},
-            {pubkey: newMetadata, isSigner: false, isWritable: false},
-            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
-            {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
-        ],
-    )
+    return createCreateInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateToken)
 }
 
 export function createCreateTokenWithPayerInstruction(
@@ -145,17 +130,104 @@ export function createCreateTokenWithPayerInstruction(
     symbol: string,
     uri: string,
 ): TransactionInstruction {
-    return createInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateTokenWithPayer)
+    return createCreateInstruction(newMint, payer, programId, decimals, title, symbol, uri, MyInstructions.CreateTokenWithPayer)
 }
 
-export function createReadTokenCreatedWithPayerInstruction(
+// Mint To
+
+class TokenMintToInstructionData {
+    instruction: MyInstructions
+    amount: number
+    constructor(props: {
+        instruction: MyInstructions,
+        amount: number,
+    }) {
+        this.instruction = props.instruction
+        this.amount = props.amount
+    }
+    toBuffer() { 
+        return Buffer.from(borsh.serialize(TokenMintToInstructionDataSchema, this)) 
+    }
+}
+
+const TokenMintToInstructionDataSchema = new Map([
+    [ TokenMintToInstructionData, { 
+        kind: 'struct', 
+        fields: [ 
+            ['instruction', 'u8'],
+            ['amount', 'u64'],
+        ],
+    }]
+])
+
+export function createTokenMintToInstruction(
+    mint: PublicKey,
+    recipient: PublicKey,
+    authority: PublicKey,
+    programId: PublicKey,
+    amount: number,
+): TransactionInstruction {
+
+    const myInstructionObject = new TokenMintToInstructionData({
+        instruction: MyInstructions.TokenMintTo, 
+        amount,
+    })
+
+    const metadata = getMetadataAddress(mint)
+    const recipientAssociatedToken = getAssociatedTokenAddressSync(mint, recipient)
+
+    const keys = [
+        {pubkey: authority, isSigner: true, isWritable: true},
+        {pubkey: recipientAssociatedToken, isSigner: false, isWritable: true},
+        {pubkey: mint, isSigner: false, isWritable: true},
+        {pubkey: metadata, isSigner: false, isWritable: true},
+        {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+        {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        {pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        {pubkey: METADATA_PROGRAM_ID, isSigner: false, isWritable: false},
+    ]
+
+    return new TransactionInstruction({
+        keys,
+        programId,
+        data: myInstructionObject.toBuffer(),
+    })
+}
+
+// Disable Minting
+
+export function createTokenDisableMintingInstruction(
+    instruction: MyInstructions,
+    mint: PublicKey,
+    authority: PublicKey,
+    programId: PublicKey,
+): TransactionInstruction {
+
+    const metadata = getMetadataAddress(mint)
+
+    return createBaseInstruction(
+        programId, 
+        instruction,
+        [
+            {pubkey: authority, isSigner: true, isWritable: true},
+            {pubkey: mint, isSigner: false, isWritable: true},
+            {pubkey: metadata, isSigner: false, isWritable: true},
+            {pubkey: SystemProgram.programId, isSigner: false, isWritable: false},
+            {pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false},
+        ],
+    )
+}
+
+// Read
+
+export function createReadTokenInstruction(
     mint: PublicKey,
     programId: PublicKey,
 ): TransactionInstruction {
     const newMetadata = getMetadataAddress(mint)
     return createBaseInstruction(
         programId, 
-        MyInstructions.ReadTokenCreatedWithPayer,
+        MyInstructions.ReadToken,
         [
             {pubkey: mint, isSigner: false, isWritable: false},
             {pubkey: newMetadata, isSigner: false, isWritable: false},

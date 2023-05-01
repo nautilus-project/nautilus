@@ -6,12 +6,12 @@ sleep 2
 echo "\nBuilding all test programs...\n"
 sleep 5
 cargo build-sbf --manifest-path="./programs/wallets/Cargo.toml"
-cargo build-sbf --manifest-path="./programs/create-source/Cargo.toml"
-cargo build-sbf --manifest-path="./programs/create-records/Cargo.toml"
+cargo build-sbf --manifest-path="./programs/tokens/Cargo.toml"
+cargo build-sbf --manifest-path="./programs/records/Cargo.toml"
 echo "\nDeploying all test programs...\n"
 solana program deploy ./programs/wallets/target/deploy/program_nautilus.so
-solana program deploy ./programs/create-source/target/deploy/program_nautilus.so
-solana program deploy ./programs/create-records/target/deploy/program_nautilus.so
+solana program deploy ./programs/tokens/target/deploy/program_nautilus.so
+solana program deploy ./programs/records/target/deploy/program_nautilus.so
 
 echo "\nCommencing all tests...\n"
 yarn
@@ -21,10 +21,10 @@ echo "\nLaunching test suite: Wallets\n"
 yarn run test-wallets
 sleep 5
 
-echo "\nLaunching test suite: Create Source\n"
-yarn run test-create-source
+echo "\nLaunching test suite: Tokens\n"
+yarn run test-tokens
 sleep 5
 
-echo "\nLaunching test suite: Create Records\n"
-yarn run test-create-records
+echo "\nLaunching test suite: Records\n"
+yarn run test-records
 sleep 5

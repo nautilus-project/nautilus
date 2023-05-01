@@ -2,10 +2,12 @@ use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     program_pack::Pack, pubkey::Pubkey,
 };
+use spl_token::instruction::AuthorityType;
 pub use spl_token::state::Mint as MintState;
 
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusSigner, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusMut, NautilusSigner,
+    Signer, Wallet,
 };
 
 /// The Nautilus object representing a mint account.
@@ -63,8 +65,6 @@ impl<'a> Mint<'a> {
             data,
         })
     }
-
-    // Token program capabilities
 }
 
 impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
@@ -98,6 +98,44 @@ impl<'a> NautilusAccountInfo<'a> for Mint<'a> {
 
     fn span(&self) -> Result<usize, ProgramError> {
         Ok(spl_token::state::Mint::LEN)
+    }
+}
+
+impl<'a> Mut<Mint<'a>> {
+    /// Mint new tokens to an associated token account.
+    pub fn mint_to(
+        &self,
+        recipient: impl NautilusMut<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        amount: u64,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::mint_to(
+            self.self_account.token_program.key,
+            self.clone(),
+            recipient,
+            mint_authority,
+            multisigs,
+            amount,
+        )
+    }
+
+    /// Change the mint's authority.
+    pub fn set_authority(
+        &self,
+        new_authority: Option<&Pubkey>,
+        authority_type: AuthorityType,
+        current_authority: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::set_authority(
+            self.self_account.token_program.key,
+            self.clone(),
+            new_authority,
+            authority_type,
+            current_authority,
+            multisigs,
+        )
     }
 }
 
