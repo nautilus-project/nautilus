@@ -94,6 +94,15 @@ pub fn source_nautilus_objects() -> Vec<NautilusObject> {
                 SourceField::TokenMetadataProgram,
             ],
         ),
+        source_struct(
+            "Nft",
+            vec![
+                SourceField::AccountInfo,
+                SourceField::Metadata,
+                SourceField::TokenProgram,
+                SourceField::TokenMetadataProgram,
+            ],
+        ),
     ]
     .into_iter()
     .map(|s| s.into())
@@ -108,5 +117,6 @@ pub fn source_nautilus_names() -> Vec<String> {
         "Metadata".to_string(),
         "AssociatedTokenAccount".to_string(),
         "Token".to_string(),
+        "Nft".to_string(),
     ]
 }

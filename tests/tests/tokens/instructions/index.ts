@@ -1,6 +1,7 @@
 export * from './associated-token'
 export * from './mint'
 export * from './metadata'
+export * from './nft'
 export * from './token'
 
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
@@ -29,6 +30,10 @@ export enum MyInstructions {
     TokenMintTo,
     TokenDisableMinting,
     ReadToken,
+    CreateNft,
+    CreateNftWithPayer,
+    NftMintTo,
+    ReadNft,
 }
 
 export class BaseInstructionData {

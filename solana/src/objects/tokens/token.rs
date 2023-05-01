@@ -9,10 +9,6 @@ use crate::{
     Wallet,
 };
 
-pub mod associated_token;
-pub mod metadata;
-pub mod mint;
-
 /// The Nautilus object representing the combination of a mint account and a token metadata account.
 ///
 /// This Nautilus object is designed for easily working with tokens and metadata together.
@@ -26,8 +22,6 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    // Inner data state associated functions
-
     /// Instantiate a new `Token` without loading the account inner data from on-chain.
     pub fn new(
         mint_account: Box<AccountInfo<'a>>,
