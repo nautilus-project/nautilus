@@ -12,45 +12,40 @@ use crate::{
     Idl,
 };
 
-pub trait PythonIdlWrite {
-    fn write_to_py(&self, dir_path: &str) -> std::io::Result<()>;
-}
-
+/// Trait to enable conversion of IDL components into Python code.
 pub trait PythonConverter {
     fn to_python_string(&self) -> String;
 }
 
-impl PythonIdlWrite for Idl {
-    fn write_to_py(&self, dir_path: &str) -> std::io::Result<()> {
-        if dir_path != "." {
-            fs::create_dir_all(dir_path)?;
-        }
-
-        let py_idl_path = Path::join(Path::new(dir_path), &format!("{}.py", &self.name));
-
-        let mut file = File::create(py_idl_path)?;
-        let python_string = self.to_python_string();
-        file.write_all(python_string.as_bytes())?;
-
-        Ok(())
-    }
-}
-
 impl PythonConverter for Idl {
     fn to_python_string(&self) -> String {
-        // TODO: Lay down schema and add instructions/configs:
-        let mut all_types = self.accounts.clone();
-        all_types.extend(self.types.clone());
-        let all_types_strings: Vec<String> =
-            all_types.iter().map(|t| t.to_python_string()).collect();
-        let res = all_types_strings.join("\n");
+        let ts_body_globs = vec![
+            // TODO: Imports
+            // TODO: Configs
+            // TODO: Constants
+            // TODO: Errors
+            self.instructions
+                .iter()
+                .map(|i| i.to_python_string())
+                .collect::<Vec<String>>(),
+            self.accounts
+                .iter()
+                .map(|a| a.to_python_string())
+                .collect::<Vec<String>>(),
+            self.types
+                .iter()
+                .map(|t| t.to_python_string())
+                .collect::<Vec<String>>(),
+        ];
+        let ts_body = ts_body_globs.into_iter().flatten().collect::<Vec<String>>();
+        let res = ts_body.join("\n");
         res
     }
 }
 
 impl PythonConverter for IdlInstruction {
     fn to_python_string(&self) -> String {
-        todo!()
+        String::from("") // TODO
     }
 }
 
@@ -121,5 +116,23 @@ impl PythonConverter for IdlType {
             IdlType::HashSet(value_type) => format!("Set[{}]", value_type.to_python_string()),
             IdlType::BTreeSet(value_type) => format!("Set[{}]", value_type.to_python_string()),
         }
+    }
+}
+
+/// The trait to enable writing an IDL to Python.
+pub trait PythonIdlWrite {
+    fn write_to_py(&self, dir_path: &str) -> std::io::Result<()>;
+}
+
+impl PythonIdlWrite for Idl {
+    fn write_to_py(&self, dir_path: &str) -> std::io::Result<()> {
+        if dir_path != "." {
+            fs::create_dir_all(dir_path)?;
+        }
+        let py_idl_path = Path::join(Path::new(dir_path), &format!("{}.py", &self.name));
+        let mut file = File::create(py_idl_path)?;
+        let python_string = self.to_python_string();
+        file.write_all(python_string.as_bytes())?;
+        Ok(())
     }
 }

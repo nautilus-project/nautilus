@@ -12,45 +12,40 @@ use crate::{
     Idl,
 };
 
-pub trait TypeScriptIdlWrite {
-    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()>;
-}
-
+/// Trait to enable conversion of IDL components into TypeScript code.
 pub trait TypeScriptConverter {
     fn to_typescript_string(&self) -> String;
 }
 
-impl TypeScriptIdlWrite for Idl {
-    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()> {
-        if dir_path != "." {
-            fs::create_dir_all(dir_path)?;
-        }
-
-        let ts_idl_path = Path::join(Path::new(dir_path), &format!("{}.ts", &self.name));
-
-        let mut file = File::create(ts_idl_path)?;
-        let typescript_string = self.to_typescript_string();
-        file.write_all(typescript_string.as_bytes())?;
-
-        Ok(())
-    }
-}
-
 impl TypeScriptConverter for Idl {
     fn to_typescript_string(&self) -> String {
-        // TODO: Lay down schema and add instructions/configs:
-        let mut all_types = self.accounts.clone();
-        all_types.extend(self.types.clone());
-        let all_types_strings: Vec<String> =
-            all_types.iter().map(|t| t.to_typescript_string()).collect();
-        let res = all_types_strings.join("\n");
+        let ts_body_globs = vec![
+            // TODO: Imports
+            // TODO: Configs
+            // TODO: Constants
+            // TODO: Errors
+            self.instructions
+                .iter()
+                .map(|i| i.to_typescript_string())
+                .collect::<Vec<String>>(),
+            self.accounts
+                .iter()
+                .map(|a| a.to_typescript_string())
+                .collect::<Vec<String>>(),
+            self.types
+                .iter()
+                .map(|t| t.to_typescript_string())
+                .collect::<Vec<String>>(),
+        ];
+        let ts_body = ts_body_globs.into_iter().flatten().collect::<Vec<String>>();
+        let res = ts_body.join("\n");
         res
     }
 }
 
 impl TypeScriptConverter for IdlInstruction {
     fn to_typescript_string(&self) -> String {
-        todo!()
+        String::from("") // TODO
     }
 }
 
@@ -142,5 +137,24 @@ impl TypeScriptConverter for IdlType {
             IdlType::HashSet(idl_type) => format!("Set<{}>", idl_type.to_typescript_string()),
             IdlType::BTreeSet(idl_type) => format!("Set<{}>", idl_type.to_typescript_string()),
         }
+    }
+}
+
+/// The trait to enable writing an IDL to TypeScript.
+pub trait TypeScriptIdlWrite {
+    /// Writes an IDL to a TypeScript `.ts` file.
+    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()>;
+}
+
+impl TypeScriptIdlWrite for Idl {
+    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()> {
+        if dir_path != "." {
+            fs::create_dir_all(dir_path)?;
+        }
+        let ts_idl_path = Path::join(Path::new(dir_path), &format!("{}.ts", &self.name));
+        let mut file = File::create(ts_idl_path)?;
+        let typescript_string = self.to_typescript_string();
+        file.write_all(typescript_string.as_bytes())?;
+        Ok(())
     }
 }
