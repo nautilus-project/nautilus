@@ -9,12 +9,11 @@ use crate::{
     Wallet,
 };
 
-/// The Nautilus object representing the combination of a mint account and a token metadata account.
+/// The Nautilus object representing an NFT.
 ///
-/// This Nautilus object is designed for easily working with tokens and metadata together.
+/// Like the `Token` object, this struct is a combination of a mint account and a token metadata account.
 ///
-/// It's comprised of both a `Mint` and `Metadata` struct, which allows you to access either individually, and
-/// most of it's implemented methods access the mint account.
+/// This Nautilus object is designed for easily working with NFTs.
 #[derive(Clone)]
 pub struct Nft<'a> {
     pub mint: Mint<'a>,
@@ -84,7 +83,7 @@ impl<'a> NautilusAccountInfo<'a> for Nft<'a> {
 }
 
 impl<'a> Mut<Nft<'a>> {
-    /// Mint new tokens to an associated token account.
+    /// Mint an NFT to an associated token account. This disables minting automatically.
     pub fn mint_to(
         &self,
         recipient: impl NautilusMut<'a>,
@@ -129,8 +128,8 @@ impl<'a> Mut<Nft<'a>> {
 }
 
 impl<'a> Create<'a, Nft<'a>> {
-    /// Create a new SPL mint with a Nft Program and
-    /// a new SPL metadata account with Nft Metadata Program.
+    /// Create a new NFT with a Token Program and
+    /// a new SPL metadata account with the Token Metadata Program.
     #[allow(clippy::too_many_arguments)]
     pub fn create(
         &mut self,
