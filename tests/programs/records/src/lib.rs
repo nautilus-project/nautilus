@@ -6,7 +6,12 @@ mod program_nautilus {
     // Perhaps we can do this with the CLI.
     fn initialize<'a>(mut nautilus_index: Create<'a, NautilusIndex<'a>>) -> ProgramResult {
         splog_info!("Index size: {}", nautilus_index.span()?);
-        nautilus_index.create()
+        //
+        // /* Business Logic */
+        //
+        nautilus_index.create()?;
+        //
+        Ok(())
     }
 
     fn create_person<'a>(
@@ -16,11 +21,20 @@ mod program_nautilus {
     ) -> ProgramResult {
         splog_info!("-- New Person:        {}", &new_person.key());
         splog_info!("-- Authority:         {}", &authority);
-        new_person.create(name, authority)
+        //
+        // /* Business Logic */
+        //
+        new_person.create(name, authority)?;
+        //
+        new_person.self_account.print();
+        Ok(())
     }
 
     fn read_person<'a>(person: Record<'a, Person>) -> ProgramResult {
         person.print();
+        //
+        // /* Business Logic */
+        //
         Ok(())
     }
 
@@ -31,11 +45,20 @@ mod program_nautilus {
         street: String,
     ) -> ProgramResult {
         splog_info!("-- New Home: {}", &new_home.key());
-        new_home.create(id, house_number, street)
+        //
+        // /* Business Logic */
+        //
+        new_home.create(id, house_number, street)?;
+        //
+        new_home.self_account.print();
+        Ok(())
     }
 
     fn read_home<'a>(home: Record<'a, Home>) -> ProgramResult {
         home.print();
+        //
+        // /* Business Logic */
+        //
         Ok(())
     }
 
@@ -47,11 +70,20 @@ mod program_nautilus {
         operating_authority: Pubkey,
     ) -> ProgramResult {
         splog_info!("-- New Car: {}", &new_car.key());
-        new_car.create(make, model, purchase_authority, operating_authority)
+        //
+        // /* Business Logic */
+        //
+        new_car.create(make, model, purchase_authority, operating_authority)?;
+        //
+        new_car.self_account.print();
+        Ok(())
     }
 
     fn read_car<'a>(car: Record<'a, Car>) -> ProgramResult {
         car.print();
+        //
+        // /* Business Logic */
+        //
         Ok(())
     }
 }

@@ -5,8 +5,8 @@ use solana_program::{
 use spl_token::instruction::AuthorityType;
 
 use crate::{
-    cpi, Create, Metadata, Mint, Mut, NautilusAccountInfo, NautilusMut, NautilusSigner, Signer,
-    Wallet,
+    cpi, edition::MasterEdition, Create, Metadata, Mint, Mut, NautilusAccountInfo, NautilusMut,
+    NautilusSigner, Signer, Wallet,
 };
 
 /// The Nautilus object representing an NFT.
@@ -105,6 +105,70 @@ impl<'a> Mut<Nft<'a>> {
             AuthorityType::MintTokens,
             mint_authority,
             multisigs,
+        )
+    }
+
+    /// Mint a new edition from a MasterEdition.
+    #[allow(clippy::too_many_arguments)]
+    pub fn mint_edition(
+        &self,
+        edition: impl NautilusMut<'a>,
+        master_edition: MasterEdition<'a>,
+        master_edition_mint: impl NautilusAccountInfo<'a>,
+        master_edition_metadata: impl NautilusAccountInfo<'a>,
+        to: impl NautilusMut<'a>,
+        to_authority: impl NautilusSigner<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        update_authority: impl NautilusSigner<'a>,
+        payer: impl NautilusSigner<'a>,
+        edition_val: u64,
+    ) -> ProgramResult {
+        cpi::token_metadata::mint_edition_from_master_edition(
+            self.self_account.mint.token_program.key,
+            Mut::<Mint>::new(self.self_account.mint.clone())?,
+            self.self_account.metadata.clone(),
+            edition,
+            master_edition.clone(),
+            master_edition_mint,
+            master_edition_metadata,
+            to,
+            to_authority,
+            mint_authority,
+            update_authority,
+            payer,
+            master_edition.rent.clone(),
+            edition_val,
+        )
+    }
+
+    /// Mint a MasterEdition NFT.
+    pub fn mint_master_edition(
+        &self,
+        master_edition: Mut<MasterEdition<'a>>,
+        recipient: impl NautilusMut<'a>,
+        update_authority: impl NautilusSigner<'a>,
+        mint_authority: impl NautilusSigner<'a>,
+        payer: impl NautilusSigner<'a>,
+    ) -> ProgramResult {
+        let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
+        cpi::token::mint_to(
+            self.self_account.mint.token_program.key,
+            self.clone(),
+            recipient,
+            mint_authority.clone(),
+            multisigs.clone(),
+            1,
+        )?;
+        cpi::token_metadata::create_master_edition_v3(
+            self.self_account.mint.token_program.key,
+            master_edition.clone(),
+            self.self_account.mint.clone(),
+            self.self_account.metadata.clone(),
+            update_authority,
+            mint_authority,
+            payer,
+            master_edition.self_account.rent.clone(),
+            Some(1),
         )
     }
 
