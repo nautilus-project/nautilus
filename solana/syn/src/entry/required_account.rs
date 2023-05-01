@@ -43,6 +43,7 @@ pub enum RequiredAccountSubtype {
 pub enum ObjectType {
     NautilusIndex,
     Wallet,
+    Nft(bool),
     Token(bool),
     Mint(bool),
     Metadata,
@@ -221,6 +222,8 @@ impl RequiredAccount {
             ObjectType::NautilusIndex
         } else if ty_name.eq("Wallet") {
             ObjectType::Wallet
+        } else if ty_name.eq("Nft") {
+            ObjectType::Nft(false) // TODO: PDA Tokens not supported yet
         } else if ty_name.eq("Token") {
             ObjectType::Token(false) // TODO: PDA Tokens not supported yet
         } else if ty_name.eq("Mint") {
@@ -255,7 +258,7 @@ impl RequiredAccount {
                 Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, is_signer).into(),
                 Construct::SystemProgram.into(),
             ],
-            ObjectType::Token(is_pda) => {
+            ObjectType::Token(is_pda) | ObjectType::Nft(is_pda) => {
                 let metadata_name = obj_name.clone() + "_metadata";
                 vec![
                     Construct::SelfAccount(

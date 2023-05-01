@@ -20,14 +20,18 @@ import {
     createCreateMetadataWithPayerInstruction,
     createCreateMintInstruction, 
     createCreateMintWithPayerInstruction, 
+    createCreateNftInstruction, 
+    createCreateNftWithPayerInstruction, 
     createCreateTokenInstruction, 
     createCreateTokenWithPayerInstruction, 
     createFreezeAssociatedTokenInstruction, 
     createMintDisableMintingInstruction, 
     createMintMintToInstruction, 
+    createNftMintToInstruction, 
     createReadAssociatedTokenInstruction,
     createReadMetadataInstruction,
     createReadMintInstruction,
+    createReadNftInstruction,
     createReadTokenInstruction,
     createThawAssociatedTokenInstruction,
     createTokenDisableMintingInstruction,
@@ -60,10 +64,17 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     const tokenTransferAmount = 5
     const tokenBurnAmount = 5
 
-    const decimals = 9
-    const title = "Nautilus Token"
-    const symbol = "NTLS"
-    const uri = "NTLS"
+    const tokenDecimals = 9
+    const tokenTitle = "Nautilus Token"
+    const tokenSymbol = "NTLS"
+    const tokenUri = "NTLS"
+
+    const newNftMint = Keypair.generate()
+    const newNftMintWithPayer = Keypair.generate()
+
+    const nftTitle = "Nautilus NFT"
+    const nftSymbol = "NTLS"
+    const nftUri = "NTLS"
 
     async function initAccount(publicKey: PublicKey) {
         await TEST_CONFIGS.sleep()
@@ -98,7 +109,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     // Mints
 
     it("Create Mint", async () => test(
-        createCreateMintInstruction(newMint.publicKey, payer.publicKey, program.publicKey, decimals),
+        createCreateMintInstruction(newMint.publicKey, payer.publicKey, program.publicKey, tokenDecimals),
         [payer, newMint],
     ))
 
@@ -108,7 +119,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     ))
 
     it("Create Mint with Payer", async () => test(
-        createCreateMintWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, decimals),
+        createCreateMintWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, tokenDecimals),
         [payer, newMintWithPayer],
     ))
 
@@ -120,7 +131,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     // Metadatas
 
     it("Create Metadata", async () => {if (!skipMetadata) return test(
-        createCreateMetadataInstruction(newMint.publicKey, payer.publicKey, program.publicKey, title, symbol, uri),
+        createCreateMetadataInstruction(newMint.publicKey, payer.publicKey, program.publicKey, tokenTitle, tokenSymbol, tokenUri),
         [payer],
     )})
 
@@ -130,7 +141,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     )})
 
     it("Create Metadata with Payer", async () => {if (!skipMetadata) return test(
-        createCreateMetadataWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, title, symbol, uri),
+        createCreateMetadataWithPayerInstruction(newMintWithPayer.publicKey, payer.publicKey, program.publicKey, tokenTitle, tokenSymbol, tokenUri),
         [payer],
     )})
 
@@ -174,7 +185,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     // Tokens
 
     it("Create Token", async () => {if (!skipMetadata) return test(
-        createCreateTokenInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
+        createCreateTokenInstruction(newTokenMint.publicKey, payer.publicKey, program.publicKey, tokenDecimals, tokenTitle, tokenSymbol, tokenUri),
         [payer, newTokenMint],
     )})
 
@@ -184,12 +195,34 @@ describe("Nautilus Unit Tests: Tokens", async () => {
     )})
 
     it("Create Token with Payer", async () => {if (!skipMetadata) return test(
-        createCreateTokenWithPayerInstruction(newTokenMintWithPayer.publicKey, payer.publicKey, program.publicKey, decimals, title, symbol, uri),
+        createCreateTokenWithPayerInstruction(newTokenMintWithPayer.publicKey, payer.publicKey, program.publicKey, tokenDecimals, tokenTitle, tokenSymbol, tokenUri),
         [payer, newTokenMintWithPayer],
     )})
 
     it("Read Token Created With Payer", async () => {if (!skipMetadata) return test(
         createReadTokenInstruction(newTokenMintWithPayer.publicKey, program.publicKey),
+        [payer],
+    )})
+
+    // NFTs
+
+    it("Create NFT", async () => {if (!skipMetadata) return test(
+        createCreateNftInstruction(newNftMint.publicKey, payer.publicKey, program.publicKey, nftTitle, nftSymbol, nftUri),
+        [payer, newNftMint],
+    )})
+
+    it("Read NFT", async () => {if (!skipMetadata) return test(
+        createReadNftInstruction(newNftMint.publicKey, program.publicKey),
+        [payer],
+    )})
+
+    it("Create NFT with Payer", async () => {if (!skipMetadata) return test(
+        createCreateNftWithPayerInstruction(newNftMintWithPayer.publicKey, payer.publicKey, program.publicKey, nftTitle, nftSymbol, nftUri),
+        [payer, newNftMintWithPayer],
+    )})
+
+    it("Read NFT Created With Payer", async () => {if (!skipMetadata) return test(
+        createReadNftInstruction(newTokenMintWithPayer.publicKey, program.publicKey),
         [payer],
     )})
 
@@ -205,7 +238,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
         [payer, testWallet1],
     ))
 
-    it("Create Associated Token For Transfer", async () => test(
+    it("Mint: Create Associated Token For Transfer", async () => test(
         createCreateAssociatedTokenInstruction(newMint.publicKey, testWallet2.publicKey, payer.publicKey, program.publicKey),
         [payer],
     ))
@@ -220,7 +253,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
         [payer],
     ))
 
-    it("Create Associated Token For MintTo", async () => {if (!skipMetadata) return test(
+    it("Token: Create Associated Token For MintTo", async () => {if (!skipMetadata) return test(
         createCreateAssociatedTokenInstruction(newTokenMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
         [payer],
     )})
@@ -235,7 +268,7 @@ describe("Nautilus Unit Tests: Tokens", async () => {
         [payer, testWallet1],
     )})
 
-    it("Create Associated Token For Transfer", async () => {if (!skipMetadata) return test(
+    it("Token: Create Associated Token For Transfer", async () => {if (!skipMetadata) return test(
         createCreateAssociatedTokenInstruction(newTokenMint.publicKey, testWallet2.publicKey, payer.publicKey, program.publicKey),
         [payer],
     )})
@@ -247,6 +280,16 @@ describe("Nautilus Unit Tests: Tokens", async () => {
 
     it("Token: Disable Minting", async () => {if (!skipMetadata) return test(
         createTokenDisableMintingInstruction(MyInstructions.TokenDisableMinting, newTokenMint.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    )})
+
+    it("NFT: Create Associated Token For MintTo", async () => {if (!skipMetadata) return test(
+        createCreateAssociatedTokenInstruction(newNftMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
+        [payer],
+    )})
+
+    it("NFT: Mint To", async () => {if (!skipMetadata) return test(
+        createNftMintToInstruction(newNftMint.publicKey, testWallet1.publicKey, payer.publicKey, program.publicKey),
         [payer],
     )})
   })

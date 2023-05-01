@@ -32,7 +32,7 @@ pub use spl_token_2022;
 
 pub use objects::{
     properties::{create::*, mutable::*, record::*, signer::*, *},
-    record::{index::*, *},
-    token::{associated_token::*, metadata::*, mint::*, *},
-    wallet::*,
+    records::{index::*, *},
+    tokens::{associated_token::*, metadata::*, mint::*, nft::*, token::*, *},
+    wallets::*,
 };

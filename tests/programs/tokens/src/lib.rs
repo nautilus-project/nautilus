@@ -383,6 +383,89 @@ mod program_nautilus {
         //
         Ok(())
     }
+
+    // NFTs
+
+    fn create_nft<'a>(
+        mut new_nft: Create<'a, Nft<'a>>,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: Signer<Wallet<'a>>,
+    ) -> ProgramResult {
+        msg!(" * New NFT Public Key: {}", &new_nft.key());
+        //
+        // /* Business Logic */
+        //
+        new_nft.create(
+            title,
+            symbol,
+            uri,
+            mint_authority.clone(),
+            mint_authority.clone(),
+            Some(mint_authority),
+        )?;
+        //
+        print_mint_data(&new_nft.self_account.mint.data, "Create");
+        print_metadata_data(&new_nft.self_account.metadata.data, "Create");
+        Ok(())
+    }
+
+    fn create_nft_with_payer<'a>(
+        mut new_nft: Create<'a, Nft<'a>>,
+        title: String,
+        symbol: String,
+        uri: String,
+        mint_authority: Signer<Wallet<'a>>,
+        rent_payer: Signer<Wallet<'a>>,
+    ) -> ProgramResult {
+        msg!(" * New NFT Public Key: {}", &new_nft.key());
+        msg!(" * Rent Payer Public Key: {}", &rent_payer.key());
+        //
+        // /* Business Logic */
+        //
+        new_nft.create_with_payer(
+            title,
+            symbol,
+            uri,
+            mint_authority.clone(),
+            mint_authority.clone(),
+            Some(mint_authority),
+            rent_payer,
+        )?;
+        //
+        print_mint_data(&new_nft.self_account.mint.data, "Create with payer");
+        print_metadata_data(&new_nft.self_account.metadata.data, "Create with payer");
+        Ok(())
+    }
+
+    fn nft_mint_to<'a>(
+        nft: Mut<Nft<'a>>,
+        to: Mut<AssociatedTokenAccount<'a>>,
+        authority: Signer<Wallet<'a>>,
+    ) -> ProgramResult {
+        print_associated_token_data(&to.self_account.data, "To acct pre-mint");
+        msg!(" * NFT Public Key: {}", &nft.key());
+        print_mint_data(&nft.self_account.mint.data, "MintTo");
+        msg!("Minting NFT to: {}", to.key());
+        //
+        // /* Business Logic */
+        //
+        nft.mint_to(to.clone(), authority)?; // Cloning so we can ref later
+                                             //
+        print_associated_token_data(&to.self_account.data, "To acct post-mint");
+        Ok(())
+    }
+
+    fn read_nft(nft: Nft) -> ProgramResult {
+        msg!(" * NFT Public Key: {}", &nft.key());
+        print_mint_data(&nft.mint.data, "Read");
+        print_metadata_data(&nft.metadata.data, "Read");
+        //
+        // /* Business Logic */
+        //
+        Ok(())
+    }
 }
 
 fn print_mint_data(data: &MintState, desc: &str) {

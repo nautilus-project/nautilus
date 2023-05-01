@@ -9,26 +9,19 @@ use crate::{
     Wallet,
 };
 
-pub mod associated_token;
-pub mod metadata;
-pub mod mint;
-
-/// The Nautilus object representing the combination of a mint account and a token metadata account.
+/// The Nautilus object representing an NFT.
 ///
-/// This Nautilus object is designed for easily working with tokens and metadata together.
+/// Like the `Token` object, this struct is a combination of a mint account and a token metadata account.
 ///
-/// It's comprised of both a `Mint` and `Metadata` struct, which allows you to access either individually, and
-/// most of it's implemented methods access the mint account.
+/// This Nautilus object is designed for easily working with NFTs.
 #[derive(Clone)]
-pub struct Token<'a> {
+pub struct Nft<'a> {
     pub mint: Mint<'a>,
     pub metadata: Metadata<'a>,
 }
 
-impl<'a> Token<'a> {
-    // Inner data state associated functions
-
-    /// Instantiate a new `Token` without loading the account inner data from on-chain.
+impl<'a> Nft<'a> {
+    /// Instantiate a new `Nft` without loading the account inner data from on-chain.
     pub fn new(
         mint_account: Box<AccountInfo<'a>>,
         metadata_account: Box<AccountInfo<'a>>,
@@ -41,7 +34,7 @@ impl<'a> Token<'a> {
         }
     }
 
-    /// Instantiate a new `Token` and load the account inner data from on-chain.
+    /// Instantiate a new `Nft` and load the account inner data from on-chain.
     pub fn load(
         mint_account: Box<AccountInfo<'a>>,
         metadata_account: Box<AccountInfo<'a>>,
@@ -55,7 +48,7 @@ impl<'a> Token<'a> {
     }
 }
 
-impl<'a> NautilusAccountInfo<'a> for Token<'a> {
+impl<'a> NautilusAccountInfo<'a> for Nft<'a> {
     fn account_info(&self) -> Box<AccountInfo<'a>> {
         self.mint.account_info()
     }
@@ -89,22 +82,29 @@ impl<'a> NautilusAccountInfo<'a> for Token<'a> {
     }
 }
 
-impl<'a> Mut<Token<'a>> {
-    /// Mint new tokens to an associated token account.
+impl<'a> Mut<Nft<'a>> {
+    /// Mint an NFT to an associated token account. This disables minting automatically.
     pub fn mint_to(
         &self,
         recipient: impl NautilusMut<'a>,
         mint_authority: impl NautilusSigner<'a>,
-        amount: u64,
     ) -> ProgramResult {
         let multisigs: Option<Vec<Signer<Wallet>>> = None; // TODO: Multisig support
         cpi::token::mint_to(
             self.self_account.mint.token_program.key,
             self.clone(),
             recipient,
+            mint_authority.clone(),
+            multisigs.clone(),
+            1,
+        )?;
+        cpi::token::set_authority(
+            self.self_account.mint.token_program.key,
+            self.clone(),
+            None,
+            AuthorityType::MintTokens,
             mint_authority,
             multisigs,
-            amount,
         )
     }
 
@@ -127,13 +127,12 @@ impl<'a> Mut<Token<'a>> {
     }
 }
 
-impl<'a> Create<'a, Token<'a>> {
-    /// Create a new SPL mint with a Token Program and
-    /// a new SPL metadata account with Token Metadata Program.
+impl<'a> Create<'a, Nft<'a>> {
+    /// Create a new NFT with a Token Program and
+    /// a new SPL metadata account with the Token Metadata Program.
     #[allow(clippy::too_many_arguments)]
     pub fn create(
         &mut self,
-        decimals: u8,
         title: String,
         symbol: String,
         uri: String,
@@ -143,7 +142,7 @@ impl<'a> Create<'a, Token<'a>> {
     ) -> ProgramResult {
         let mut create_mint: Create<Mint> = self.clone().into();
         let mut create_metadata: Create<Metadata> = self.clone().into();
-        create_mint.create(decimals, mint_authority.clone(), freeze_authority)?;
+        create_mint.create(0, mint_authority.clone(), freeze_authority)?;
         create_metadata.create(
             title,
             symbol,
@@ -159,7 +158,6 @@ impl<'a> Create<'a, Token<'a>> {
     #[allow(clippy::too_many_arguments)]
     pub fn create_with_payer(
         &mut self,
-        decimals: u8,
         title: String,
         symbol: String,
         uri: String,
@@ -171,7 +169,7 @@ impl<'a> Create<'a, Token<'a>> {
         let mut create_mint: Create<Mint> = self.clone().into();
         let mut create_metadata: Create<Metadata> = self.clone().into();
         create_mint.create_with_payer(
-            decimals,
+            0,
             mint_authority.clone(),
             freeze_authority,
             payer.clone(),
@@ -191,14 +189,14 @@ impl<'a> Create<'a, Token<'a>> {
 
 // Converters
 
-impl<'a> From<Token<'a>> for Mint<'a> {
-    fn from(value: Token<'a>) -> Self {
+impl<'a> From<Nft<'a>> for Mint<'a> {
+    fn from(value: Nft<'a>) -> Self {
         value.mint
     }
 }
 
-impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Mint<'a>> {
-    fn from(value: Create<'a, Token<'a>>) -> Self {
+impl<'a> From<Create<'a, Nft<'a>>> for Create<'a, Mint<'a>> {
+    fn from(value: Create<'a, Nft<'a>>) -> Self {
         Self {
             self_account: value.self_account.into(),
             fee_payer: value.fee_payer,
@@ -208,14 +206,14 @@ impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Mint<'a>> {
     }
 }
 
-impl<'a> From<Token<'a>> for Metadata<'a> {
-    fn from(value: Token<'a>) -> Self {
+impl<'a> From<Nft<'a>> for Metadata<'a> {
+    fn from(value: Nft<'a>) -> Self {
         value.metadata
     }
 }
 
-impl<'a> From<Create<'a, Token<'a>>> for Create<'a, Metadata<'a>> {
-    fn from(value: Create<'a, Token<'a>>) -> Self {
+impl<'a> From<Create<'a, Nft<'a>>> for Create<'a, Metadata<'a>> {
+    fn from(value: Create<'a, Nft<'a>>) -> Self {
         Self {
             self_account: value.self_account.into(),
             fee_payer: value.fee_payer,
