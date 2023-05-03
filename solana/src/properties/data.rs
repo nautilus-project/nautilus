@@ -70,7 +70,7 @@ pub trait NautilusRecordData: BorshDeserialize + BorshSerialize + Clone + Defaul
 
 /// This trait provides methods accessible to Nautilus Accounts (PDAs).
 ///
-/// When you define a struct with the `#[derive(nautilus::Directory)]` macro, any accounts created
+/// When you define a struct with the `#[derive(nautilus::State)]` macro, any accounts created
 /// with this data scheme will have seeds defined and inherit PDA functionality.
 ///
 /// Note: `seeds(..)` and `pda(..)` are derived from the derive macro - since their arguments will vary.

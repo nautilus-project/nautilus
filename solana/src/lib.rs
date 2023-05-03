@@ -20,7 +20,7 @@ pub use spl_token_2022;
 pub use splogger;
 
 pub use borsh::{self, BorshDeserialize, BorshSerialize};
-pub use nautilus_derive::{nautilus, Directory, Table};
+pub use nautilus_derive::{nautilus, State, Table};
 pub use solana_program::{
     account_info::{next_account_info, AccountInfo, IntoAccountInfo},
     declare_id, entrypoint,

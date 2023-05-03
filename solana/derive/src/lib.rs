@@ -34,7 +34,7 @@ pub fn nautilus_table(input: TokenStream) -> TokenStream {
 
 /// The derive macro to implement the required traits to allow for the annotated struct to serve
 /// as the data type for a Nautilus account - allowing it to be used as `T` inside of `Account<'_, T>`.
-#[proc_macro_derive(Directory, attributes(seeds, authority))]
+#[proc_macro_derive(State, attributes(seeds, authority))]
 pub fn nautilus_account(input: TokenStream) -> TokenStream {
     let item_struct = parse_macro_input!(input as ItemStruct);
     NautilusObject::from_item_struct(
