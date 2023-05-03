@@ -7,6 +7,7 @@ export const PAYER = loadKeypairFromFile(os.homedir() + '/.config/solana/id.json
 export const PROGRAM_WALLETS = loadKeypairFromFile('./programs/wallets/target/deploy/program_nautilus-keypair.json')
 export const PROGRAM_TOKENS = loadKeypairFromFile('./programs/tokens/target/deploy/program_nautilus-keypair.json')
 export const PROGRAM_RECORDS = loadKeypairFromFile('./programs/records/target/deploy/program_nautilus-keypair.json')
+export const PROGRAM_ACCOUNTS = loadKeypairFromFile('./programs/accounts/target/deploy/program_nautilus-keypair.json')
 
 function loadKeypairFromFile(path: string): Keypair {
     return Keypair.fromSecretKey(

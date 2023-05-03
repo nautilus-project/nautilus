@@ -1,35 +1,36 @@
+//! Traits used for marking Nautilus objects as signers.
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::error::NautilusError;
+use crate::{error::NautilusError, NautilusMut};
 
 use super::NautilusAccountInfo;
 
-/// The trait that ensures an object's underlying `AccountInfo` must be mutable.
-pub trait NautilusMut<'a>: NautilusAccountInfo<'a> {}
+/// The trait that ensures an object's underlying `AccountInfo` must be a signer.
+pub trait NautilusSigner<'a>: NautilusAccountInfo<'a> {}
 
-/// The struct to wrap an object so that it adheres to the `NautilusMut<'_>` trait.
-/// A user wraps their object `T` in `Mut<T>` in order to comply with various method constraints and ensure the underlying account is marked as mutable.
+/// The struct to wrap an object so that it adheres to the `NautilusSigner<'_>` trait.
+/// A user wraps their object `T` in `Signer<T>` in order to comply with various method constraints and ensure the underlying account is marked as a signer.
 #[derive(Clone)]
-pub struct Mut<T>
+pub struct Signer<T>
 where
     T: Clone,
 {
     pub self_account: T,
 }
 
-impl<'a, T> Mut<T>
+impl<'a, T> Signer<T>
 where
     T: Clone + NautilusAccountInfo<'a>,
 {
     pub fn new(self_account: T) -> Result<Self, ProgramError> {
-        match self_account.is_writable() {
+        match self_account.is_signer() {
             true => Ok(Self { self_account }),
-            false => Err(NautilusError::AccountNotMutable(self_account.key().to_string()).into()),
+            false => Err(NautilusError::AccountNotSigner(self_account.key().to_string()).into()),
         }
     }
 }
 
-impl<'a, T> NautilusAccountInfo<'a> for Mut<T>
+impl<'a, T> NautilusAccountInfo<'a> for Signer<T>
 where
     T: NautilusAccountInfo<'a>,
 {
@@ -66,4 +67,6 @@ where
     }
 }
 
-impl<'a, T> NautilusMut<'a> for Mut<T> where T: NautilusAccountInfo<'a> {}
+impl<'a, T> NautilusMut<'a> for Signer<T> where T: NautilusAccountInfo<'a> {}
+
+impl<'a, T> NautilusSigner<'a> for Signer<T> where T: NautilusAccountInfo<'a> {}

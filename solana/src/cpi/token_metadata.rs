@@ -1,4 +1,4 @@
-//! Cross-Program-Invocations to the Metaplex Token Metadata Program.
+//! Cross-Program invocations to the Metaplex Token Metadata Program.
 
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program::invoke, pubkey::Pubkey,

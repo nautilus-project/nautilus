@@ -1,4 +1,5 @@
-//! Cross-Program-Invocations to the System Program
+//! Cross-Program invocations to the System Program
+use borsh::BorshSerialize;
 use solana_program::{
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
@@ -6,7 +7,7 @@ use solana_program::{
     system_instruction,
 };
 
-use crate::{NautilusData, NautilusMut, NautilusRecord, NautilusSigner};
+use crate::{NautilusAccountInfo, NautilusMut, NautilusSigner};
 
 /// Allocate space for an account.
 pub fn allocate<'a>(new_account: impl NautilusSigner<'a>) -> ProgramResult {
@@ -42,26 +43,15 @@ pub fn create_account<'a>(
     )
 }
 
-/// Cross-Program-Invocation (CPI) to create a record.
-///
-/// This CPI is signed using the signer seeds of the record (PDA), and also
-/// makes sure to serialized the provided data into the new account.
+/// Cross-Program Invocation (CPI) to create a program-derived address account (PDA).
 #[allow(clippy::boxed_local)]
-pub fn create_record<'a, T: NautilusData>(
-    new_account: impl NautilusRecord<'a>,
+pub fn create_pda<'a, T: BorshSerialize>(
+    new_account: impl NautilusAccountInfo<'a>,
     owner: &Pubkey,
     payer: impl NautilusSigner<'a>,
     data: Box<T>,
+    signer_seeds: Vec<&[u8]>,
 ) -> ProgramResult {
-    let (pda, bump) = new_account.pda();
-    assert_eq!(
-        &pda,
-        new_account.key(),
-        "Derived PDA does not match data for account {:#?}",
-        new_account.key()
-    );
-    let seeds = new_account.seeds();
-    let signer_seeds: [&[u8]; 3] = [seeds[0].as_slice(), seeds[1].as_slice(), &[bump]];
     invoke_signed(
         &system_instruction::create_account(
             payer.key(),

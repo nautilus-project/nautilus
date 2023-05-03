@@ -1,3 +1,4 @@
+//! Parses information about the user's entire crate.
 use cargo_toml::Manifest;
 use convert_case::{Case::Pascal, Casing};
 use nautilus_idl::idl_type_def::IdlTypeDef;
@@ -8,8 +9,8 @@ use syn::{FnArg, Ident, Item, ItemFn, Pat, PathArguments, Type, TypePath, UseTre
 use syn::{Meta, NestedMeta};
 
 use crate::object::source::source_nautilus_objects;
-use crate::object::NautilusObject;
 use crate::object::ObjectEntryConfig;
+use crate::object::{NautilusObject, NautilusObjectType};
 
 use super::entry_variant::CallContext;
 
@@ -50,15 +51,26 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
         .filter_map(|s| {
             if let Some(attr) = s.attrs.iter().find(|attr| attr.path.is_ident("derive")) {
                 if let Ok(Meta::List(meta_list)) = attr.parse_meta() {
-                    if meta_list
-                        .nested
-                        .iter()
-                        .any(|nested_meta| match nested_meta {
-                            NestedMeta::Meta(Meta::Path(path)) => path.is_ident("Table"),
-                            _ => false,
-                        })
-                    {
-                        let nautilus_obj: NautilusObject = s.clone().into();
+                    let matched_macro =
+                        meta_list
+                            .nested
+                            .iter()
+                            .find_map(|nested_meta| match nested_meta {
+                                NestedMeta::Meta(Meta::Path(path)) => {
+                                    if path.is_ident("Table") {
+                                        Some(NautilusObjectType::Record)
+                                    } else if path.is_ident("Directory") {
+                                        Some(NautilusObjectType::Account)
+                                    } else {
+                                        None
+                                    }
+                                }
+                                _ => None,
+                            });
+
+                    if let Some(nautilus_ty) = matched_macro {
+                        let nautilus_obj: NautilusObject =
+                            NautilusObject::from_item_struct(s.clone(), nautilus_ty);
                         let i = &nautilus_obj;
                         idl_accounts.push(i.into());
                         return Some(nautilus_obj);
@@ -69,6 +81,7 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
             None
         })
         .collect();
+
     nautilus_objects.extend(source_nautilus_objects());
 
     crate_context.enums().for_each(|e| idl_types.push(e.into()));
@@ -149,7 +162,7 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
             } else if segment.ident == "Mut" {
                 is_mut = true;
                 (child_type, is_pda) = derive_child_type(&segment.arguments)
-            } else if segment.ident == "Record" {
+            } else if segment.ident == "Record" || segment.ident == "Account" {
                 is_pda = true;
                 (child_type, _) = derive_child_type(&segment.arguments)
             }
@@ -183,7 +196,7 @@ fn derive_child_type(arguments: &PathArguments) -> (Option<Type>, bool) {
                 remove_lifetimes_from_type(&mut new_ty);
                 if let Type::Path(TypePath { path, .. }) = &new_ty {
                     if let Some(segment) = path.segments.first() {
-                        if segment.ident == "Record" {
+                        if segment.ident == "Record" || segment.ident == "Account" {
                             return derive_child_type(&segment.arguments);
                         }
                     }

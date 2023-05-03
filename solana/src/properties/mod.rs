@@ -1,3 +1,4 @@
+//! Submodule defining the trait hierarchy for Nautilus objects.
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
@@ -6,8 +7,8 @@ use solana_program::{
 use self::mutable::NautilusMut;
 
 pub mod create;
+pub mod data;
 pub mod mutable;
-pub mod record;
 pub mod signer;
 
 /// The core trait that marks an object in a Nautilus program as being comprised of Solana accounts.

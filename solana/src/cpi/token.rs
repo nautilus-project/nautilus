@@ -1,4 +1,4 @@
-//! Cross-Program-Invocations to the Token Program (legacy).
+//! Cross-Program invocations to the Token Program (legacy).
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program::invoke, pubkey::Pubkey,
 };

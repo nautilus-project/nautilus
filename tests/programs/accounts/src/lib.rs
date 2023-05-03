@@ -1,28 +1,16 @@
-//! Testing data records (PDAs).
+//! Testing non-record data accounts (PDAs).
 use nautilus::splogger::{info, Splog};
 use nautilus::*;
 
 #[nautilus]
 mod program_nautilus {
-    // Right now, the Nautilus Index must be initialized ahead of time.
-    // Perhaps we can do this with the CLI.
-    fn initialize<'a>(mut nautilus_index: Create<'a, NautilusIndex<'a>>) -> ProgramResult {
-        info!("Index size: {}", nautilus_index.span()?);
-        //
-        // /* Business Logic */
-        //
-        nautilus_index.create()?;
-        //
-        Ok(())
-    }
-
     fn create_person<'a>(
-        mut new_person: Create<'a, Record<'a, Person>>,
+        mut new_person: Create<'a, Account<'a, Person>>,
         name: String,
         authority: Pubkey,
     ) -> ProgramResult {
-        info!("-- New Person:        {}", &new_person.key());
-        info!("-- Authority:         {}", &authority);
+        info!(" * New Person:        {}", &new_person.key());
+        info!(" * Authority:         {}", &authority);
         //
         // /* Business Logic */
         //
@@ -32,7 +20,7 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn read_person<'a>(person: Record<'a, Person>) -> ProgramResult {
+    fn read_person<'a>(person: Account<'a, Person>) -> ProgramResult {
         person.print();
         //
         // /* Business Logic */
@@ -41,22 +29,22 @@ mod program_nautilus {
     }
 
     fn create_home<'a>(
-        mut new_home: Create<'a, Record<'a, Home>>,
-        id: u8,
+        mut new_home: Create<'a, Account<'a, Home>>,
         house_number: u8,
         street: String,
+        some_pubkey: Pubkey,
     ) -> ProgramResult {
-        info!("-- New Home: {}", &new_home.key());
+        info!(" * New Home: {}", &new_home.key());
         //
         // /* Business Logic */
         //
-        new_home.create(id, house_number, street)?;
-        //
+        new_home.create(house_number, street, (some_pubkey,))?; // Seed parameter required
+                                                                //
         new_home.self_account.print();
         Ok(())
     }
 
-    fn read_home<'a>(home: Record<'a, Home>) -> ProgramResult {
+    fn read_home<'a>(home: Account<'a, Home>) -> ProgramResult {
         home.print();
         //
         // /* Business Logic */
@@ -65,13 +53,13 @@ mod program_nautilus {
     }
 
     fn create_car<'a>(
-        mut new_car: Create<'a, Record<'a, Car>>,
+        mut new_car: Create<'a, Account<'a, Car>>,
         make: String,
         model: String,
         purchase_authority: Pubkey,
         operating_authority: Pubkey,
     ) -> ProgramResult {
-        info!("-- New Car: {}", &new_car.key());
+        info!(" * New Car: {}", &new_car.key());
         //
         // /* Business Logic */
         //
@@ -81,7 +69,7 @@ mod program_nautilus {
         Ok(())
     }
 
-    fn read_car<'a>(car: Record<'a, Car>) -> ProgramResult {
+    fn read_car<'a>(car: Account<'a, Car>) -> ProgramResult {
         car.print();
         //
         // /* Business Logic */
@@ -90,28 +78,34 @@ mod program_nautilus {
     }
 }
 
-#[derive(Table)]
+#[derive(Directory)]
+#[seeds(
+    "person",               // Literal seed
+    authority,              // Self-referencing seed
+)]
 struct Person {
-    #[primary_key(autoincrement = true)]
-    id: u8,
     name: String,
     #[authority]
     authority: Pubkey,
 }
 
-#[derive(Table)]
+#[derive(Directory)]
+#[seeds(
+    "home",                 // Literal seed
+    some_pubkey: Pubkey,    // Parameter seed
+)]
 struct Home {
-    #[primary_key(autoincrement = false)]
-    id: u8,
     house_number: u8,
     street: String,
 }
 
-#[derive(Table)]
-#[default_instructions(Create, Delete, Update)]
+#[derive(Directory)]
+#[seeds(
+    "car",                  // Literal seed
+    purchase_authority,     // Self-referencing seed
+    operating_authority,    // Self-referencing seed
+)]
 struct Car {
-    #[primary_key(autoincrement = true)]
-    id: u8,
     make: String,
     model: String,
     #[authority]
@@ -126,28 +120,25 @@ pub trait TestPrint {
     fn print(&self);
 }
 
-impl TestPrint for Record<'_, Person> {
+impl TestPrint for Account<'_, Person> {
     fn print(&self) {
-        info!("-- Person: {}", self.key());
-        info!("      ID:             {}", self.data.id);
+        info!(" * Person: {}", self.key());
         info!("      Name:           {}", self.data.name);
         info!("      Authority:      {}", self.data.authority);
     }
 }
 
-impl TestPrint for Record<'_, Home> {
+impl TestPrint for Account<'_, Home> {
     fn print(&self) {
-        info!("-- Home: {}", self.key());
-        info!("      ID:             {}", self.data.id);
+        info!(" * Home: {}", self.key());
         info!("      House Number:   {}", self.data.house_number);
         info!("      Street:         {}", self.data.street);
     }
 }
 
-impl TestPrint for Record<'_, Car> {
+impl TestPrint for Account<'_, Car> {
     fn print(&self) {
-        info!("-- Car: {}", self.key());
-        info!("      ID:             {}", self.data.id);
+        info!(" * Car: {}", self.key());
         info!("      Make:           {}", self.data.make);
         info!("      Model:          {}", self.data.model);
         info!("      Purchase Auth:  {}", self.data.purchase_authority);

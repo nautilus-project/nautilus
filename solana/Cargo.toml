@@ -20,3 +20,4 @@ spl-token = "3.5.0"
 spl-token-2022 = "0.6.1"
 splogger = { git = "https://github.com/nautilus-project/splogger", branch = "main", version = "0.0.1" }
 thiserror = "1.0.40"
+winnow = "=0.4.1"

@@ -8,10 +8,12 @@ sleep 5
 cargo build-sbf --manifest-path="./programs/wallets/Cargo.toml"
 cargo build-sbf --manifest-path="./programs/tokens/Cargo.toml"
 cargo build-sbf --manifest-path="./programs/records/Cargo.toml"
+cargo build-sbf --manifest-path="./programs/accounts/Cargo.toml"
 echo "\nDeploying all test programs...\n"
 solana program deploy ./programs/wallets/target/deploy/program_nautilus.so
 solana program deploy ./programs/tokens/target/deploy/program_nautilus.so
 solana program deploy ./programs/records/target/deploy/program_nautilus.so
+solana program deploy ./programs/accounts/target/deploy/program_nautilus.so
 
 echo "\nCommencing all tests...\n"
 yarn
@@ -27,4 +29,8 @@ sleep 5
 
 echo "\nLaunching test suite: Records\n"
 yarn run test-records
+sleep 5
+
+echo "\nLaunching test suite: Accounts\n"
+yarn run test-accounts
 sleep 5

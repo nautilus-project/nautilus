@@ -1,3 +1,5 @@
+//! A `syn`-powered enum that dissolves to the required components to create the
+//! program's entrypoint, processor, and IDL.
 use nautilus_idl::idl_instruction::IdlInstruction;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
