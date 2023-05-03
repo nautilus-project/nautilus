@@ -5,7 +5,11 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::Ident;
 
+use crate::object::NautilusObjectType;
+
 /// The details of a required account for a Nautilus object.
+///
+/// These details pretty much map to their IDL representation directly.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RequiredAccount {
     pub ident: Ident,
@@ -21,7 +25,7 @@ pub struct RequiredAccount {
 pub enum RequiredAccountType {
     ProgramId,
     IndexAccount,
-    Account(RequiredAccountSubtype),
+    Account(RequiredAccountSubtype), // Any general account not matching the other variants
     FeePayer,
     Sysvar,
     SystemProgram,
@@ -31,9 +35,13 @@ pub enum RequiredAccountType {
     TokenMetadataProgram,
 }
 
+/// The sub-type of a general account.
+///
+/// `SelfAccount` is the underlying account, while others like `Metadata` and `MintAuthority` are
+/// required for some objects like `Token` and `Mint`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RequiredAccountSubtype {
-    SelfAccount,
+    SelfAccount, // The underlying account for any Nautilus object
     Metadata,
     MintAuthority,
 }
@@ -48,10 +56,17 @@ pub enum ObjectType {
     Mint(bool),
     Metadata,
     AssociatedTokenAccount,
-    Record(bool, Vec<Construct>),
+    Record(bool, Vec<Construct>),  // Table record
+    Account(bool, Vec<Construct>), // Directory account
 }
 
 /// A construct shell enum used to map variants with provided args into required accounts.
+///
+/// This enum almost mirrors the `RequiredAccountType` enum, but in this context its used
+/// to pass provided configurations - such as `is_mut` and `is_signer` - to the resolver.
+///
+/// If you examine `From<Construct> for RequiredAccount`, you'll see this enum is used to
+/// resolve the required accounts for any of its variants with the configs.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Construct {
     ProgramId,
@@ -217,7 +232,11 @@ impl From<Construct> for RequiredAccount {
 // TODO: Add support for custom descriptions
 //
 impl RequiredAccount {
-    pub fn derive_object_type(ty_name: &str, is_mut: bool) -> ObjectType {
+    pub fn derive_object_type(
+        ty_name: &str,
+        is_mut: bool,
+        nautilus_ty: Option<NautilusObjectType>,
+    ) -> ObjectType {
         if ty_name.eq("NautilusIndex") {
             ObjectType::NautilusIndex
         } else if ty_name.eq("Wallet") {
@@ -233,7 +252,13 @@ impl RequiredAccount {
         } else if ty_name.eq("AssociatedTokenAccount") {
             ObjectType::AssociatedTokenAccount
         } else {
-            ObjectType::Record(is_mut, vec![]) // TODO: PDA authorities not supported yet
+            match nautilus_ty {
+                Some(t) => match t {
+                    NautilusObjectType::Record => ObjectType::Record(is_mut, vec![]), // TODO: PDA authorities not supported yet
+                    NautilusObjectType::Account => ObjectType::Account(is_mut, vec![]), // TODO: PDA authorities not supported yet
+                },
+                None => panic!("Could not match object type: {}. Was it annotated with a Nautilus #[derive(..)] macro?", ty_name)
+            }
         }
     }
 
@@ -299,6 +324,12 @@ impl RequiredAccount {
                     Construct::ProgramId.into(),
                     Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
                     Construct::Index(is_mut).into(),
+                ]
+            }
+            ObjectType::Account(is_mut, _) => {
+                vec![
+                    Construct::ProgramId.into(),
+                    Construct::SelfAccount(obj_name.clone(), obj_name, is_mut, false).into(),
                 ]
             }
         };

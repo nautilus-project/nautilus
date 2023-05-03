@@ -7,14 +7,15 @@ use crate::Cli;
 
 #[derive(Subcommand)]
 pub enum NautilusCommand {
-    /// Builds the Nautilus program 🛠️
+    /// 🛠️  Builds the Nautilus program
     Build,
-    /// Ships (deploys) the Nautilus program ⛴️
+    /// ⛴️  Ships (deploys) the Nautilus program
     Deploy,
-    /// Ships (deploys) the Nautilus program ⛴️
+    /// ⛴️  Ships (deploys) the Nautilus program
     Ship,
 }
 
+/// Util function for running commands on the operating system.
 fn os_command(cmd: &str) -> std::io::Result<()> {
     let mut cmd = if cfg!(target_os = "windows") {
         Command::new("cmd").args(["/C", cmd]).spawn()
@@ -27,17 +28,20 @@ fn os_command(cmd: &str) -> std::io::Result<()> {
     }
 }
 
+/// Build the Nautilus program.
 fn build() -> std::io::Result<()> {
     os_command("cargo build-sbf")?;
     Ok(())
 }
 
+/// Deploy the Nautilus program using locally set configs.
 fn deploy() -> std::io::Result<()> {
     os_command("solana config get")?;
     os_command("solana program deploy target/deploy/*.so")?;
     Ok(())
 }
 
+/// Process incoming commands to the Nautilus CLI.
 pub fn processor(cli: Cli) -> std::io::Result<()> {
     match &cli.command {
         NautilusCommand::Build => {

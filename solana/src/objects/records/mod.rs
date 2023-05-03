@@ -1,11 +1,12 @@
+//! The `Record<T>` Nautilus object and all associated trait implementations.
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusData, NautilusIndex,
-    NautilusMut, NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusIndex, NautilusMut,
+    NautilusRecord, NautilusRecordData, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 pub mod index;
@@ -22,7 +23,7 @@ pub mod index;
 #[derive(Clone)]
 pub struct Record<'a, T>
 where
-    T: NautilusData,
+    T: NautilusRecordData,
 {
     pub program_id: &'a Pubkey,
     pub account_info: Box<AccountInfo<'a>>,
@@ -32,7 +33,7 @@ where
 
 impl<'a, T> Record<'a, T>
 where
-    T: NautilusData,
+    T: NautilusRecordData,
 {
     /// Instantiate a new record without loading the account inner data from on-chain.
     pub fn new(
@@ -84,7 +85,7 @@ where
 
 impl<'a, T> NautilusAccountInfo<'a> for Record<'a, T>
 where
-    T: NautilusData,
+    T: NautilusRecordData,
 {
     fn account_info(&self) -> Box<AccountInfo<'a>> {
         self.account_info.clone()
@@ -121,18 +122,22 @@ where
 
 impl<'a, T> NautilusRecord<'a> for Record<'a, T>
 where
-    T: NautilusData,
+    T: NautilusRecordData,
 {
-    fn primary_key(&self) -> Vec<u8> {
-        self.data.primary_key()
+    fn discriminator(&self) -> [u8; 8] {
+        self.data.discriminator()
     }
 
-    fn seeds(&self) -> [Vec<u8>; 2] {
+    fn seeds(&self) -> Vec<Vec<u8>> {
         self.data.seeds()
     }
 
     fn pda(&self) -> (Pubkey, u8) {
         self.data.pda(self.program_id)
+    }
+
+    fn primary_key(&self) -> Vec<u8> {
+        self.data.primary_key()
     }
 
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
@@ -146,7 +151,7 @@ where
 
 impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
 where
-    T: NautilusData,
+    T: NautilusRecordData,
 {
     fn transfer_lamports(
         &self,
@@ -162,7 +167,7 @@ where
 
 impl<'a, T> Create<'a, Record<'a, T>>
 where
-    T: NautilusData,
+    T: NautilusRecordData,
 {
     /// Allocate space for a record using the System Program.
     pub fn allocate(&self) -> ProgramResult {
@@ -178,23 +183,72 @@ where
             account_info: self.fee_payer.to_owned(),
             system_program: self.system_program.to_owned(),
         })?;
-        cpi::system::create_record(
+        let (pda, bump) = self.pda();
+        assert_eq!(
+            &pda,
+            self.key(),
+            "Derived PDA does not match data for account {:#?}",
+            self.key()
+        );
+        let mut signer_seeds_vec = self.seeds();
+        signer_seeds_vec.push(vec![bump]);
+        let signer_seeds: Vec<&[u8]> = signer_seeds_vec.iter().map(AsRef::as_ref).collect();
+        cpi::system::create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.self_account.data.clone(),
-        )?;
-        Ok(())
+            signer_seeds,
+        )
     }
 
     /// This function is the same as `create_record(&mut self, ..)` but allows you to specify a rent payer.
     pub fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
-        cpi::system::create_record(
+        let (pda, bump) = self.pda();
+        assert_eq!(
+            &pda,
+            self.key(),
+            "Derived PDA does not match data for account {:#?}",
+            self.key()
+        );
+        let mut signer_seeds_vec = self.seeds();
+        signer_seeds_vec.push(vec![bump]);
+        let signer_seeds: Vec<&[u8]> = signer_seeds_vec.iter().map(AsRef::as_ref).collect();
+        cpi::system::create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             self.self_account.data.clone(),
-        )?;
-        Ok(())
+            signer_seeds,
+        )
+    }
+}
+
+impl<'a, T> NautilusRecord<'a> for Create<'a, Record<'a, T>>
+where
+    T: NautilusRecordData,
+{
+    fn discriminator(&self) -> [u8; 8] {
+        self.self_account.discriminator()
+    }
+
+    fn seeds(&self) -> Vec<Vec<u8>> {
+        self.self_account.seeds()
+    }
+
+    fn pda(&self) -> (Pubkey, u8) {
+        self.self_account.pda()
+    }
+
+    fn primary_key(&self) -> Vec<u8> {
+        self.self_account.primary_key()
+    }
+
+    fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
+        self.self_account.check_authorities(accounts)
+    }
+
+    fn count_authorities(&self) -> u8 {
+        self.self_account.count_authorities()
     }
 }

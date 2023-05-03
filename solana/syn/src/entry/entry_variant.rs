@@ -1,3 +1,6 @@
+//! A `syn`-powered struct that dissolves to the required components to create the
+//! variants of the program's instruction enum and it's associated processor match arm
+//! initialization logic.
 use nautilus_idl::idl_instruction::{IdlInstruction};
 use proc_macro2::{TokenStream, Span};
 use quote::quote;
@@ -5,7 +8,7 @@ use syn::{Ident, Type};
 
 use crate::{
     entry::required_account::{RequiredAccountSubtype, to_ident_pointer}, 
-    object::{NautilusObject, source::source_nautilus_names}
+    object::{NautilusObject, source::source_nautilus_names, parser::NautilusObjectConfig}
 };
 
 use super::{
@@ -135,12 +138,18 @@ impl NautilusEntrypointEnumVariant {
                     CallContext::Nautilus(obj) => match &obj.entry_config {
                         Some(config) => {
                             let arg_ident = &config.arg_ident;
-                            let (obj_type, arg_ty, is_record) = match source_nautilus_names().contains(&obj.ident.to_string()) {
+                            let (obj_type, arg_ty, is_custom) = match source_nautilus_names().contains(&obj.ident.to_string()) {
                                 true => (obj.ident.clone(), quote!(), false),
                                 false => {
                                     let ty = &obj.ident;
                                     (
-                                        Ident::new("Record", Span::call_site()), 
+                                        match &obj.object_config {
+                                            Some(t) => match t {
+                                                NautilusObjectConfig::RecordConfig { .. } => Ident::new("Record", Span::call_site()),
+                                                NautilusObjectConfig::AccountConfig { .. } => Ident::new("Account", Span::call_site()),
+                                            },
+                                            None => panic!("Object {} did not match any source Nautilus objects and was not annotated with a Nautilus #[derive(..)] macro", &obj.ident.to_string()),
+                                        }, 
                                         quote! { #ty },
                                         true,
                                     )
@@ -161,7 +170,7 @@ impl NautilusEntrypointEnumVariant {
                                         let t: TokenStream = r.into();
                                         t
                                     });
-                                    let create_obj_init = match is_record {
+                                    let create_obj_init = match is_custom {
                                         true => quote! { 
                                             let mut #arg_ident = Create::new(
                                                 #(#create_call_idents,)*
@@ -187,7 +196,7 @@ impl NautilusEntrypointEnumVariant {
                                             quote! { let #arg_ident = Mut::new(#obj_type::load(#(#read_call_idents,)*)?)?; },
                                         );
                                     } else { 
-                                        object_inits.push(match is_record {
+                                        object_inits.push(match is_custom {
                                                 true => quote! { let #arg_ident = #obj_type::< #arg_ty >::load(#(#read_call_idents,)*)?; },
                                                 false => quote! { let #arg_ident = #obj_type::load(#(#read_call_idents,)*)?; },
                                             }
@@ -209,7 +218,7 @@ impl NautilusEntrypointEnumVariant {
         let call_ident = &self.call_ident;
         quote::quote! {
             {
-                splog_info!("Instruction: {}", #instruction_name);
+                splogger::info!("Instruction: {}", #instruction_name);
                 let accounts_iter = &mut accounts.iter();
                 #(#all_accounts)*
                 #index_init

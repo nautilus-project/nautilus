@@ -1,3 +1,4 @@
+//! The `Edition<T>` and `MasterEdition<T>` Nautilus object` and all associated trait implementations.
 pub use mpl_token_metadata::state::{
     Edition as EditionState, MasterEditionV2 as MasterEditionState, TokenMetadataAccount,
 };

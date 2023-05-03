@@ -1,3 +1,4 @@
+//! Traits used for updating Nautilus objects.
 use solana_program::entrypoint::ProgramResult;
 
 use super::signer::NautilusSigner;

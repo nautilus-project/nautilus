@@ -1,3 +1,4 @@
+//! Traits used for creating Nautilus objects.
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{error::NautilusError, NautilusMut};

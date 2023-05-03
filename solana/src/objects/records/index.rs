@@ -1,3 +1,4 @@
+//! The special `NautilusIndex` Nautilus object and all associated trait implementations.
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
@@ -5,8 +6,8 @@ use solana_program::{
 };
 
 use crate::{
-    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusData, NautilusMut,
-    NautilusRecord, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusMut, NautilusRecord,
+    NautilusRecordData, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 /// The account inner data for the `NautilusIndex`.
@@ -74,9 +75,8 @@ where
     }
 }
 
-impl NautilusData for NautilusIndexData {
+impl NautilusRecordData for NautilusIndexData {
     const TABLE_NAME: &'static str = "nautilus_index";
-
     const AUTO_INCREMENT: bool = false;
 
     fn primary_key(&self) -> Vec<u8> {
@@ -97,7 +97,7 @@ impl NautilusData for NautilusIndexData {
 /// The underlying account - designated in field `account_info` - is the Nautilus Index.
 ///
 /// This single account is used as a reference to enable autoincrementing of records.
-#[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone)]
+#[derive(Clone)]
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
     pub account_info: Box<AccountInfo<'a>>,
@@ -206,16 +206,20 @@ impl<'a> NautilusAccountInfo<'a> for NautilusIndex<'a> {
 }
 
 impl<'a> NautilusRecord<'a> for NautilusIndex<'a> {
-    fn primary_key(&self) -> Vec<u8> {
-        self.data.primary_key()
+    fn discriminator(&self) -> [u8; 8] {
+        self.data.discriminator()
     }
 
-    fn seeds(&self) -> [Vec<u8>; 2] {
+    fn seeds(&self) -> Vec<Vec<u8>> {
         self.data.seeds()
     }
 
     fn pda(&self) -> (Pubkey, u8) {
         self.data.pda(self.program_id)
+    }
+
+    fn primary_key(&self) -> Vec<u8> {
+        self.data.primary_key()
     }
 
     fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
@@ -252,11 +256,22 @@ impl<'a> Create<'a, NautilusIndex<'a>> {
             index: std::collections::HashMap::new(),
         };
         let data_pointer = Box::new(data);
-        cpi::system::create_record(
+        let (pda, bump) = self.pda();
+        assert_eq!(
+            &pda,
+            self.key(),
+            "Derived PDA does not match data for account {:#?}",
+            self.key()
+        );
+        let mut signer_seeds_vec = self.seeds();
+        signer_seeds_vec.push(vec![bump]);
+        let signer_seeds: Vec<&[u8]> = signer_seeds_vec.iter().map(AsRef::as_ref).collect();
+        cpi::system::create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             data_pointer.clone(),
+            signer_seeds,
         )?;
         self.self_account.data = *data_pointer;
         Ok(())
@@ -268,13 +283,50 @@ impl<'a> Create<'a, NautilusIndex<'a>> {
             index: std::collections::HashMap::new(),
         };
         let data_pointer = Box::new(data);
-        cpi::system::create_record(
+        let (pda, bump) = self.pda();
+        assert_eq!(
+            &pda,
+            self.key(),
+            "Derived PDA does not match data for account {:#?}",
+            self.key()
+        );
+        let mut signer_seeds_vec = self.seeds();
+        signer_seeds_vec.push(vec![bump]);
+        let signer_seeds: Vec<&[u8]> = signer_seeds_vec.iter().map(AsRef::as_ref).collect();
+        cpi::system::create_pda(
             self.self_account.clone(),
             self.self_account.program_id,
             payer,
             data_pointer.clone(),
+            signer_seeds,
         )?;
         self.self_account.data = *data_pointer;
         Ok(())
+    }
+}
+
+impl<'a> NautilusRecord<'a> for Create<'a, NautilusIndex<'a>> {
+    fn discriminator(&self) -> [u8; 8] {
+        self.self_account.discriminator()
+    }
+
+    fn seeds(&self) -> Vec<Vec<u8>> {
+        self.self_account.seeds()
+    }
+
+    fn pda(&self) -> (Pubkey, u8) {
+        self.self_account.pda()
+    }
+
+    fn primary_key(&self) -> Vec<u8> {
+        self.self_account.primary_key()
+    }
+
+    fn check_authorities(&self, accounts: Vec<AccountInfo>) -> Result<(), ProgramError> {
+        self.self_account.check_authorities(accounts)
+    }
+
+    fn count_authorities(&self) -> u8 {
+        self.self_account.count_authorities()
     }
 }

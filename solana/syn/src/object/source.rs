@@ -1,7 +1,10 @@
+//! Spawns all objects from Nautilus's `src/objects/.` into `syn::ItemStruct` types
+//! for `syn` processing.
 use syn::{punctuated::Punctuated, Field, FieldsNamed, Ident, ItemStruct};
 
 use super::NautilusObject;
 
+/// Enum vehicle used to build a `syn::Field`.
 enum SourceField {
     ProgramId,
     AccountInfo,
@@ -13,6 +16,7 @@ enum SourceField {
 }
 
 impl From<&SourceField> for Field {
+    /// Converts from a `SourceField` to a `syn::Field`.
     fn from(value: &SourceField) -> Self {
         match value {
             SourceField::ProgramId => source_field("program_id"),
@@ -26,6 +30,7 @@ impl From<&SourceField> for Field {
     }
 }
 
+/// Helper function to build a named `syn::Field` from defaults.
 fn source_field(field_name: &str) -> Field {
     Field {
         attrs: vec![],
@@ -36,6 +41,7 @@ fn source_field(field_name: &str) -> Field {
     }
 }
 
+/// Helper function to build a named `syn::ItemStruct` from defaults.
 fn source_struct(name: &str, source_fields: Vec<SourceField>) -> ItemStruct {
     let ident = Ident::new(name, proc_macro2::Span::call_site());
     let fields = {
@@ -59,6 +65,8 @@ fn source_struct(name: &str, source_fields: Vec<SourceField>) -> ItemStruct {
     }
 }
 
+/// Uses helpers to return a vector of all Nautilus objects from Nautilus's `src/objects/.`
+/// as `syn::ItemStruct` types.
 pub fn source_nautilus_objects() -> Vec<NautilusObject> {
     [
         source_struct(
@@ -105,10 +113,11 @@ pub fn source_nautilus_objects() -> Vec<NautilusObject> {
         ),
     ]
     .into_iter()
-    .map(|s| s.into())
+    .map(|s| NautilusObject::from_item_struct(s, super::NautilusObjectType::Account))
     .collect()
 }
 
+/// Returns a vector with just the string names of all objects from Nautilus's `src/objects/.`.
 pub fn source_nautilus_names() -> Vec<String> {
     vec![
         "NautilusIndex".to_string(),

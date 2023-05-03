@@ -1,7 +1,8 @@
+//! Nautilus' macros used to power its abstraction.
 use nautilus_syn::{entry::NautilusEntrypoint, object::NautilusObject};
 use proc_macro::TokenStream;
 use quote::ToTokens;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, ItemStruct};
 
 extern crate proc_macro;
 
@@ -22,16 +23,24 @@ pub fn nautilus(_: TokenStream, input: TokenStream) -> TokenStream {
 /// as the data type for a Nautilus record - allowing it to be used as `T` inside of `Record<'_, T>`.
 #[proc_macro_derive(Table, attributes(default_instructions, primary_key, authority))]
 pub fn nautilus_table(input: TokenStream) -> TokenStream {
-    parse_macro_input!(input as NautilusObject)
-        .to_token_stream()
-        .into()
+    let item_struct = parse_macro_input!(input as ItemStruct);
+    NautilusObject::from_item_struct(
+        item_struct,
+        nautilus_syn::object::NautilusObjectType::Record,
+    )
+    .to_token_stream()
+    .into()
 }
 
 /// The derive macro to implement the required traits to allow for the annotated struct to serve
-/// as the data type for a Nautilus object - allowing it to be used as `T` inside of `Object<'_, T>`.
-#[proc_macro_derive(Object, attributes(seeds, authority))]
-pub fn nautilus_object(input: TokenStream) -> TokenStream {
-    parse_macro_input!(input as NautilusObject)
-        .to_token_stream()
-        .into()
+/// as the data type for a Nautilus account - allowing it to be used as `T` inside of `Account<'_, T>`.
+#[proc_macro_derive(Directory, attributes(seeds, authority))]
+pub fn nautilus_account(input: TokenStream) -> TokenStream {
+    let item_struct = parse_macro_input!(input as ItemStruct);
+    NautilusObject::from_item_struct(
+        item_struct,
+        nautilus_syn::object::NautilusObjectType::Account,
+    )
+    .to_token_stream()
+    .into()
 }

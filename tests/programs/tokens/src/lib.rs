@@ -1,4 +1,6 @@
+//! Testing token-related objects.
 use nautilus::spl_token::instruction::AuthorityType;
+use nautilus::splogger::{info, Splog};
 use nautilus::*;
 
 #[nautilus]
@@ -11,7 +13,7 @@ mod program_nautilus {
         decimals: u8,
         mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New Mint Public Key: {}", &new_mint.key());
+        info!(" * New Mint Public Key: {}", &new_mint.key());
         //
         // /* Business Logic */
         //
@@ -27,8 +29,8 @@ mod program_nautilus {
         mint_authority: Signer<Wallet<'a>>,
         rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New Mint Public Key: {}", &new_mint.key());
-        splog_info!(" * Rent Payer Public Key: {}", &rent_payer.key());
+        info!(" * New Mint Public Key: {}", &new_mint.key());
+        info!(" * Rent Payer Public Key: {}", &rent_payer.key());
         //
         // /* Business Logic */
         //
@@ -50,9 +52,9 @@ mod program_nautilus {
         amount: u64,
     ) -> ProgramResult {
         print_associated_token_data(&to.self_account.data, "To acct pre-mint");
-        splog_info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * Mint Public Key: {}", &mint.key());
         print_mint_data(&mint.self_account.data, "MintTo");
-        splog_info!("Minting {} tokens to: {}", amount, to.key());
+        info!("Minting {} tokens to: {}", amount, to.key());
         //
         // /* Business Logic */
         //
@@ -66,7 +68,7 @@ mod program_nautilus {
         mint: Mut<Mint<'a>>,
         authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * Mint Public Key: {}", &mint.key());
         print_mint_data(&mint.self_account.data, "Mint pre-disabling");
         //
         // /* Business Logic */
@@ -78,7 +80,7 @@ mod program_nautilus {
     }
 
     fn read_mint(mint: Mint) -> ProgramResult {
-        splog_info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * Mint Public Key: {}", &mint.key());
         print_mint_data(&mint.data, "Read");
         //
         // /* Business Logic */
@@ -96,8 +98,8 @@ mod program_nautilus {
         uri: String,
         mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New Metadata Public Key: {}", &new_metadata.key());
-        splog_info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * New Metadata Public Key: {}", &new_metadata.key());
+        info!(" * Mint Public Key: {}", &mint.key());
         //
         // /* Business Logic */
         //
@@ -123,9 +125,9 @@ mod program_nautilus {
         mint_authority: Signer<Wallet<'a>>,
         rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New Metadata Public Key: {}", &new_metadata.key());
-        splog_info!(" * Mint Public Key: {}", &mint.key());
-        splog_info!(" * Rent Payer Public Key: {}", &rent_payer.key());
+        info!(" * New Metadata Public Key: {}", &new_metadata.key());
+        info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * Rent Payer Public Key: {}", &rent_payer.key());
         //
         // /* Business Logic */
         //
@@ -144,7 +146,7 @@ mod program_nautilus {
     }
 
     fn read_metadata(metadata: Metadata) -> ProgramResult {
-        splog_info!(" * Metadata Public Key: {}", &metadata.key());
+        info!(" * Metadata Public Key: {}", &metadata.key());
         print_metadata_data(&metadata.data, "Read");
         //
         // /* Business Logic */
@@ -159,12 +161,12 @@ mod program_nautilus {
         mint: Mint<'a>,
         owner: Wallet<'a>,
     ) -> ProgramResult {
-        splog_info!(
+        info!(
             " * New AssociatedTokenAccount Public Key: {}",
             &new_associated_token.key()
         );
-        splog_info!(" * Mint Public Key: {}", &mint.key());
-        splog_info!(" * Owner Public Key: {}", &owner.key());
+        info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * Owner Public Key: {}", &owner.key());
         //
         // /* Business Logic */
         //
@@ -180,13 +182,13 @@ mod program_nautilus {
         owner: Wallet<'a>,
         rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(
+        info!(
             " * New AssociatedTokenAccount Public Key: {}",
             &new_associated_token.key()
         );
-        splog_info!(" * Mint Public Key: {}", &mint.key());
-        splog_info!(" * Owner Public Key: {}", &owner.key());
-        splog_info!(" * Rent Payer Public Key: {}", &rent_payer.key());
+        info!(" * Mint Public Key: {}", &mint.key());
+        info!(" * Owner Public Key: {}", &owner.key());
+        info!(" * Rent Payer Public Key: {}", &rent_payer.key());
         //
         // /* Business Logic */
         //
@@ -197,7 +199,7 @@ mod program_nautilus {
     }
 
     fn read_associated_token(associated_token: AssociatedTokenAccount) -> ProgramResult {
-        splog_info!(
+        info!(
             " * AssociatedTokenAccount Public Key: {}",
             &associated_token.key()
         );
@@ -215,7 +217,7 @@ mod program_nautilus {
         amount: u64,
     ) -> ProgramResult {
         print_associated_token_data(&from.self_account.data, "From acct pre-burn");
-        splog_info!("Burning {} tokens from: {} ", amount, from.key(),);
+        info!("Burning {} tokens from: {} ", amount, from.key(),);
         //
         // /* Business Logic */
         //
@@ -233,7 +235,7 @@ mod program_nautilus {
     ) -> ProgramResult {
         print_associated_token_data(&from.self_account.data, "From acct pre-transfer");
         print_associated_token_data(&to.self_account.data, "To acct pre-transfer");
-        splog_info!(
+        info!(
             "Transferring {} tokens from: {} to: {}",
             amount,
             from.key(),
@@ -254,7 +256,7 @@ mod program_nautilus {
         account: Mut<AssociatedTokenAccount<'a>>,
         authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * AssociatedTokenAccount Public Key: {}", &account.key());
+        info!(" * AssociatedTokenAccount Public Key: {}", &account.key());
         print_associated_token_data(&account.self_account.data, "Freeze (pre)");
         //
         // /* Business Logic */
@@ -270,7 +272,7 @@ mod program_nautilus {
         account: Mut<AssociatedTokenAccount<'a>>,
         authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * AssociatedTokenAccount Public Key: {}", &account.key());
+        info!(" * AssociatedTokenAccount Public Key: {}", &account.key());
         print_associated_token_data(&account.self_account.data, "Thaw (pre)");
         //
         // /* Business Logic */
@@ -291,7 +293,7 @@ mod program_nautilus {
         uri: String,
         mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New Token Public Key: {}", &new_token.key());
+        info!(" * New Token Public Key: {}", &new_token.key());
         //
         // /* Business Logic */
         //
@@ -319,8 +321,8 @@ mod program_nautilus {
         mint_authority: Signer<Wallet<'a>>,
         rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New Token Public Key: {}", &new_token.key());
-        splog_info!(" * Rent Payer Public Key: {}", &rent_payer.key());
+        info!(" * New Token Public Key: {}", &new_token.key());
+        info!(" * Rent Payer Public Key: {}", &rent_payer.key());
         //
         // /* Business Logic */
         //
@@ -347,9 +349,9 @@ mod program_nautilus {
         amount: u64,
     ) -> ProgramResult {
         print_associated_token_data(&to.self_account.data, "To acct pre-mint");
-        splog_info!(" * Token Public Key: {}", &token.key());
+        info!(" * Token Public Key: {}", &token.key());
         print_mint_data(&token.self_account.mint.data, "MintTo");
-        splog_info!("Minting {} tokens to: {}", amount, to.key());
+        info!("Minting {} tokens to: {}", amount, to.key());
         //
         // /* Business Logic */
         //
@@ -363,7 +365,7 @@ mod program_nautilus {
         token: Mut<Token<'a>>,
         authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * Mint Public Key: {}", &token.key());
+        info!(" * Mint Public Key: {}", &token.key());
         print_mint_data(&token.self_account.mint.data, "Token mint pre-disabling");
         //
         // /* Business Logic */
@@ -375,7 +377,7 @@ mod program_nautilus {
     }
 
     fn read_token(token: Token) -> ProgramResult {
-        splog_info!(" * Token Public Key: {}", &token.key());
+        info!(" * Token Public Key: {}", &token.key());
         print_mint_data(&token.mint.data, "Read");
         print_metadata_data(&token.metadata.data, "Read");
         //
@@ -393,7 +395,7 @@ mod program_nautilus {
         uri: String,
         mint_authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New NFT Public Key: {}", &new_nft.key());
+        info!(" * New NFT Public Key: {}", &new_nft.key());
         //
         // /* Business Logic */
         //
@@ -419,8 +421,8 @@ mod program_nautilus {
         mint_authority: Signer<Wallet<'a>>,
         rent_payer: Signer<Wallet<'a>>,
     ) -> ProgramResult {
-        splog_info!(" * New NFT Public Key: {}", &new_nft.key());
-        splog_info!(" * Rent Payer Public Key: {}", &rent_payer.key());
+        info!(" * New NFT Public Key: {}", &new_nft.key());
+        info!(" * Rent Payer Public Key: {}", &rent_payer.key());
         //
         // /* Business Logic */
         //
@@ -445,9 +447,9 @@ mod program_nautilus {
         authority: Signer<Wallet<'a>>,
     ) -> ProgramResult {
         print_associated_token_data(&to.self_account.data, "To acct pre-mint");
-        splog_info!(" * NFT Public Key: {}", &nft.key());
+        info!(" * NFT Public Key: {}", &nft.key());
         print_mint_data(&nft.self_account.mint.data, "MintTo");
-        splog_info!("Minting NFT to: {}", to.key());
+        info!("Minting NFT to: {}", to.key());
         //
         // /* Business Logic */
         //
@@ -458,7 +460,7 @@ mod program_nautilus {
     }
 
     fn read_nft(nft: Nft) -> ProgramResult {
-        splog_info!(" * NFT Public Key: {}", &nft.key());
+        info!(" * NFT Public Key: {}", &nft.key());
         print_mint_data(&nft.mint.data, "Read");
         print_metadata_data(&nft.metadata.data, "Read");
         //
@@ -469,35 +471,35 @@ mod program_nautilus {
 }
 
 fn print_mint_data(data: &MintState, desc: &str) {
-    splog_info!(" * Mint Data for: {}:", desc);
-    splog_info!("      Mint Authority:         {:#?}", data.mint_authority);
-    splog_info!("      Supply:                 {}", data.supply);
-    splog_info!("      Decimals:               {}", data.decimals);
-    splog_info!("      Is Initialized:         {}", data.is_initialized);
-    splog_info!("      Freeze Authority:       {:#?}", data.freeze_authority);
+    info!(" * Mint Data for: {}:", desc);
+    info!("      Mint Authority:         {:#?}", data.mint_authority);
+    info!("      Supply:                 {}", data.supply);
+    info!("      Decimals:               {}", data.decimals);
+    info!("      Is Initialized:         {}", data.is_initialized);
+    info!("      Freeze Authority:       {:#?}", data.freeze_authority);
 }
 
 fn print_metadata_data(data: &MetadataState, desc: &str) {
-    splog_info!(" * Metadata Data for: {}:", desc);
-    splog_info!("      Mint:                   {:#?}", data.mint);
-    splog_info!(
+    info!(" * Metadata Data for: {}:", desc);
+    info!("      Mint:                   {:#?}", data.mint);
+    info!(
         "      Primary Sale Happened:  {}",
         data.primary_sale_happened
     );
-    splog_info!("      Is Mutable:             {}", data.is_mutable);
-    splog_info!("      Edition Nonce:          {:#?}", data.edition_nonce);
-    splog_info!("      Title:                  {}", data.data.name);
-    splog_info!("      Symbol:                 {}", data.data.symbol);
-    splog_info!("      URI:                    {}", data.data.uri);
+    info!("      Is Mutable:             {}", data.is_mutable);
+    info!("      Edition Nonce:          {:#?}", data.edition_nonce);
+    info!("      Title:                  {}", data.data.name);
+    info!("      Symbol:                 {}", data.data.symbol);
+    info!("      URI:                    {}", data.data.uri);
 }
 
 fn print_associated_token_data(data: &AssociatedTokenAccountState, desc: &str) {
-    splog_info!(" * Associated Token Data for: {}:", desc);
-    splog_info!("      Mint:                   {:#?}", data.mint);
-    splog_info!("      Owner:                  {:#?}", data.owner);
-    splog_info!("      Amount:                 {}", data.amount);
-    splog_info!("      Delegate:               {:#?}", data.delegate);
-    splog_info!("      Is Native:              {:#?}", data.is_native);
-    splog_info!("      Delegated Amount:       {}", data.delegated_amount);
-    splog_info!("      Close Authority:        {:#?}", data.close_authority);
+    info!(" * Associated Token Data for: {}:", desc);
+    info!("      Mint:                   {:#?}", data.mint);
+    info!("      Owner:                  {:#?}", data.owner);
+    info!("      Amount:                 {}", data.amount);
+    info!("      Delegate:               {:#?}", data.delegate);
+    info!("      Is Native:              {:#?}", data.is_native);
+    info!("      Delegated Amount:       {}", data.delegated_amount);
+    info!("      Close Authority:        {:#?}", data.close_authority);
 }

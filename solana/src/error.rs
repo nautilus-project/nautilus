@@ -1,9 +1,10 @@
+//! Nautilus custom errors.
 use num_traits::{FromPrimitive, ToPrimitive};
 use solana_program::{
     decode_error::DecodeError,
     program_error::{PrintProgramError, ProgramError},
 };
-use splogger::{splog_error, Splog};
+use splogger::{error, Splog};
 use thiserror::Error;
 
 /// Custom errors for Nautilus functionality. Convertible to `solana_program::program_error::ProgramError`.
@@ -80,43 +81,39 @@ impl PrintProgramError for NautilusError {
     {
         match self {
             Self::LoadDataFailed(state_type, pubkey) => {
-                splog_error!(
+                error!(
                     "Failed to load {} data from account: {}",
-                    state_type,
-                    pubkey
+                    state_type, pubkey
                 );
-                splog_error!("Could not borrow account data");
-                splog_error!(
+                error!("Could not borrow account data");
+                error!(
                     "Failed to load {} data from account: {}",
-                    state_type,
-                    pubkey
+                    state_type, pubkey
                 );
             }
             Self::DeserializeDataFailed(state_type, pubkey) => {
-                splog_error!(
+                error!(
                     "Failed to deserialize {} data from account: {}",
-                    state_type,
-                    pubkey
+                    state_type, pubkey
                 );
-                splog_error!("Could not deserialize");
-                splog_error!(
+                error!("Could not deserialize");
+                error!(
                     "Failed to deserialize {} data from account: {}",
-                    state_type,
-                    pubkey
+                    state_type, pubkey
                 );
             }
             Self::WriteRecordFailed(table_name) => {
-                splog_error!("Failed to create a new record for table: {}", table_name);
+                error!("Failed to create a new record for table: {}", table_name);
             }
-            Self::AccountNotMutable(pubkey) => splog_error!(
+            Self::AccountNotMutable(pubkey) => error!(
                 "This account was marked with `Mut<T>` but was not passed in as mutable: {}",
                 pubkey
             ),
-            Self::AccountNotSigner(pubkey) => splog_error!(
+            Self::AccountNotSigner(pubkey) => error!(
                 "This account was marked with `Signer<T>` but was not passed in as signer: {}",
                 pubkey
             ),
-            Self::AccountExists(pubkey) => splog_error!(
+            Self::AccountExists(pubkey) => error!(
                 "This account was marked with `Create<T>` but it exists already: {}",
                 pubkey
             ),

@@ -1,3 +1,4 @@
+//! The `Metadata<T>` Nautilus object and all associated trait implementations.
 pub use mpl_token_metadata::state::{Metadata as MetadataState, TokenMetadataAccount};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,

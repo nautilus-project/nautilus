@@ -1,4 +1,4 @@
-//! Cross-Program-Invocations to the Associated Token Program
+//! Cross-Program invocations to the Associated Token Program
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, program::invoke};
 
 use crate::{AssociatedTokenAccount, NautilusAccountInfo, NautilusSigner};
