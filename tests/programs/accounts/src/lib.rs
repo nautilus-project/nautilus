@@ -78,7 +78,7 @@ mod program_nautilus {
     }
 }
 
-#[derive(Directory)]
+#[derive(State)]
 #[seeds(
     "person",               // Literal seed
     authority,              // Self-referencing seed
@@ -89,7 +89,7 @@ struct Person {
     authority: Pubkey,
 }
 
-#[derive(Directory)]
+#[derive(State)]
 #[seeds(
     "home",                 // Literal seed
     some_pubkey: Pubkey,    // Parameter seed
@@ -99,7 +99,7 @@ struct Home {
     street: String,
 }
 
-#[derive(Directory)]
+#[derive(State)]
 #[seeds(
     "car",                  // Literal seed
     purchase_authority,     // Self-referencing seed

@@ -17,7 +17,7 @@ use self::{
 };
 
 /// The struct containing the parsed contents of a user's struct, annotated with either `#[derive(nautilus::Table)]`
-/// or `#[derive(nautilus::Directory)]`.
+/// or `#[derive(nautilus::State)]`.
 /// 
 /// * `ident`: The struct's identifier.
 /// * `raw_Type`: The raw type of the object (is it a struct or enum?).

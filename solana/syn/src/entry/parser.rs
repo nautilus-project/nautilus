@@ -59,7 +59,7 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
                                 NestedMeta::Meta(Meta::Path(path)) => {
                                     if path.is_ident("Table") {
                                         Some(NautilusObjectType::Record)
-                                    } else if path.is_ident("Directory") {
+                                    } else if path.is_ident("State") {
                                         Some(NautilusObjectType::Account)
                                     } else {
                                         None

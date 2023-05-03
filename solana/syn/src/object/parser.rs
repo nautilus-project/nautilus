@@ -160,7 +160,7 @@ pub fn parse_top_level_attributes_for_record(
     default_instructions
 }
 
-/// Attempts to parse the top-level macro attributes for `#[derive(nautilus::Directory)]`, such
+/// Attempts to parse the top-level macro attributes for `#[derive(nautilus::State)]`, such
 /// as `#[seeds(..)]`.
 pub fn parse_top_level_attributes_for_account(attrs: &Vec<syn::Attribute>) -> Vec<Seed> {
     let mut seeds = Vec::new();

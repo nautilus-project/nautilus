@@ -57,7 +57,7 @@ pub enum ObjectType {
     Metadata,
     AssociatedTokenAccount,
     Record(bool, Vec<Construct>),  // Table record
-    Account(bool, Vec<Construct>), // Directory account
+    Account(bool, Vec<Construct>), // State account
 }
 
 /// A construct shell enum used to map variants with provided args into required accounts.
