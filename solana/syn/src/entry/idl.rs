@@ -84,7 +84,7 @@ impl From<&NautilusObjectConfig> for IdlTypeDefNautilusConfig {
                 authorities,
                 default_instructions,
             } => Self {
-                discrminator_str: None,
+                discriminator_str: None,
                 table_name: Some(table_name.clone()),
                 primary_key: Some(primary_key_ident.to_string()),
                 autoincrement: Some(*autoincrement_enabled),
@@ -101,7 +101,7 @@ impl From<&NautilusObjectConfig> for IdlTypeDefNautilusConfig {
                 authorities,
                 seeds,
             } => Self {
-                discrminator_str: Some(discrminator_str.clone()),
+                discriminator_str: Some(discrminator_str.clone()),
                 table_name: None,
                 primary_key: None,
                 autoincrement: None,
