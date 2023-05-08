@@ -12,6 +12,21 @@ use crate::{
     Idl,
 };
 
+fn capitalize_first_letter(s: &String) -> String {
+    let mut char_iter = s.chars();
+    match char_iter.next() {
+        None => String::new(),
+        Some(c) => c.to_uppercase().collect::<String>() + char_iter.as_str(),
+    }
+}
+fn decapitalize_first_letter(s: &String) -> String {
+    let mut char_iter = s.chars();
+    match char_iter.next() {
+        None => String::new(),
+        Some(c) => c.to_lowercase().collect::<String>() + char_iter.as_str(),
+    }
+}
+
 /// Trait to enable conversion of IDL components into TypeScript code.
 pub trait TypeScriptConverter {
     fn to_typescript_string(&self) -> String;
@@ -20,7 +35,13 @@ pub trait TypeScriptConverter {
 impl TypeScriptConverter for Idl {
     fn to_typescript_string(&self) -> String {
         let ts_body_globs = vec![
-            // TODO: Imports
+            vec![
+                String::from("import { PublicKey } from \"@solana/web3.js\""),
+                String::from("import BN from \"bn.js\""),
+                String::from("\n"),
+                self.to_typescript_program_idl(),
+                String::from("\n"),
+            ],
             // TODO: Configs
             // TODO: Constants
             // TODO: Errors
@@ -40,6 +61,38 @@ impl TypeScriptConverter for Idl {
         let ts_body = ts_body_globs.into_iter().flatten().collect::<Vec<String>>();
         let res = ts_body.join("\n");
         res
+    }
+}
+
+impl Idl {
+    pub fn to_typescript_program_idl(&self) -> String {
+        let formatted_name = self
+            .name
+            .split('-')
+            .map(|x| capitalize_first_letter(&x.to_string()))
+            .collect::<Vec<_>>()
+            .concat();
+
+        let tables = self
+            .accounts
+            .iter()
+            .map(|account| format!("    {}: string", decapitalize_first_letter(&account.name)))
+            .collect::<Vec<_>>()
+            .join(",\n");
+        let tables_string = if self.accounts.len() == 0 {
+            None
+        } else {
+            Some(format!("\n  tables: {{\n{}\n  }}\n", tables))
+        };
+
+        let strings = vec![tables_string]
+            .iter()
+            .filter(|&x| x.is_some())
+            .map(|x| x.as_deref().unwrap())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        format!("export type {}Program = {{{}}}", formatted_name, strings)
     }
 }
 
