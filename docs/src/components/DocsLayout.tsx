@@ -8,6 +8,30 @@ interface Section {
   content: string;
 }
 
+const sections = [
+  { 
+    title: "🚢 The Basics",
+    subsections: [
+      { title: "► What is Nautilus?", slug: 'what-is-nautilus' },
+      { title: "► How It Works", slug: 'how-it-works' },
+      { title: "► Installation", slug: 'installation' }
+    ]
+  },
+  { 
+    title: "⚛️ Core Concepts",
+    subsections: [
+      { title: "► Tables", slug: 'tables' },
+    ]
+  },
+  { 
+    title: "🧰 Tools",
+    subsections: [
+      { title: "► Javascript SDK", slug: 'javascript-sdk' },
+      { title: "► Python SDK", slug: 'python-sdk' }
+    ]
+  }
+]
+
 const DocumentationLayout = ({
   title,
   description,
@@ -99,75 +123,26 @@ const DocumentationLayout = ({
               role="list"
               className="-ml-0.5 h-[calc(100vh-4.5rem)] overflow-y-auto py-7 pl-0.5 space-y-8"
             >
-              <li>
-                <h3 className="text-lg font-bold tracking-tight text-slate-900">
-                  🚢 The Basics
-                </h3>
+              {sections.map(section =>
+                <li key={section.title}>
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900">
+                    {section.title}
+                  </h3>
 
-                <ul role="list" className="pl-3 mt-3 space-y-2">
-                  <li>
-                    <a
-                      href="/docs/what-is-nautilus"
-                      className="text-slate-600 hover:text-slate-800"
-                    >
-                      ► What is Nautilus?
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="/docs/how-it-works"
-                      className="text-slate-600 hover:text-slate-800"
-                    >
-                      ► How It Works
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="text-slate-600 hover:text-slate-800">
-                      ► Installation
-                    </a>
-                  </li>
-                </ul>
-              </li>
-
-              <li>
-                <h3 className="text-lg font-bold tracking-tight text-slate-900">
-                  🚀 Content Types
-                </h3>
-
-                <ul role="list" className="pl-3 mt-3 space-y-2">
-                  <li>
-                    <a href="#" className="text-slate-600 hover:text-slate-800">
-                      ► What are content types?
-                    </a>
-                  </li>
-
-                  <li>
-                    <a href="#" className="text-slate-600 hover:text-slate-800">
-                      ► Create and edit content types
-                    </a>
-                  </li>
-                </ul>
-              </li>
-
-              <li>
-                <h3 className="text-lg font-bold tracking-tight text-slate-900">
-                  👾 Content
-                </h3>
-
-                <ul role="list" className="pl-3 mt-3 space-y-2">
-                  <li>
-                    <a href="#" className="text-slate-600 hover:text-slate-800">
-                      ► What kind of content can I create and edit?
-                    </a>
-                  </li>
-
-                  <li>
-                    <a href="#" className="text-slate-600 hover:text-slate-800">
-                      ► Previewing content
-                    </a>
-                  </li>
-                </ul>
-              </li>
+                  <ul role="list" className="pl-3 mt-3 space-y-2">
+                    {section.subsections.map(subsection =>
+                      <li key={subsection.title}>
+                        <a
+                          href={`/docs/${subsection.slug}`}
+                          className="text-slate-600 hover:text-slate-800"
+                        >
+                          {subsection.title}
+                        </a>
+                      </li>
+                    )}
+                  </ul>
+                </li>
+              )}
             </ul>
           </nav>
         </div>
