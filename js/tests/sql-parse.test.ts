@@ -1,13 +1,15 @@
-import assert from "assert"
-import { describe, it } from "mocha"
-import { Nautilus } from "../src"
 import { CONNECTION, PROGRAM_ID } from "./main.test"
+import { describe, it } from "mocha"
+
+import { Nautilus } from "../src"
+import assert from "assert"
+import idl from "../idl/program-nautilus.json"
 
 export function tests() {
 
     describe("[Unit Tests]:   SQL Parsing", () => {
 
-        const nautilus = new Nautilus(CONNECTION, PROGRAM_ID);
+        const nautilus = new Nautilus({connection: CONNECTION, programId: PROGRAM_ID, idl});
 
         function testParseSql(input: string) {
             it(`   -- Can parse:    ${input}`, () => assert(input = nautilus.sql(input).dumpSql()))

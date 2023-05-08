@@ -1,4 +1,4 @@
-import { 
+import {
     AccountInfo,
     Connection,
     GetProgramAccountsConfig,
@@ -11,113 +11,118 @@ import {
     VersionedTransaction,
 } from '@solana/web3.js';
 
-export class NautilusUtils {
+// Get Program Accounts
 
-    // Get Program Accounts
+export async function getProgramAccounts(
+    connection: Connection,
+    programId: PublicKey,
+    config: GetProgramAccountsConfig,
+    returnFields?: string[]
+): Promise<{
+    pubkey: PublicKey,
+    account: AccountInfo<any>
+}[]> {
+    return connection.getProgramAccounts(
+        programId,
+        config,
+    )
+}
 
-    static async getProgramAccounts(
-        connection: Connection,
-        programId: PublicKey, 
-        config: GetProgramAccountsConfig,
-        returnFields?: string[]
-    ): Promise<{
-        pubkey: PublicKey,
-        account: AccountInfo<any>
-    }[]> {
-        return connection.getProgramAccounts(
-            programId,
-            config,
-        )
-    }
+// Nautilus Instruction Utils
 
-    // Nautilus Instruction Utils
-
-    // TODO: Create these filters based on the IDL and the passed tableName
-    static evaluateWhereFilter(
-        field: string,
-        operator: string,
-        matches: string,
-    ): GetProgramAccountsFilter {
-        return {
-            memcmp: {
-                offset: 0,
-                bytes: 'string',
-              }
+// TODO: Create these filters based on the IDL and the passed tableName
+export function evaluateWhereFilter(
+    field: string,
+    operator: string,
+    matches: string,
+): GetProgramAccountsFilter {
+    return {
+        memcmp: {
+            offset: 0,
+            bytes: 'string',
         }
     }
+}
 
-    // TODO: Create these instructions based on the IDL and the passed tableName
-    static createCreateInstruction(programId: PublicKey, tableName: string, data: any): TransactionInstruction {
-        return {
-            programId,
-            keys: [{
-                pubkey: PublicKey.unique(), isSigner: true, isWritable: true
-            }],
-            data: Buffer.alloc(0),
-        }
+// TODO: Create these instructions based on the IDL and the passed tableName
+export function createCreateInstruction(programId: PublicKey, tableName: string, data: any): TransactionInstruction {
+    return {
+        programId,
+        keys: [{
+            pubkey: PublicKey.unique(), isSigner: true, isWritable: true
+        }],
+        data: Buffer.alloc(0),
     }
+}
 
-    // TODO: Create these instructions based on the IDL and the passed tableName
-    static createDeleteInstruction(programId: PublicKey, tableName: string, account: any): TransactionInstruction {
-        return {
-            programId,
-            keys: [{
-                pubkey: PublicKey.unique(), isSigner: true, isWritable: true
-            }],
-            data: Buffer.alloc(0),
-        }
+// TODO: Create these instructions based on the IDL and the passed tableName
+export function createDeleteInstruction(programId: PublicKey, tableName: string, account: any): TransactionInstruction {
+    return {
+        programId,
+        keys: [{
+            pubkey: PublicKey.unique(), isSigner: true, isWritable: true
+        }],
+        data: Buffer.alloc(0),
     }
+}
 
-    // TODO: Create these instructions based on the IDL and the passed tableName
-    static createUpdateInstruction(programId: PublicKey, tableName: string, data: any): TransactionInstruction {
-        return {
-            programId,
-            keys: [{
-                pubkey: PublicKey.unique(), isSigner: true, isWritable: true
-            }],
-            data: Buffer.alloc(0),
-        }
+// TODO: Create these instructions based on the IDL and the passed tableName
+export function createUpdateInstruction(programId: PublicKey, tableName: string, data: any): TransactionInstruction {
+    return {
+        programId,
+        keys: [{
+            pubkey: PublicKey.unique(), isSigner: true, isWritable: true
+        }],
+        data: Buffer.alloc(0),
     }
+}
 
 
-    // Solana Transaction Utils
+// Solana Transaction Utils
 
-    static async buildTransaction(
-        connection: Connection,
-        instructionsList: TransactionInstruction[],
-        signers: Signer[],
-        payerKey: PublicKey,
-    ): Promise<VersionedTransaction> {
-        const tx = new VersionedTransaction(
-            new TransactionMessage({
-                payerKey,
-                recentBlockhash: (
-                    await connection
-                        .getLatestBlockhash()
-                        .then((res) => res.blockhash)
-                ),
-                instructions: instructionsList,
-            }).compileToV0Message()
-        );
-        tx.sign(signers)
-        return tx
-    }
+export async function buildTransaction(
+    connection: Connection,
+    instructionsList: TransactionInstruction[],
+    signers: Signer[],
+    payerKey: PublicKey,
+): Promise<VersionedTransaction> {
+    const tx = new VersionedTransaction(
+        new TransactionMessage({
+            payerKey,
+            recentBlockhash: (
+                await connection
+                    .getLatestBlockhash()
+                    .then((res) => res.blockhash)
+            ),
+            instructions: instructionsList,
+        }).compileToV0Message()
+    );
+    tx.sign(signers)
+    return tx
+}
 
-    static async sendTransactionWithSigner(
-        connection: Connection,
-        instructions: TransactionInstruction[],
-        signers: Signer[],
-        feePayer: PublicKey,
-        sendOptions?: SendOptions,
-    ): Promise<string> {
-        return connection.sendTransaction(
-            (await NautilusUtils.buildTransaction(
-                connection, 
-                instructions, 
-                signers,
-                feePayer,
-            )),
-            sendOptions,
-        )
-    }
+export async function sendTransactionWithSigner(
+    connection: Connection,
+    instructions: TransactionInstruction[],
+    signers: Signer[],
+    feePayer: PublicKey,
+    sendOptions?: SendOptions,
+): Promise<string> {
+    return connection.sendTransaction(
+        (await buildTransaction(
+            connection,
+            instructions,
+            signers,
+            feePayer,
+        )),
+        sendOptions,
+    )
+}
+
+export const capitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+export const decapitalizeFirstLetter = (str: string) => {
+    return str.charAt(0).toLowerCase() + str.slice(1)
 }

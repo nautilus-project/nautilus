@@ -1,22 +1,24 @@
-import { 
+import {
     AccountInfo,
     GetProgramAccountsConfig,
-    PublicKey, 
-    SendOptions, 
-    Signer, 
+    PublicKey,
+    SendOptions,
+    Signer,
     TransactionInstruction,
 } from '@solana/web3.js';
+import { createCreateInstruction, createDeleteInstruction, createUpdateInstruction, evaluateWhereFilter, getProgramAccounts, sendTransactionWithSigner } from '../util';
+
 import { Nautilus } from '../';
-import { NautilusUtils } from '../util';
+import { NautilusProgram } from '../types';
 
 enum FetchFirst {
     Delete,
     Update,
 }
 
-export class NautilusTable {
+export class NautilusTable<Program extends NautilusProgram = NautilusProgram> {
 
-    nautilus: Nautilus
+    nautilus: Nautilus<Program>
     programId: PublicKey | undefined
     tableName: string
 
@@ -32,11 +34,11 @@ export class NautilusTable {
     signersList: Signer[]
 
     constructor(
-        nautilus: Nautilus,
+        nautilus: Nautilus<Program>,
         tableName: string,
     ) {
         this.nautilus = nautilus
-        if (nautilus.defaultProgram) this.programId = nautilus.defaultProgram
+        if (nautilus.programId) this.programId = nautilus.programId
         this.tableName = tableName
         
         this.getProgramAccountsConfig = {
@@ -76,7 +78,7 @@ export class NautilusTable {
         matches: string,
     ) {
         this.getProgramAccountsConfig.filters?.push(
-            NautilusUtils.evaluateWhereFilter(field, operator, matches)
+            evaluateWhereFilter(field, operator, matches)
         );
         return this
     }
@@ -86,7 +88,7 @@ export class NautilusTable {
         account: AccountInfo<any>
     }[]> {
         if (!this.programId) return noProgramIdError()
-        return NautilusUtils.getProgramAccounts(
+        return getProgramAccounts(
             this.nautilus.connection,
             this.programId,
             this.getProgramAccountsConfig,
@@ -101,10 +103,10 @@ export class NautilusTable {
             const programId = this.programId
             if (Array.isArray(data)) {
                 data.forEach((d) => this.instructions.push(
-                    NautilusUtils.createCreateInstruction(programId, this.tableName, d)
+                    createCreateInstruction(programId, this.tableName, d)
                 ))
             } else {
-                this.instructions.push(NautilusUtils.createCreateInstruction(programId, this.tableName, data))
+                this.instructions.push(createCreateInstruction(programId, this.tableName, data))
             }
         } else {
             return noProgramIdError()
@@ -135,12 +137,12 @@ export class NautilusTable {
             const instructions = this.instructions
             if (this.fetchFirst) {
                 (await this.get()).forEach((account) => this.fetchFirst == FetchFirst.Delete ? 
-                    instructions.push(NautilusUtils.createDeleteInstruction(programId, this.tableName, account))
+                    instructions.push(createDeleteInstruction(programId, this.tableName, account))
                     :
-                    instructions.push(NautilusUtils.createUpdateInstruction(programId, this.tableName, this.updateData))
+                    instructions.push(createUpdateInstruction(programId, this.tableName, this.updateData))
                 )
             }
-            return NautilusUtils.sendTransactionWithSigner(
+            return sendTransactionWithSigner(
                 this.nautilus.connection,
                 instructions,
                 this.signersList,

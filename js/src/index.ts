@@ -6,36 +6,51 @@
 //
 //
 
-import { 
-    Connection, 
+import {
+    Connection,
     Keypair,
-    PublicKey, 
+    PublicKey
 } from '@solana/web3.js';
-import { 
-    NautilusQuery, 
+import { NautilusIdl, NautilusProgram } from './types';
+import {
+    NautilusQuery,
     NautilusTable,
 } from './sql';
-import { NautilusUtils } from './util';
 
-export class Nautilus {
+import { decapitalizeFirstLetter } from './util';
+
+export class Nautilus<Program extends NautilusProgram = NautilusProgram> {
 
     connection: Connection;
-    programs: [PublicKey, string][];
-    defaultProgram: PublicKey | undefined;
-    payer: Keypair | undefined;
+    programId: PublicKey;
+    programs?: {[programName: string]: PublicKey};
+    payer?: Keypair | undefined;
 
-    util: NautilusUtils = new NautilusUtils();
+    readonly idl: NautilusIdl;
+    readonly tables: { [N in keyof Program["tables"]]: NautilusTable };
 
-    constructor(
+    constructor ({ connection, idl, programId, programs, payer }: {
         connection: Connection,
-        programs: string | PublicKey | [PublicKey, string][],
-        defaultProgram?: string | PublicKey,
+        idl: NautilusIdl,
+        programId: string | PublicKey,
+        programs?: {[programName: string]: PublicKey},
         payer?: Keypair,
-    ) {
-        
+    }) {
+
         this.connection = connection;
-        [this.programs, this.defaultProgram] = parseNautilusArgs(programs, defaultProgram)
+        this.programId = programId instanceof PublicKey ? programId : new PublicKey(programId);
+        this.programs = programs
         this.payer = payer ?? undefined;
+
+        this.idl = idl
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const tables: any = {}
+        for (const table of idl.accounts) {
+            const formattedName = decapitalizeFirstLetter(table.name)
+            tables[formattedName] = new NautilusTable(this, table.name)
+        }
+        this.tables = tables
     }
 
     table(tableName: string): NautilusTable {
@@ -53,44 +68,4 @@ export class Nautilus {
     }
 }
 
-function parseNautilusArgs(
-    argPrograms: string | PublicKey | [PublicKey, string][],
-    argDefaultProgram: string | PublicKey | undefined,
-): [[PublicKey, string][], PublicKey | undefined] {
-
-    const checkForDefaultProgram = (found: boolean) => {
-        if (!found) throw Error(
-            "Instance error: Provided default program was not found in the provided programs list"
-        )
-    }
-    
-    let programs: [PublicKey, string][]
-    let defaultProgram: PublicKey | undefined = undefined
-
-    if (typeof argPrograms == "string") {
-        programs = [[new PublicKey(argPrograms), "default"]]
-        if (!argDefaultProgram) defaultProgram = new PublicKey(argPrograms)
-    } else if (argPrograms instanceof PublicKey) {
-        programs = [[argPrograms, "default"]]
-        if (!argDefaultProgram) defaultProgram = argPrograms
-    } else {
-        programs = argPrograms
-        if (argDefaultProgram) {
-            if (argDefaultProgram instanceof PublicKey) {
-                checkForDefaultProgram(
-                    argPrograms.filter(([publicKey, _]) => 
-                        publicKey === argDefaultProgram).length != 0
-                )
-            } else {
-                checkForDefaultProgram(
-                    argPrograms.filter(([publicKey, name]) => 
-                        publicKey.toBase58() == argDefaultProgram || name === argDefaultProgram).length != 0
-                )
-            }
-        } else {
-            if (argPrograms.length === 1) defaultProgram = argPrograms[0][0]
-        }
-    }
-
-    return [programs, defaultProgram]
-}
+export { NautilusQuery, NautilusTable }
