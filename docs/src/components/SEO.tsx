@@ -1,8 +1,7 @@
 import Head from "next/head";
 import globalConfig from "../../config/global.config";
 import { SEOProps } from "../../interfaces/seo";
-
-const SEO = ({ title, description, image }: SEOProps) => {
+export default function SEO({ title, description, image }: SEOProps) {
   return (
     <Head>
       <title>{title}</title>
@@ -27,6 +26,4 @@ const SEO = ({ title, description, image }: SEOProps) => {
       <link rel="icon" href="/favicon.ico" />
     </Head>
   );
-};
-
-export default SEO;
+}
