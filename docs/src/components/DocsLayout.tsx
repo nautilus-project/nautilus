@@ -9,30 +9,28 @@ interface Section {
 }
 
 const sections = [
-  { 
+  {
     title: "🚢 The Basics",
     subsections: [
-      { title: "► What is Nautilus?", slug: 'what-is-nautilus' },
-      { title: "► How It Works", slug: 'how-it-works' },
-      { title: "► Installation", slug: 'installation' }
-    ]
+      { title: "► What is Nautilus?", slug: "what-is-nautilus" },
+      { title: "► How It Works", slug: "how-it-works" },
+      { title: "► Installation", slug: "installation" },
+    ],
   },
-  { 
+  {
     title: "⚛️ Core Concepts",
-    subsections: [
-      { title: "► Tables", slug: 'tables' },
-    ]
+    subsections: [{ title: "► Tables", slug: "tables" }],
   },
-  { 
+  {
     title: "🧰 Tools",
     subsections: [
-      { title: "► Javascript SDK", slug: 'javascript-sdk' },
-      { title: "► Python SDK", slug: 'python-sdk' }
-    ]
-  }
-]
+      { title: "► Javascript SDK", slug: "javascript-sdk" },
+      { title: "► Python SDK", slug: "python-sdk" },
+    ],
+  },
+];
 
-const DocumentationLayout = ({
+export default function DocumentationLayout({
   title,
   description,
   previous,
@@ -40,7 +38,7 @@ const DocumentationLayout = ({
   next,
   nextLink,
   content,
-}: Section) => {
+}: Section) {
   return (
     <div>
       <header className="sticky top-0 z-50 flex items-center justify-between px-3 py-2 border-b shadow-lg bg-white backdrop-blur-sm border-slate-400/40">
@@ -123,14 +121,14 @@ const DocumentationLayout = ({
               role="list"
               className="-ml-0.5 h-[calc(100vh-4.5rem)] overflow-y-auto py-7 pl-0.5 space-y-8"
             >
-              {sections.map(section =>
+              {sections.map((section) => (
                 <li key={section.title}>
                   <h3 className="text-lg font-bold tracking-tight text-slate-900">
                     {section.title}
                   </h3>
 
                   <ul role="list" className="pl-3 mt-3 space-y-2">
-                    {section.subsections.map(subsection =>
+                    {section.subsections.map((subsection) => (
                       <li key={subsection.title}>
                         <a
                           href={`/docs/${subsection.slug}`}
@@ -139,10 +137,10 @@ const DocumentationLayout = ({
                           {subsection.title}
                         </a>
                       </li>
-                    )}
+                    ))}
                   </ul>
                 </li>
-              )}
+              ))}
             </ul>
           </nav>
         </div>
@@ -197,6 +195,4 @@ const DocumentationLayout = ({
       </main>
     </div>
   );
-};
-
-export default DocumentationLayout;
+}

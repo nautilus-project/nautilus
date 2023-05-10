@@ -11,14 +11,10 @@ export default function Home() {
         description="An object-oriented, SQL-native Solana programming framework"
         image=""
       />
-      <div className="bg-[url(https://i.imgur.com/Fq6zXIb.jpg)] backdrop-blur-md bg-no-repeat bg-cover bg-center bg-fixed">
-        <div className="bg-cover bg-fixed backdrop-blur-md pt-2">
-          <div className={styles.fadeInUp}>
-            <Navbar />
-          </div>
-          <main>
-            <Hero />
-          </main>
+      <div className="w-full bg-[url(https://i.imgur.com/Fq6zXIb.jpg)] bg-no-repeat bg-cover lg:bg-center bg-fixed">
+        <Navbar />
+        <div className="flex flex-col min-h-screen container mx-auto items-center justify-center">
+          <Hero />
         </div>
       </div>
     </>
