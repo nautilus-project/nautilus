@@ -1,4 +1,5 @@
-//! The special `NautilusIndex` Nautilus object and all associated trait implementations.
+//! The special `NautilusIndex` Nautilus object and all associated trait
+//! implementations.
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
@@ -12,10 +13,12 @@ use crate::{
 
 /// The account inner data for the `NautilusIndex`.
 ///
-/// This `index` is simply a Hash Map that stores the current record count for each table, where
-/// the `String` key is the table name and the `u32` value is the current count.
+/// This `index` is simply a Hash Map that stores the current record count for
+/// each table, where the `String` key is the table name and the `u32` value is
+/// the current count.
 ///
-/// This data is kept in one single account and used as a reference to enable autoincrementing of records.
+/// This data is kept in one single account and used as a reference to enable
+/// autoincrementing of records.
 #[derive(Clone, Default)]
 pub struct NautilusIndexData {
     pub index: std::collections::HashMap<String, u32>,
@@ -92,11 +95,14 @@ impl NautilusRecordData for NautilusIndexData {
     }
 }
 
-/// The special Nautilus object representing the accompanying index for a Nautilus program.
+/// The special Nautilus object representing the accompanying index for a
+/// Nautilus program.
 ///
-/// The underlying account - designated in field `account_info` - is the Nautilus Index.
+/// The underlying account - designated in field `account_info` - is the
+/// Nautilus Index.
 ///
-/// This single account is used as a reference to enable autoincrementing of records.
+/// This single account is used as a reference to enable autoincrementing of
+/// records.
 #[derive(Clone)]
 pub struct NautilusIndex<'a> {
     pub program_id: &'a Pubkey,
@@ -105,7 +111,8 @@ pub struct NautilusIndex<'a> {
 }
 
 impl<'a> NautilusIndex<'a> {
-    /// Instantiate a new `NautilusIndex` without loading the account inner data from on-chain.
+    /// Instantiate a new `NautilusIndex` without loading the account inner data
+    /// from on-chain.
     pub fn new(program_id: &'a Pubkey, account_info: Box<AccountInfo<'a>>) -> Self {
         Self {
             program_id,
@@ -114,7 +121,8 @@ impl<'a> NautilusIndex<'a> {
         }
     }
 
-    /// Instantiate a new `NautilusIndex` and load the account inner data from on-chain.
+    /// Instantiate a new `NautilusIndex` and load the account inner data from
+    /// on-chain.
     pub fn load(
         program_id: &'a Pubkey,
         account_info: Box<AccountInfo<'a>>,
@@ -246,7 +254,8 @@ impl<'a> Create<'a, NautilusIndex<'a>> {
         cpi::system::allocate(self.clone())
     }
 
-    /// Create a new Nautilus Index account. This should only be run once in your program's lifetime.
+    /// Create a new Nautilus Index account. This should only be run once in
+    /// your program's lifetime.
     pub fn create(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.clone(),
@@ -277,7 +286,8 @@ impl<'a> Create<'a, NautilusIndex<'a>> {
         Ok(())
     }
 
-    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    /// This function is the same as `create(&mut self, ..)` but allows you to
+    /// specify a rent payer.
     pub fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         let data = NautilusIndexData {
             index: std::collections::HashMap::new(),

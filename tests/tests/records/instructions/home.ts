@@ -41,7 +41,7 @@ const CreateHomeInstructionDataSchema = new Map([
     }]
 ])
 
-function deriveHomeAddress(programId: PublicKey, id: number): PublicKey {
+export function deriveHomeAddress(programId: PublicKey, id: number): PublicKey {
     return PublicKey.findProgramAddressSync(
         [Buffer.from("home"), Buffer.from(Uint8Array.of(id))],
         programId

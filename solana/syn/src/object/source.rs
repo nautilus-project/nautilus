@@ -1,5 +1,5 @@
-//! Spawns all objects from Nautilus's `src/objects/.` into `syn::ItemStruct` types
-//! for `syn` processing.
+//! Spawns all objects from Nautilus's `src/objects/.` into `syn::ItemStruct`
+//! types for `syn` processing.
 use syn::{punctuated::Punctuated, Field, FieldsNamed, Ident, ItemStruct};
 
 use super::NautilusObject;
@@ -65,8 +65,8 @@ fn source_struct(name: &str, source_fields: Vec<SourceField>) -> ItemStruct {
     }
 }
 
-/// Uses helpers to return a vector of all Nautilus objects from Nautilus's `src/objects/.`
-/// as `syn::ItemStruct` types.
+/// Uses helpers to return a vector of all Nautilus objects from Nautilus's
+/// `src/objects/.` as `syn::ItemStruct` types.
 pub fn source_nautilus_objects() -> Vec<NautilusObject> {
     [
         source_struct(
@@ -117,7 +117,8 @@ pub fn source_nautilus_objects() -> Vec<NautilusObject> {
     .collect()
 }
 
-/// Returns a vector with just the string names of all objects from Nautilus's `src/objects/.`.
+/// Returns a vector with just the string names of all objects from Nautilus's
+/// `src/objects/.`.
 pub fn source_nautilus_names() -> Vec<String> {
     vec![
         "NautilusIndex".to_string(),

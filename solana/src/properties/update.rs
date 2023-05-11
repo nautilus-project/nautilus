@@ -5,17 +5,15 @@ use crate::{error::NautilusError, NautilusMut};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
-/// The struct to wrap an object so that it has the necessary accounts to create
-/// an on-chain instance of itself. A user wraps their object `T` in `Create<'_,
-/// T>` in order to make accessible the transaction fee payer, the System
-/// Program, and the Rent Sysvar.
+/// The struct to wrap an object so that it has the necessary accounts to update an on-chain instance of itself.
+/// A user wraps their object `T` in `Update<'_, T>` in order to make accessible the transaction fee payer,
+/// the System Program, and the Rent Sysvar.
 ///
-/// The transaction fee payer can be included by default whenever they provide a
-/// signature for transaction fees, and the System Program and Rent Sysvar are
-/// always read-only, which means the addition of these accounts will never
-/// hinder Sealevel parallel execution.
+/// The transaction fee payer can be included by default whenever they provide a signature for transaction fees, and
+/// the System Program and Rent Sysvar are always read-only, which means the addition of these accounts will never hinder
+/// Sealevel parallel execution.
 #[derive(Clone)]
-pub struct Create<'a, T>
+pub struct Update<'a, T>
 where
     T: NautilusAccountInfo<'a> + 'a,
 {
@@ -25,7 +23,7 @@ where
     pub self_account: T,
 }
 
-impl<'a, T> Create<'a, T>
+impl<'a, T> Update<'a, T>
 where
     T: NautilusAccountInfo<'a> + 'a,
 {
@@ -47,7 +45,7 @@ where
     }
 }
 
-impl<'a, T> NautilusAccountInfo<'a> for Create<'a, T>
+impl<'a, T> NautilusAccountInfo<'a> for Update<'a, T>
 where
     T: NautilusAccountInfo<'a> + 'a,
 {
@@ -84,9 +82,9 @@ where
     }
 }
 
-impl<'a, T> NautilusMut<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
+impl<'a, T> NautilusMut<'a> for Update<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
 
-impl<'a, T> NautilusSigner<'a> for Create<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
+impl<'a, T> NautilusSigner<'a> for Update<'a, T> where T: NautilusAccountInfo<'a> + 'a {}
 
 fn check_account_does_not_exist<'a>(account: &impl NautilusAccountInfo<'a>) -> bool {
     let account_info = account.account_info();

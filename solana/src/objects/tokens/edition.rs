@@ -1,4 +1,5 @@
-//! The `Edition<T>` and `MasterEdition<T>` Nautilus object` and all associated trait implementations.
+//! The `Edition<T>` and `MasterEdition<T>` Nautilus object` and all associated
+//! trait implementations.
 pub use mpl_token_metadata::state::{
     Edition as EditionState, MasterEditionV2 as MasterEditionState, TokenMetadataAccount,
 };
@@ -8,10 +9,11 @@ use crate::{error::NautilusError, NautilusAccountInfo};
 
 /// The Nautilus object representing an Edition of an NFT.
 ///
-/// The underlying account - designated in field `account_info` - is the edition account.
+/// The underlying account - designated in field `account_info` - is the edition
+/// account.
 ///
-/// We also include the read-only Token Metadata Program for any CPI operations necessary, since we do not
-/// own this account.
+/// We also include the read-only Token Metadata Program for any CPI operations
+/// necessary, since we do not own this account.
 #[derive(Clone)]
 pub struct Edition<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -21,7 +23,8 @@ pub struct Edition<'a> {
 }
 
 impl<'a> Edition<'a> {
-    /// Instantiate a new `Edition` without loading the account inner data from on-chain.
+    /// Instantiate a new `Edition` without loading the account inner data from
+    /// on-chain.
     pub fn new(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,
@@ -35,7 +38,8 @@ impl<'a> Edition<'a> {
         }
     }
 
-    /// Instantiate a new `Edition` and load the account inner data from on-chain.
+    /// Instantiate a new `Edition` and load the account inner data from
+    /// on-chain.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,
@@ -105,10 +109,11 @@ impl<'a> NautilusAccountInfo<'a> for Edition<'a> {
 
 /// The Nautilus object representing an MasterEdition of an NFT.
 ///
-/// The underlying account - designated in field `account_info` - is the edition account.
+/// The underlying account - designated in field `account_info` - is the edition
+/// account.
 ///
-/// We also include the read-only Token Metadata Program for any CPI operations necessary, since we do not
-/// own this account.
+/// We also include the read-only Token Metadata Program for any CPI operations
+/// necessary, since we do not own this account.
 #[derive(Clone)]
 pub struct MasterEdition<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -118,7 +123,8 @@ pub struct MasterEdition<'a> {
 }
 
 impl<'a> MasterEdition<'a> {
-    /// Instantiate a new `MasterEdition` without loading the account inner data from on-chain.
+    /// Instantiate a new `MasterEdition` without loading the account inner data
+    /// from on-chain.
     pub fn new(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,
@@ -132,7 +138,8 @@ impl<'a> MasterEdition<'a> {
         }
     }
 
-    /// Instantiate a new `MasterEdition` and load the account inner data from on-chain.
+    /// Instantiate a new `MasterEdition` and load the account inner data from
+    /// on-chain.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         token_metadata_program: Box<AccountInfo<'a>>,

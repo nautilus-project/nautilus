@@ -1,4 +1,5 @@
-//! Converters to allow for dissolving of Nautilus token-generation configuration structs,
+//! Converters to allow for dissolving of Nautilus token-generation
+//! configuration structs,
 // such as `NautilusEntrypointEnum` and `NautilusEntrypointEnumVariant`,
 // into IDL components.
 use nautilus_idl::{
@@ -20,8 +21,8 @@ use super::{entry_variant::NautilusEntrypointEnumVariant, required_account::Requ
 
 /// Converts the `NautilusEntrypointEnumVariant` into an IDL instruction.
 ///
-/// This will use the configurations from the variant to build the necessary instruction in
-/// the IDL - including all required accounts.
+/// This will use the configurations from the variant to build the necessary
+/// instruction in the IDL - including all required accounts.
 impl From<&NautilusEntrypointEnumVariant> for IdlInstruction {
     fn from(value: &NautilusEntrypointEnumVariant) -> Self {
         let mut name = value.variant_ident.to_string();
@@ -39,8 +40,8 @@ impl From<&NautilusEntrypointEnumVariant> for IdlInstruction {
     }
 }
 
-/// Straightforward conversion from a `RequiredAccount` into its IDL representation, including
-/// configs for `is_mut` and `is_signer`.
+/// Straightforward conversion from a `RequiredAccount` into its IDL
+/// representation, including configs for `is_mut` and `is_signer`.
 impl From<&RequiredAccount> for IdlInstructionAccount {
     fn from(value: &RequiredAccount) -> Self {
         Self {
@@ -53,7 +54,8 @@ impl From<&RequiredAccount> for IdlInstructionAccount {
     }
 }
 
-/// Straightforward conversion from a `NautilusObject` into its IDL type definition.
+/// Straightforward conversion from a `NautilusObject` into its IDL type
+/// definition.
 impl From<&NautilusObject> for IdlTypeDef {
     fn from(value: &NautilusObject) -> Self {
         let mut default_type_def: IdlTypeDef = match &value.raw_type {
@@ -68,10 +70,12 @@ impl From<&NautilusObject> for IdlTypeDef {
     }
 }
 
-/// Converts the object configurations for a `NautilusObject` into IDL configurations.
+/// Converts the object configurations for a `NautilusObject` into IDL
+/// configurations.
 ///
-/// These configurations are additional (and mostly optional) configs for the client to use to
-/// perform certain actions such as SQL queries and autoincrement.
+/// These configurations are additional (and mostly optional) configs for the
+/// client to use to perform certain actions such as SQL queries and
+/// autoincrement.
 impl From<&NautilusObjectConfig> for IdlTypeDefNautilusConfig {
     fn from(value: &NautilusObjectConfig) -> Self {
         match value {
@@ -113,7 +117,8 @@ impl From<&NautilusObjectConfig> for IdlTypeDefNautilusConfig {
     }
 }
 
-/// Converts a `Seed` from the `syn` crate into an `IdlSeed` from the `idl` crate.
+/// Converts a `Seed` from the `syn` crate into an `IdlSeed` from the `idl`
+/// crate.
 impl From<&Seed> for IdlSeed {
     fn from(value: &Seed) -> Self {
         match value {
@@ -136,15 +141,18 @@ impl From<&Seed> for IdlSeed {
 impl From<DefaultInstruction> for IdlTypeDefNautilusConfigDefaultInstruction {
     fn from(value: DefaultInstruction) -> Self {
         match value {
-            DefaultInstruction::Create(val) => {
-                IdlTypeDefNautilusConfigDefaultInstruction::Create(val)
-            }
-            DefaultInstruction::Delete(val) => {
-                IdlTypeDefNautilusConfigDefaultInstruction::Delete(val)
-            }
-            DefaultInstruction::Update(val) => {
-                IdlTypeDefNautilusConfigDefaultInstruction::Update(val)
-            }
+            DefaultInstruction::Create {
+                struct_ident: _,
+                instruction,
+            } => IdlTypeDefNautilusConfigDefaultInstruction::Create(instruction),
+            DefaultInstruction::Delete {
+                struct_ident: _,
+                instruction,
+            } => IdlTypeDefNautilusConfigDefaultInstruction::Delete(instruction),
+            DefaultInstruction::Update {
+                struct_ident: _,
+                instruction,
+            } => IdlTypeDefNautilusConfigDefaultInstruction::Update(instruction),
         }
     }
 }

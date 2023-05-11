@@ -43,7 +43,8 @@ pub fn create_account<'a>(
     )
 }
 
-/// Cross-Program Invocation (CPI) to create a program-derived address account (PDA).
+/// Cross-Program Invocation (CPI) to create a program-derived address account
+/// (PDA).
 #[allow(clippy::boxed_local)]
 pub fn create_pda<'a, T: BorshSerialize>(
     new_account: impl NautilusAccountInfo<'a>,

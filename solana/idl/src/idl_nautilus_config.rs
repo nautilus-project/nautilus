@@ -12,8 +12,9 @@ pub enum IdlSeed {
 
 /// Additional Nautilus-specific IDL configurations.
 ///
-/// These configurations are additional (and mostly optional) configs for the client to use to
-/// perform certain actions such as SQL queries and autoincrement.
+/// These configurations are additional (and mostly optional) configs for the
+/// client to use to perform certain actions such as SQL queries and
+/// autoincrement.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdlTypeDefNautilusConfig {

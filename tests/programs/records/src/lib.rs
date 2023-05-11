@@ -88,6 +88,54 @@ mod program_nautilus {
         //
         Ok(())
     }
+
+    fn fund_person<'a>(
+        person: Mut<Record<'a, Person>>,
+        payer: Signer<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
+        payer.transfer_lamports(person, amount)
+    }
+
+    fn transfer_from_person<'a>(
+        person: Mut<Record<'a, Person>>,
+        recipient: Mut<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
+        person.transfer_lamports(recipient, amount)
+    }
+
+    fn fund_home<'a>(
+        home: Mut<Record<'a, Home>>,
+        payer: Signer<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
+        payer.transfer_lamports(home, amount)
+    }
+
+    fn transfer_from_home<'a>(
+        home: Mut<Record<'a, Home>>,
+        recipient: Mut<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
+        home.transfer_lamports(recipient, amount)
+    }
+
+    fn fund_car<'a>(
+        car: Mut<Record<'a, Car>>,
+        payer: Signer<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
+        payer.transfer_lamports(car, amount)
+    }
+
+    fn transfer_from_car<'a>(
+        car: Mut<Record<'a, Car>>,
+        recipient: Mut<Wallet<'a>>,
+        amount: u64,
+    ) -> ProgramResult {
+        car.transfer_lamports(recipient, amount)
+    }
 }
 
 #[derive(Table)]

@@ -4,10 +4,11 @@
 //                          Nautilus IDL
 // ----------------------------------------------------------------
 //
-// Much of this IDL crate is inspired by or borrowed directly from Metaplex's Shank.
+// Much of this IDL crate is inspired by or borrowed directly from Metaplex's
+// Shank.
 //
-// Nautilus and its contributors intend to introduce a shared, dynamic IDL crate to be used
-// by anyone across the Solana community.
+// Nautilus and its contributors intend to introduce a shared, dynamic IDL crate
+// to be used by anyone across the Solana community.
 //
 // All credit to contributors at Metaplex for anything borrowed in this crate.
 //

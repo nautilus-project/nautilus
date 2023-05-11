@@ -12,7 +12,8 @@ use crate::{
 
 /// The Nautilus object representing an NFT.
 ///
-/// Like the `Token` object, this struct is a combination of a mint account and a token metadata account.
+/// Like the `Token` object, this struct is a combination of a mint account and
+/// a token metadata account.
 ///
 /// This Nautilus object is designed for easily working with NFTs.
 #[derive(Clone)]
@@ -22,7 +23,8 @@ pub struct Nft<'a> {
 }
 
 impl<'a> Nft<'a> {
-    /// Instantiate a new `Nft` without loading the account inner data from on-chain.
+    /// Instantiate a new `Nft` without loading the account inner data from
+    /// on-chain.
     pub fn new(
         mint_account: Box<AccountInfo<'a>>,
         metadata_account: Box<AccountInfo<'a>>,
@@ -84,7 +86,8 @@ impl<'a> NautilusAccountInfo<'a> for Nft<'a> {
 }
 
 impl<'a> Mut<Nft<'a>> {
-    /// Mint an NFT to an associated token account. This disables minting automatically.
+    /// Mint an NFT to an associated token account. This disables minting
+    /// automatically.
     pub fn mint_to(
         &self,
         recipient: impl NautilusMut<'a>,
@@ -219,7 +222,8 @@ impl<'a> Create<'a, Nft<'a>> {
         Ok(())
     }
 
-    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    /// This function is the same as `create(&mut self, ..)` but allows you to
+    /// specify a rent payer.
     #[allow(clippy::too_many_arguments)]
     pub fn create_with_payer(
         &mut self,

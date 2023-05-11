@@ -38,7 +38,7 @@ const CreatePersonInstructionDataSchema = new Map([
     }]
 ])
 
-function derivePersonAddress(programId: PublicKey, id: number): PublicKey {
+export function derivePersonAddress(programId: PublicKey, id: number): PublicKey {
     return PublicKey.findProgramAddressSync(
         [Buffer.from("person"), Buffer.from(Uint8Array.of(id))],
         programId

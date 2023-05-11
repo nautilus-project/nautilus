@@ -1,4 +1,5 @@
-//! Spawns the tokens for the required trait implementations for an annotated struct.
+//! Spawns the tokens for the required trait implementations for an annotated
+//! struct.
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{token::Colon, Fields, FnArg, Ident, Pat, PatIdent, PatType, Type};
@@ -41,7 +42,8 @@ pub fn impl_default(ident: &Ident, fields: &Fields) -> TokenStream {
     }
 }
 
-/// Generates tokens to implement `BorshDeserialize` and `BorshSerialize` on a struct.
+/// Generates tokens to implement `BorshDeserialize` and `BorshSerialize` on a
+/// struct.
 pub fn impl_borsh(ident: &Ident, fields: &Fields) -> TokenStream {
     let borsh_ser_where = fields.iter().map(|f| {
         let field_ty = f.ty.clone();
@@ -214,7 +216,8 @@ pub fn impl_nautilus_account_data(
         }
     };
 
-    // Determines how we build the `seeds(..)` and `pda(..)` functions and their respective callers.
+    // Determines how we build the `seeds(..)` and `pda(..)` functions and their
+    // respective callers.
     let (seeds_inner, seeds_params_tuple) = build_seeds_components_for_account(seeds);
     let (
         seeds_args,
@@ -382,7 +385,8 @@ pub fn impl_nautilus_account_data(
     }
 }
 
-/// Helper function to generate tokens for writing the function that returns the data type's primary key.
+/// Helper function to generate tokens for writing the function that returns the
+/// data type's primary key.
 fn build_tokens_primary_key_seed(key: &syn::Ident, ty: &syn::Type) -> TokenStream {
     match quote::quote!(#ty).to_string().as_str() {
         "String" => quote::quote! {
@@ -403,8 +407,8 @@ fn build_tokens_primary_key_seed(key: &syn::Ident, ty: &syn::Type) -> TokenStrea
     }
 }
 
-/// Helper function that parses the fields of a struct to determine the function signature for
-/// a `new(..) -> Self` function to create a record.
+/// Helper function that parses the fields of a struct to determine the function
+/// signature for a `new(..) -> Self` function to create a record.
 fn get_new_fn_args_for_record(
     fields: &Fields,
     autoincrement: bool,
@@ -435,8 +439,8 @@ fn get_new_fn_args_for_record(
     (data_new_fn_args, data_new_call_args)
 }
 
-/// Helper function that parses the fields of a struct to determine the function signature for
-/// a `new(..) -> Self` function to create an account.
+/// Helper function that parses the fields of a struct to determine the function
+/// signature for a `new(..) -> Self` function to create an account.
 fn get_new_fn_args_for_account(fields: &Fields) -> (Vec<FnArg>, Vec<Ident>) {
     let mut data_new_fn_args: Vec<FnArg> = vec![];
     let mut data_new_call_args: Vec<Ident> = vec![];
@@ -465,7 +469,8 @@ fn get_new_fn_args_for_account(fields: &Fields) -> (Vec<FnArg>, Vec<Ident>) {
 ///
 /// Consider the return type of this function:
 /// * 'seeds_inner': Conversions of all seeds into the `Vec<Vec<u8>>`.
-/// * 'seeds_params': Input parameters required for any seeds declared that are parameter-like.
+/// * 'seeds_params': Input parameters required for any seeds declared that are
+///   parameter-like.
 /// * 'seeds_params_tuple': Input parameters required represented in a tuple.
 fn build_seeds_components_for_account(seeds: &Vec<Seed>) -> (TokenStream, Option<TokenStream>) {
     let mut seeds_inner_items: Vec<TokenStream> = vec![];

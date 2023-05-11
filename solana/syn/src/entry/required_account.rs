@@ -37,8 +37,8 @@ pub enum RequiredAccountType {
 
 /// The sub-type of a general account.
 ///
-/// `SelfAccount` is the underlying account, while others like `Metadata` and `MintAuthority` are
-/// required for some objects like `Token` and `Mint`.
+/// `SelfAccount` is the underlying account, while others like `Metadata` and
+/// `MintAuthority` are required for some objects like `Token` and `Mint`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RequiredAccountSubtype {
     SelfAccount, // The underlying account for any Nautilus object
@@ -60,13 +60,16 @@ pub enum ObjectType {
     Account(bool, Vec<Construct>), // State account
 }
 
-/// A construct shell enum used to map variants with provided args into required accounts.
+/// A construct shell enum used to map variants with provided args into required
+/// accounts.
 ///
-/// This enum almost mirrors the `RequiredAccountType` enum, but in this context its used
-/// to pass provided configurations - such as `is_mut` and `is_signer` - to the resolver.
+/// This enum almost mirrors the `RequiredAccountType` enum, but in this context
+/// its used to pass provided configurations - such as `is_mut` and `is_signer`
+/// - to the resolver.
 ///
-/// If you examine `From<Construct> for RequiredAccount`, you'll see this enum is used to
-/// resolve the required accounts for any of its variants with the configs.
+/// If you examine `From<Construct> for RequiredAccount`, you'll see this enum
+/// is used to resolve the required accounts for any of its variants with the
+/// configs.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Construct {
     ProgramId,
@@ -90,7 +93,8 @@ pub enum SysvarType {
 }
 
 impl From<Construct> for RequiredAccount {
-    /// Converts a Construct into the proper RequiredAccount using the provided variant arguments.
+    /// Converts a Construct into the proper RequiredAccount using the provided
+    /// variant arguments.
     fn from(value: Construct) -> Self {
         match value {
             Construct::ProgramId => {
@@ -263,8 +267,8 @@ impl RequiredAccount {
     }
 
     /// Resolves the required accounts for an object name and ObjectType.
-    /// The object name, as declared in the user's function signature, is used to append as a
-    /// prefix to certain accounts where necessary.
+    /// The object name, as declared in the user's function signature, is used
+    /// to append as a prefix to certain accounts where necessary.
     pub fn resolve_accounts(
         obj_name: String,
         object_type: ObjectType,
@@ -346,7 +350,8 @@ impl RequiredAccount {
         )
     }
 
-    /// De-duplication of required accounts. Used to aggregate all accounts required for an instruction.
+    /// De-duplication of required accounts. Used to aggregate all accounts
+    /// required for an instruction.
     pub fn condense(all_required_accounts: Vec<Vec<Self>>) -> Vec<Self> {
         let flattened = all_required_accounts
             .into_iter()
@@ -376,9 +381,10 @@ impl RequiredAccount {
 }
 
 impl From<&RequiredAccount> for proc_macro2::TokenStream {
-    /// Converts a required account into the tokens used to instantiate a Nautilus object.
-    /// Each required account for a Nautilus object can use `Into<TokenStream>` to generate the
-    /// cloning of the `Box` pointers in the processor match arm, to be passed into the object's initializer.
+    /// Converts a required account into the tokens used to instantiate a
+    /// Nautilus object. Each required account for a Nautilus object can use
+    /// `Into<TokenStream>` to generate the cloning of the `Box` pointers in
+    /// the processor match arm, to be passed into the object's initializer.
     fn from(ast: &RequiredAccount) -> Self {
         match &ast.account_type {
             RequiredAccountType::ProgramId => quote! { program_id },

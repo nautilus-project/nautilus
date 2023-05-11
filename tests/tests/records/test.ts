@@ -4,19 +4,27 @@ import {
 } from 'mocha'
 import {
     Keypair,
+    LAMPORTS_PER_SOL,
     sendAndConfirmTransaction,
     Transaction,
     TransactionInstruction,
 } from '@solana/web3.js'
 import { PAYER, PROGRAM_RECORDS, TEST_CONFIGS } from '../const'
 import { 
+    MyInstructions,
     createCreateCarInstruction,
     createCreateHomeInstruction,
     createCreatePersonInstruction, 
+    createFundCarInstruction, 
+    createFundHomeInstruction, 
+    createFundPersonInstruction, 
     createInitializeInstruction, 
     createReadCarInstruction,
     createReadHomeInstruction,
     createReadPersonInstruction,
+    createTransferFromCarInstruction,
+    createTransferFromHomeInstruction,
+    createTransferFromPersonInstruction,
 } from './instructions'
 
 describe("Nautilus Unit Tests: Create Records", async () => {
@@ -31,6 +39,8 @@ describe("Nautilus Unit Tests: Create Records", async () => {
     const homeStreet = "Solana St."
     const carMake = "Chevrolet"
     const carModel = "Corvette"
+
+    const fundTransferAmount = LAMPORTS_PER_SOL / 1000
 
     async function test(ix: TransactionInstruction, signers: Keypair[]) {
         TEST_CONFIGS.sleep()
@@ -75,6 +85,36 @@ describe("Nautilus Unit Tests: Create Records", async () => {
 
     it("Read Car", async () => test(
         await createReadCarInstruction(program.publicKey),
+        [payer],
+    ))
+
+    it("Fund Person", async () => test(
+        await createFundPersonInstruction(payer.publicKey, program.publicKey, fundTransferAmount),
+        [payer],
+    ))
+
+    it("Transfer from Person", async () => test(
+        await createTransferFromPersonInstruction(payer.publicKey, program.publicKey, fundTransferAmount),
+        [payer],
+    ))
+
+    it("Fund Home", async () => test(
+        await createFundHomeInstruction(payer.publicKey, program.publicKey, fundTransferAmount, homeId),
+        [payer],
+    ))
+
+    it("Transfer from Home", async () => test(
+        await createTransferFromHomeInstruction(payer.publicKey, program.publicKey, fundTransferAmount, homeId),
+        [payer],
+    ))
+
+    it("Fund Car", async () => test(
+        await createFundCarInstruction(payer.publicKey, program.publicKey, fundTransferAmount),
+        [payer],
+    ))
+
+    it("Transfer from Car", async () => test(
+        await createTransferFromCarInstruction(payer.publicKey, program.publicKey, fundTransferAmount),
         [payer],
     ))
   })

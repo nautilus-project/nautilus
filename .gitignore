@@ -10,4 +10,5 @@ test-ledger/
 # Testing
 solana/*.json
 iso
+iso-derive
 nautilife

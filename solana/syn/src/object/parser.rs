@@ -38,8 +38,8 @@ pub struct NautilusAccountFieldAttributes {
     pub is_authority: bool,
 }
 
-/// Parse out a `syn::ItemStruct` according to whichever type of Nautilus object is
-/// attempting to be created from the macro.
+/// Parse out a `syn::ItemStruct` according to whichever type of Nautilus object
+/// is attempting to be created from the macro.
 pub fn parse_item_struct(
     item_struct: &ItemStruct,
     nautilus_ty: NautilusObjectType,
@@ -51,7 +51,7 @@ pub fn parse_item_struct(
     match nautilus_ty {
         NautilusObjectType::Record => {
             let default_instructions =
-                parse_top_level_attributes_for_record(&ident_string, &item_struct.attrs);
+                parse_top_level_attributes_for_record(&item_struct.ident, &item_struct.attrs);
 
             let mut primary_key_ident_opt: Option<(Ident, Type)> = None;
             let mut autoincrement_enabled: bool = true;
@@ -109,7 +109,8 @@ pub fn parse_item_struct(
     }
 }
 
-/// Parses the field attributes of the struct, such as `#[authority]` and `#[primary_key(..)]`.
+/// Parses the field attributes of the struct, such as `#[authority]` and
+/// `#[primary_key(..)]`.
 pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttributes {
     let mut is_primary_key = false;
     let mut autoincrement_enabled = true;
@@ -143,16 +144,16 @@ pub fn parse_field_attributes(field: &syn::Field) -> NautilusAccountFieldAttribu
     }
 }
 
-/// Attempts to parse the top-level macro attributes for `#[derive(nautilus::Table)]`, such
-/// as `#[default_instructions(..)]`.
+/// Attempts to parse the top-level macro attributes for
+/// `#[derive(nautilus::Table)]`, such as `#[default_instructions(..)]`.
 pub fn parse_top_level_attributes_for_record(
-    struct_name: &str,
+    struct_ident: &Ident,
     attrs: &Vec<syn::Attribute>,
 ) -> Vec<DefaultInstruction> {
     let mut default_instructions = Vec::new();
     for attr in attrs.iter() {
         if attr.path.is_ident("default_instructions") {
-            let mut parsed_instructions = DefaultInstructionParser::parse(attr, struct_name)
+            let mut parsed_instructions = DefaultInstructionParser::parse(attr, struct_ident)
                 .expect("Invalid format for `default_instructions` attribute");
             default_instructions.append(&mut parsed_instructions.instructions);
         }
@@ -160,8 +161,8 @@ pub fn parse_top_level_attributes_for_record(
     default_instructions
 }
 
-/// Attempts to parse the top-level macro attributes for `#[derive(nautilus::State)]`, such
-/// as `#[seeds(..)]`.
+/// Attempts to parse the top-level macro attributes for
+/// `#[derive(nautilus::State)]`, such as `#[seeds(..)]`.
 pub fn parse_top_level_attributes_for_account(attrs: &Vec<syn::Attribute>) -> Vec<Seed> {
     let mut seeds = Vec::new();
     for attr in attrs.iter() {

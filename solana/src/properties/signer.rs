@@ -5,11 +5,14 @@ use crate::{error::NautilusError, NautilusMut};
 
 use super::NautilusAccountInfo;
 
-/// The trait that ensures an object's underlying `AccountInfo` must be a signer.
+/// The trait that ensures an object's underlying `AccountInfo` must be a
+/// signer.
 pub trait NautilusSigner<'a>: NautilusAccountInfo<'a> {}
 
-/// The struct to wrap an object so that it adheres to the `NautilusSigner<'_>` trait.
-/// A user wraps their object `T` in `Signer<T>` in order to comply with various method constraints and ensure the underlying account is marked as a signer.
+/// The struct to wrap an object so that it adheres to the `NautilusSigner<'_>`
+/// trait. A user wraps their object `T` in `Signer<T>` in order to comply with
+/// various method constraints and ensure the underlying account is marked as a
+/// signer.
 #[derive(Clone)]
 pub struct Signer<T>
 where
