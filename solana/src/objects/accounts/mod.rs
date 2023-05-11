@@ -2,14 +2,15 @@
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
-    error::NautilusError, NautilusAccount, NautilusAccountData, NautilusAccountInfo, NautilusMut,
-    NautilusTransferLamports,
+    error::NautilusError, Mut, NautilusAccount, NautilusAccountData, NautilusAccountInfo,
+    NautilusMut, NautilusTransferLamports,
 };
 
-/// The struct that allows you to create a plain-old program-derived address (PDA) account.
+/// The struct that allows you to create a plain-old program-derived address
+/// (PDA) account.
 ///
-/// A user wraps their data type `T` with `Account<'_, T>` in order to combine the data stored within the
-/// account and its underlying AccountInfo.
+/// A user wraps their data type `T` with `Account<'_, T>` in order to combine
+/// the data stored within the account and its underlying AccountInfo.
 ///
 /// The `account_info` field represents the PDA itself.
 #[derive(Clone)]
@@ -26,7 +27,8 @@ impl<'a, T> Account<'a, T>
 where
     T: NautilusAccountData,
 {
-    /// Instantiate a new PDA without loading the account inner data from on-chain.
+    /// Instantiate a new PDA without loading the account inner data from
+    /// on-chain.
     pub fn new(program_id: &'a Pubkey, account_info: Box<AccountInfo<'a>>) -> Self {
         Self {
             program_id,
@@ -121,7 +123,7 @@ where
     }
 }
 
-impl<'a, T> NautilusTransferLamports<'a> for Account<'a, T>
+impl<'a, T> NautilusTransferLamports<'a> for Mut<Account<'a, T>>
 where
     T: NautilusAccountData,
 {

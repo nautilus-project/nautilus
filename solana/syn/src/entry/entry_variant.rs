@@ -1,14 +1,14 @@
-//! A `syn`-powered struct that dissolves to the required components to create the
-//! variants of the program's instruction enum and it's associated processor match arm
-//! initialization logic.
-use nautilus_idl::idl_instruction::{IdlInstruction};
-use proc_macro2::{TokenStream, Span};
+//! A `syn`-powered struct that dissolves to the required components to create
+//! the variants of the program's instruction enum and it's associated processor
+//! match arm initialization logic.
+use nautilus_idl::idl_instruction::IdlInstruction;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Ident, Type};
 
 use crate::{
-    entry::required_account::{RequiredAccountSubtype, to_ident_pointer}, 
-    object::{NautilusObject, source::source_nautilus_names, parser::NautilusObjectConfig}
+    entry::required_account::{to_ident_pointer, RequiredAccountSubtype},
+    object::{parser::NautilusObjectConfig, source::source_nautilus_names, NautilusObject},
 };
 
 use super::{
@@ -19,36 +19,44 @@ use super::{
     },
 };
 
-/// The struct used to house all of the required components for building out the generated program, derived
-/// from the user's declared function.
+/// The struct used to house all of the required components for building out the
+/// generated program, derived from the user's declared function.
 ///
-/// The key functionality actually occurs in the trait implementations for this struct - including the self implementations such as `new(..)`.
+/// The key functionality actually occurs in the trait implementations for this
+/// struct - including the self implementations such as `new(..)`.
 #[derive(Debug)]
 pub struct NautilusEntrypointEnumVariant {
-    /// Instruction discriminant: derived from the order the functions are declared.
+    /// Instruction discriminant: derived from the order the functions are
+    /// declared.
     pub discriminant: u8,
-    /// The identifier of this instruction's variant in the program instruction enum.
+    /// The identifier of this instruction's variant in the program instruction
+    /// enum.
     pub variant_ident: Ident,
-    /// The arguments required for this instruction's variant in the program instruction enum.
+    /// The arguments required for this instruction's variant in the program
+    /// instruction enum.
     pub variant_args: Vec<(Ident, Type)>,
-    /// All required accounts for this instruction, in order to instantiate the declared Nautilus objects.
+    /// All required accounts for this instruction, in order to instantiate the
+    /// declared Nautilus objects.
     pub required_accounts: Vec<RequiredAccount>,
     /// The identifier of the user's declared function, in order to call it.
     pub call_ident: Ident,
-    /// The "call context" of each declared parameter in the user's defined function signature.
-    /// 
-    /// "Call context" can be explored further by examining the documentation for `CallContext`, but 
-    /// essentially it's information about whether or not the parameter is a Nautilus object or an instruction argument.
+    /// The "call context" of each declared parameter in the user's defined
+    /// function signature.
+    ///
+    /// "Call context" can be explored further by examining the documentation
+    /// for `CallContext`, but essentially it's information about whether or
+    /// not the parameter is a Nautilus object or an instruction argument.
     pub call_context: Vec<CallContext>,
 }
 
-/// "Call context" for each declared parameter in the user's defined function signature.
+/// "Call context" for each declared parameter in the user's defined function
+/// signature.
 #[derive(Debug)]
 pub enum CallContext {
     /// The parameter is in fact a Nautilus object.
-    /// 
-    /// Houses the configurations for this specific Nautilus object declared, which will tell
-    /// Nautilus how to instanitate it.
+    ///
+    /// Houses the configurations for this specific Nautilus object declared,
+    /// which will tell Nautilus how to instanitate it.
     Nautilus(NautilusObject),
     /// The parameter is an instruction argument and not a Nautilus object.
     Arg(Ident),
@@ -57,8 +65,9 @@ pub enum CallContext {
 impl NautilusEntrypointEnumVariant {
     /// Creates a new `NautilusEntrypointEnumVariant`.
     ///
-    /// This action will map each `CallContext::Nautilus(..)` for the parameters declared in the user's function to 
-    /// determine all required accounts for the instruction.
+    /// This action will map each `CallContext::Nautilus(..)` for the parameters
+    /// declared in the user's function to determine all required accounts
+    /// for the instruction.
     pub fn new(
         discriminant: u8,
         variant_ident: Ident,
@@ -95,19 +104,22 @@ impl NautilusEntrypointEnumVariant {
     }
 
     /// Builds the processor match arm for this particular declared function.
-    /// 
+    ///
     /// This function is where the bulk of the magic occurs.
-    /// 
-    /// Its basically going to generate the code to extract all required accounts from the provided
-    /// list of accounts in the program's entrypoint, ie. `accounts: &[AccountInfo]`, then use those
-    /// accounts to create `Box` pointers and instantiate each declared Nautilus object, then call the user's function.
+    ///
+    /// Its basically going to generate the code to extract all required
+    /// accounts from the provided list of accounts in the program's
+    /// entrypoint, ie. `accounts: &[AccountInfo]`, then use those
+    /// accounts to create `Box` pointers and instantiate each declared Nautilus
+    /// object, then call the user's function.
     fn build_match_arm_logic(&self) -> TokenStream {
         let instruction_name = self.variant_ident.to_string();
         let mut index_init = quote!();
-        // Maps all required accounts for this instruction into the proper tokens to extract from the iterator and 
-        // create a `Box` pointer for that account.
-        // The `Box` pointer is created in this step, so all cloning later in the match arm is cloning the `Box<AccountInfo>`
-        // instead of the `AccountInfo` itself.
+        // Maps all required accounts for this instruction into the proper tokens to
+        // extract from the iterator and create a `Box` pointer for that
+        // account. The `Box` pointer is created in this step, so all cloning
+        // later in the match arm is cloning the `Box<AccountInfo>` instead of
+        // the `AccountInfo` itself.
         let all_accounts = self.required_accounts.iter().map(|r| {
             let ident = match &r.account_type {
                 RequiredAccountType::Account(subtype) => match &subtype {
@@ -122,16 +134,18 @@ impl NautilusEntrypointEnumVariant {
                 _ => r.ident.clone(),
             };
             let ident_pointer = to_ident_pointer(&ident);
-            quote! { 
-                let #ident = next_account_info(accounts_iter)?.to_owned(); 
-                let #ident_pointer = Box::new(#ident); 
+            quote! {
+                let #ident = next_account_info(accounts_iter)?.to_owned();
+                let #ident_pointer = Box::new(#ident);
             }
         });
         let mut object_inits = vec![];
         let mut call_args = vec![];
-        // This block is going to try to instantiate every Nautilus object needed to call the user's function.
-        // Non-Nautilus objects will simply pass-through to the called function.
-        // The last line of the processor match arm will call the user's function with all of the instantiated "call_args".
+        // This block is going to try to instantiate every Nautilus object needed to
+        // call the user's function. Non-Nautilus objects will simply
+        // pass-through to the called function. The last line of the processor
+        // match arm will call the user's function with all of the instantiated
+        // "call_args".
         {
             self.call_context.iter().for_each(|ctx| {
                 match ctx {
@@ -149,7 +163,7 @@ impl NautilusEntrypointEnumVariant {
                                                 NautilusObjectConfig::AccountConfig { .. } => Ident::new("Account", Span::call_site()),
                                             },
                                             None => panic!("Object {} did not match any source Nautilus objects and was not annotated with a Nautilus #[derive(..)] macro", &obj.ident.to_string()),
-                                        }, 
+                                        },
                                         quote! { #ty },
                                         true,
                                     )
@@ -171,13 +185,13 @@ impl NautilusEntrypointEnumVariant {
                                         t
                                     });
                                     let create_obj_init = match is_custom {
-                                        true => quote! { 
+                                        true => quote! {
                                             let mut #arg_ident = Create::new(
                                                 #(#create_call_idents,)*
                                                 #obj_type::< #arg_ty >::new(#(#read_call_idents,)*)
                                             )?;
                                         },
-                                        false => quote! { 
+                                        false => quote! {
                                             let mut #arg_ident = Create::new(
                                                 #(#create_call_idents,)*
                                                 #obj_type::new(#(#read_call_idents,)*)
@@ -187,7 +201,7 @@ impl NautilusEntrypointEnumVariant {
                                     object_inits.push(create_obj_init);
                                 },
                                 None => {
-                                    if config.is_signer { 
+                                    if config.is_signer {
                                         object_inits.push(
                                             quote! { let #arg_ident = Signer::new(#obj_type::load(#(#read_call_idents,)*)?)?; },
                                         );
@@ -195,7 +209,7 @@ impl NautilusEntrypointEnumVariant {
                                         object_inits.push(
                                             quote! { let #arg_ident = Mut::new(#obj_type::load(#(#read_call_idents,)*)?)?; },
                                         );
-                                    } else { 
+                                    } else {
                                         object_inits.push(match is_custom {
                                                 true => quote! { let #arg_ident = #obj_type::< #arg_ty >::load(#(#read_call_idents,)*)?; },
                                                 false => quote! { let #arg_ident = #obj_type::load(#(#read_call_idents,)*)?; },
@@ -204,7 +218,6 @@ impl NautilusEntrypointEnumVariant {
                                     }
                                 },
                             };
-                            
                             call_args.push(quote! { #arg_ident })
                         }
                         None => {
@@ -230,15 +243,22 @@ impl NautilusEntrypointEnumVariant {
 }
 
 impl From<&NautilusEntrypointEnumVariant> for (TokenStream, TokenStream, IdlInstruction) {
-    /// Dissolves the `NautilusEntrypointEnumVariant` into the proper components for building out the generated program.
-    /// 
-    /// When the `NautilusEntrypointEnum` is dissolved, it dissolves each `NautilusEntrypointEnumVariant` of its `variants` vector and 
+    /// Dissolves the `NautilusEntrypointEnumVariant` into the proper components
+    /// for building out the generated program.
+    ///
+    /// When the `NautilusEntrypointEnum` is dissolved, it dissolves each
+    /// `NautilusEntrypointEnumVariant` of its `variants` vector and
     /// aggregates each generated component.
     ///
-    /// Consider the return type of the function itself - defined at the trait level: (`TokenStream`, `TokenStream`, `IdlInstruction`):
-    /// * `TokenStream` (first): The identifier and associated arguments for the program instruction enum variant for this particular declared function.
-    /// * `TokenStream` (second): The processor match arm for this particular declared function.
-    /// * `IdlInstruction`: The IDL instruction derived from this particular declared function.
+    /// Consider the return type of the function itself - defined at the trait
+    /// level: (`TokenStream`, `TokenStream`, `IdlInstruction`):
+    /// * `TokenStream` (first): The identifier and associated arguments for the
+    ///   program instruction enum variant for this particular declared
+    ///   function.
+    /// * `TokenStream` (second): The processor match arm for this particular
+    ///   declared function.
+    /// * `IdlInstruction`: The IDL instruction derived from this particular
+    ///   declared function.
     fn from(value: &NautilusEntrypointEnumVariant) -> Self {
         let variant_ident = &value.variant_ident;
         let enum_ident = NautilusEntrypointEnum::enum_ident();

@@ -520,9 +520,9 @@ pub fn set_authority<'a>(
 
 /// Given a wrapped / native token account (a token account containing SOL)
 /// updates its amount field based on the account's underlying `lamports`.
-/// This is useful if a non-wrapped SOL account uses `system_instruction::transfer`
-/// to move lamports to a wrapped token account, and needs to have its token
-/// `amount` field updated.
+/// This is useful if a non-wrapped SOL account uses
+/// `system_instruction::transfer` to move lamports to a wrapped token account,
+/// and needs to have its token `amount` field updated.
 pub fn sync_native<'a>(
     token_program_id: &Pubkey,
     token_account: impl NautilusMut<'a>,

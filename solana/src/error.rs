@@ -7,22 +7,28 @@ use solana_program::{
 use splogger::{error, Splog};
 use thiserror::Error;
 
-/// Custom errors for Nautilus functionality. Convertible to `solana_program::program_error::ProgramError`.
+/// Custom errors for Nautilus functionality. Convertible to
+/// `solana_program::program_error::ProgramError`.
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
 pub enum NautilusError {
-    /// The inner data of an account could not be loaded. This usually means the account is empty.
+    /// The inner data of an account could not be loaded. This usually means the
+    /// account is empty.
     #[error("The inner data of an account could not be loaded. This usually means the account is empty.")]
     LoadDataFailed(String, String),
-    /// The inner data of an account could not be deserialized. This usually means an account type mismatch.
+    /// The inner data of an account could not be deserialized. This usually
+    /// means an account type mismatch.
     #[error("The inner data of an account could not be deserialized. This usually means an account type mismatch.")]
     DeserializeDataFailed(String, String),
-    /// Nautilus couldn't write a new record to a table. This usually means an error with the primary key provided.
+    /// Nautilus couldn't write a new record to a table. This usually means an
+    /// error with the primary key provided.
     #[error("Nautilus couldn't write a new record to a table. This usually means an error with the primary key provided.")]
     WriteRecordFailed(String),
-    /// The underlying account for a `Mut<T>` declared object was not marked as mutable.
+    /// The underlying account for a `Mut<T>` declared object was not marked as
+    /// mutable.
     #[error("The underlying account for a `Mut<T>` declared object was not marked as mutable.")]
     AccountNotMutable(String),
-    /// The underlying account for a `Signer<T>` declared object was not marked as signer.
+    /// The underlying account for a `Signer<T>` declared object was not marked
+    /// as signer.
     #[error("The underlying account for a `Signer<T>` declared object was not marked as signer.")]
     AccountNotSigner(String),
     /// The underlying account for a `Create<T>` declared object already exists.

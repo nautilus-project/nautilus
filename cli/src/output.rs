@@ -38,7 +38,8 @@ impl NautilusTerminal {
         println!("\n\n{}", msg);
     }
 
-    /// Set the color, print some output, then remit control of the output terminal.
+    /// Set the color, print some output, then remit control of the output
+    /// terminal.
     pub fn end_output(&mut self, color: Color, msg: &str) {
         let mut colspec = ColorSpec::new();
         colspec.set_fg(Some(color)).set_bold(true);

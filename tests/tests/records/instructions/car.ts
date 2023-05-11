@@ -46,7 +46,7 @@ const CreateCarInstructionDataSchema = new Map([
     }]
 ])
 
-function deriveCarAddress(programId: PublicKey, id: number): PublicKey {
+export function deriveCarAddress(programId: PublicKey, id: number): PublicKey {
     return PublicKey.findProgramAddressSync(
         [Buffer.from("car"), Buffer.from(Uint8Array.of(id))],
         programId

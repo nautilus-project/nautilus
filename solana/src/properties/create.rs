@@ -5,13 +5,15 @@ use crate::{error::NautilusError, NautilusMut};
 
 use super::{signer::NautilusSigner, NautilusAccountInfo};
 
-/// The struct to wrap an object so that it has the necessary accounts to create an on-chain instance of itself.
-/// A user wraps their object `T` in `Create<'_, T>` in order to make accessible the transaction fee payer,
-/// the System Program, and the Rent Sysvar.
+/// The struct to wrap an object so that it has the necessary accounts to create
+/// an on-chain instance of itself. A user wraps their object `T` in `Create<'_,
+/// T>` in order to make accessible the transaction fee payer, the System
+/// Program, and the Rent Sysvar.
 ///
-/// The transaction fee payer can be included by default whenever they provide a signature for transaction fees, and
-/// the System Program and Rent Sysvar are always read-only, which means the addition of these accounts will never hinder
-/// Sealevel parallel execution.
+/// The transaction fee payer can be included by default whenever they provide a
+/// signature for transaction fees, and the System Program and Rent Sysvar are
+/// always read-only, which means the addition of these accounts will never
+/// hinder Sealevel parallel execution.
 #[derive(Clone)]
 pub struct Create<'a, T>
 where

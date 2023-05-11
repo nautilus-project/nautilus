@@ -10,12 +10,15 @@ use crate::{
     Wallet,
 };
 
-/// The Nautilus object representing the combination of a mint account and a token metadata account.
+/// The Nautilus object representing the combination of a mint account and a
+/// token metadata account.
 ///
-/// This Nautilus object is designed for easily working with tokens and metadata together.
+/// This Nautilus object is designed for easily working with tokens and metadata
+/// together.
 ///
-/// It's comprised of both a `Mint` and `Metadata` struct, which allows you to access either individually, and
-/// most of it's implemented methods access the mint account.
+/// It's comprised of both a `Mint` and `Metadata` struct, which allows you to
+/// access either individually, and most of it's implemented methods access the
+/// mint account.
 #[derive(Clone)]
 pub struct Token<'a> {
     pub mint: Mint<'a>,
@@ -23,7 +26,8 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    /// Instantiate a new `Token` without loading the account inner data from on-chain.
+    /// Instantiate a new `Token` without loading the account inner data from
+    /// on-chain.
     pub fn new(
         mint_account: Box<AccountInfo<'a>>,
         metadata_account: Box<AccountInfo<'a>>,
@@ -150,7 +154,8 @@ impl<'a> Create<'a, Token<'a>> {
         Ok(())
     }
 
-    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    /// This function is the same as `create(&mut self, ..)` but allows you to
+    /// specify a rent payer.
     #[allow(clippy::too_many_arguments)]
     pub fn create_with_payer(
         &mut self,

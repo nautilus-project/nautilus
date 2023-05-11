@@ -5,21 +5,25 @@ use solana_program::{
 };
 
 use crate::{
-    cpi, error::NautilusError, Create, NautilusAccountInfo, NautilusIndex, NautilusMut,
+    cpi, error::NautilusError, Create, Mut, NautilusAccountInfo, NautilusIndex, NautilusMut,
     NautilusRecord, NautilusRecordData, NautilusSigner, NautilusTransferLamports, Signer, Wallet,
 };
 
 pub mod index;
 
-/// The struct that allows you to treat a Program-Derived-Address (PDA) account as a table record.
+/// The struct that allows you to treat a Program-Derived-Address (PDA) account
+/// as a table record.
 ///
-/// A user wraps their data type `T` with `Record<'_, T>` in order to combine the data stored within the
-/// record and the accounts required to operate on it.
+/// A user wraps their data type `T` with `Record<'_, T>` in order to combine
+/// the data stored within the record and the accounts required to operate on
+/// it.
 ///
-/// The `account_info` field represents the PDA itself, while the `index` field is one single account that accompanies
-/// a Nautilus program and keeps an index of every table.
+/// The `account_info` field represents the PDA itself, while the `index` field
+/// is one single account that accompanies a Nautilus program and keeps an index
+/// of every table.
 ///
-/// For more information on the `NautilusIndex<'_>` see the docs for that struct.
+/// For more information on the `NautilusIndex<'_>` see the docs for that
+/// struct.
 #[derive(Clone)]
 pub struct Record<'a, T>
 where
@@ -35,7 +39,8 @@ impl<'a, T> Record<'a, T>
 where
     T: NautilusRecordData,
 {
-    /// Instantiate a new record without loading the account inner data from on-chain.
+    /// Instantiate a new record without loading the account inner data from
+    /// on-chain.
     pub fn new(
         program_id: &'a Pubkey,
         account_info: Box<AccountInfo<'a>>,
@@ -149,7 +154,7 @@ where
     }
 }
 
-impl<'a, T> NautilusTransferLamports<'a> for Record<'a, T>
+impl<'a, T> NautilusTransferLamports<'a> for Mut<Record<'a, T>>
 where
     T: NautilusRecordData,
 {
@@ -176,8 +181,9 @@ where
 
     /// Create a new record.
     ///
-    /// This function is specifically not named `create` because `create(&mut self, ..)` is added by
-    /// the derive macro `#[derive(nautilus::Table)]`, which then drives this function.
+    /// This function is specifically not named `create` because `create(&mut
+    /// self, ..)` is added by the derive macro
+    /// `#[derive(nautilus::Table)]`, which then drives this function.
     pub fn create_record(&mut self) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
@@ -202,7 +208,8 @@ where
         )
     }
 
-    /// This function is the same as `create_record(&mut self, ..)` but allows you to specify a rent payer.
+    /// This function is the same as `create_record(&mut self, ..)` but allows
+    /// you to specify a rent payer.
     pub fn create_record_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         let (pda, bump) = self.pda();
         assert_eq!(

@@ -8,8 +8,10 @@ use super::NautilusAccountInfo;
 /// The trait that ensures an object's underlying `AccountInfo` must be mutable.
 pub trait NautilusMut<'a>: NautilusAccountInfo<'a> {}
 
-/// The struct to wrap an object so that it adheres to the `NautilusMut<'_>` trait.
-/// A user wraps their object `T` in `Mut<T>` in order to comply with various method constraints and ensure the underlying account is marked as mutable.
+/// The struct to wrap an object so that it adheres to the `NautilusMut<'_>`
+/// trait. A user wraps their object `T` in `Mut<T>` in order to comply with
+/// various method constraints and ensure the underlying account is marked as
+/// mutable.
 #[derive(Clone)]
 pub struct Mut<T>
 where

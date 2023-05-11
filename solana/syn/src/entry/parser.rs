@@ -28,15 +28,20 @@ pub fn parse_manifest() -> (String, String) {
     (String::from(crate_version), package.name)
 }
 
-/// Uses Metaplex's `shank_macro_impl` to parse all of the contents of the user's crate.
+/// Uses Metaplex's `shank_macro_impl` to parse all of the contents of the
+/// user's crate.
 ///
-/// It uses this information to build the rest of the IDL (accounts and types), and return all
-/// defined Nautilus objects annotated with a Nautilus derive macro.
+/// It uses this information to build the rest of the IDL (accounts and types),
+/// and return all defined Nautilus objects annotated with a Nautilus derive
+/// macro.
 ///
-/// Consider the return type: (`Vec<NautilusObject>`, `Vec<IdlTypeDef>`, `Vec<IdlTypeDef>`):
-/// * `Vec<NautilusObject>`: All Nautilus objects defined in the crate using Nautilus derive macros.
+/// Consider the return type: (`Vec<NautilusObject>`, `Vec<IdlTypeDef>`,
+/// `Vec<IdlTypeDef>`):
+/// * `Vec<NautilusObject>`: All Nautilus objects defined in the crate using
+///   Nautilus derive macros.
 /// * `Vec<IdlTypeDef>` (first): All accounts for the IDL (Nautilus objects).
-/// * `Vec<IdlTypeDef>` (second): All types for the IDL (non-Nautilus objects defined in the crate).
+/// * `Vec<IdlTypeDef>` (second): All types for the IDL (non-Nautilus objects
+///   defined in the crate).
 pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTypeDef>) {
     let root = std::env::current_dir().unwrap().join("src/lib.rs");
     let crate_context = CrateContext::parse(root).expect(
@@ -91,16 +96,23 @@ pub fn parse_crate_context() -> (Vec<NautilusObject>, Vec<IdlTypeDef>, Vec<IdlTy
 
 /// Parses all required information from a user's defined function.
 ///
-/// All Nautilus objects - both from the source crate itself and the user's crate - are provided
-/// as a parameter in order to decipher whether or not a function's parameter is a Nautilus object.
+/// All Nautilus objects - both from the source crate itself and the user's
+/// crate - are provided as a parameter in order to decipher whether or not a
+/// function's parameter is a Nautilus object.
 ///
-/// Consider the return type: (`Ident`, `Vec<(Ident, Type)>`, `Ident`, `Vec<CallContext>`):
-/// * `Ident` (first): The identifier of this instruction's variant in the program instruction enum.
-/// * `Vec<(Ident, Type)>` (second): The arguments required for this instruction's variant in the program instruction enum.
-/// * `Ident` (second): The "call context" of each declared parameter in the user's defined function signature.
-/// * `Vec<CallContext>`: The "call context" of each declared parameter in the user's defined function signature.
+/// Consider the return type: (`Ident`, `Vec<(Ident, Type)>`, `Ident`,
+/// `Vec<CallContext>`):
+/// * `Ident` (first): The identifier of this instruction's variant in the
+///   program instruction enum.
+/// * `Vec<(Ident, Type)>` (second): The arguments required for this
+///   instruction's variant in the program instruction enum.
+/// * `Ident` (second): The "call context" of each declared parameter in the
+///   user's defined function signature.
+/// * `Vec<CallContext>`: The "call context" of each declared parameter in the
+///   user's defined function signature.
 ///
-/// You can see these return values are directly used to build a `NautilusEntrypointEnumVariant`.
+/// You can see these return values are directly used to build a
+/// `NautilusEntrypointEnumVariant`.
 pub fn parse_function(
     nautilus_objects: &Vec<NautilusObject>,
     function: ItemFn,
@@ -186,8 +198,8 @@ pub fn parse_type(ty: &Type) -> (String, bool, bool, bool) {
     (type_name, is_create, is_signer, is_mut)
 }
 
-/// Derives the child type of a compound object with angle-bracket generic arguments,
-/// ie: `Object<T>`.
+/// Derives the child type of a compound object with angle-bracket generic
+/// arguments, ie: `Object<T>`.
 fn derive_child_type(arguments: &PathArguments) -> (Option<Type>, bool) {
     if let PathArguments::AngleBracketed(args) = arguments {
         for arg in &args.args {
@@ -210,7 +222,8 @@ fn derive_child_type(arguments: &PathArguments) -> (Option<Type>, bool) {
 
 /// Removes all lifetime specifiers from a `syn::Type`.
 ///
-/// This is not currently used to replace code but to generate a string representation of a type.
+/// This is not currently used to replace code but to generate a string
+/// representation of a type.
 fn remove_lifetimes_from_type(t: &mut Type) {
     match t {
         Type::Path(ref mut tp) => {

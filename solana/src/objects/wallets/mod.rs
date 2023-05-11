@@ -11,11 +11,11 @@ use crate::{
 
 /// The Nautilus object representing a Solana system account.
 ///
-/// The underlying account - designated in field `account_info` - is the system account
-/// this Wallet represents.
+/// The underlying account - designated in field `account_info` - is the system
+/// account this Wallet represents.
 ///
-/// We also include the read-only System Program for any CPI operations necessary, since we do not
-/// own this account.
+/// We also include the read-only System Program for any CPI operations
+/// necessary, since we do not own this account.
 #[derive(Clone)]
 pub struct Wallet<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -23,9 +23,11 @@ pub struct Wallet<'a> {
 }
 
 impl<'a> Wallet<'a> {
-    /// Instantiate a new `Wallet` without loading the account inner data from on-chain.
+    /// Instantiate a new `Wallet` without loading the account inner data from
+    /// on-chain.
     ///
-    /// This function actually does nothing with on-chain data anyway, since system accounts have no inner data.
+    /// This function actually does nothing with on-chain data anyway, since
+    /// system accounts have no inner data.
     pub fn new(account_info: Box<AccountInfo<'a>>, system_program: Box<AccountInfo<'a>>) -> Self {
         Self {
             account_info,
@@ -33,9 +35,11 @@ impl<'a> Wallet<'a> {
         }
     }
 
-    /// Instantiate a new `Wallet` and load the account inner data from on-chain.
+    /// Instantiate a new `Wallet` and load the account inner data from
+    /// on-chain.
     ///
-    /// This function actually does nothing with on-chain data anyway, since system accounts have no inner data.
+    /// This function actually does nothing with on-chain data anyway, since
+    /// system accounts have no inner data.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         system_program: Box<AccountInfo<'a>>,
@@ -108,7 +112,8 @@ impl<'a> Create<'a, Wallet<'a>> {
         cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }
 
-    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    /// This function is the same as `create(&mut self, ..)` but allows you to
+    /// specify a rent payer.
     pub fn create_with_payer(&mut self, payer: impl NautilusSigner<'a>) -> ProgramResult {
         cpi::system::create_account(self.clone(), self.system_program.key, payer)
     }

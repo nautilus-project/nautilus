@@ -1,4 +1,5 @@
-//! The `AssociatedTokenAccount<T>` Nautilus object and all associated trait implementations.
+//! The `AssociatedTokenAccount<T>` Nautilus object and all associated trait
+//! implementations.
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     program_pack::Pack, pubkey::Pubkey,
@@ -12,10 +13,11 @@ use crate::{
 
 /// The Nautilus object representing an associated token account.
 ///
-/// The underlying account - designated in field `account_info` - is the associated token account.
+/// The underlying account - designated in field `account_info` - is the
+/// associated token account.
 ///
-/// We also include the read-only Token Program and Associated Token Program for any CPI operations necessary, since we do not
-/// own this account.
+/// We also include the read-only Token Program and Associated Token Program for
+/// any CPI operations necessary, since we do not own this account.
 #[derive(Clone)]
 pub struct AssociatedTokenAccount<'a> {
     pub account_info: Box<AccountInfo<'a>>,
@@ -25,7 +27,8 @@ pub struct AssociatedTokenAccount<'a> {
 }
 
 impl<'a> AssociatedTokenAccount<'a> {
-    /// Instantiate a new `AssociatedTokenAccount` without loading the account inner data from on-chain.
+    /// Instantiate a new `AssociatedTokenAccount` without loading the account
+    /// inner data from on-chain.
     pub fn new(
         account_info: Box<AccountInfo<'a>>,
         token_program: Box<AccountInfo<'a>>,
@@ -39,7 +42,8 @@ impl<'a> AssociatedTokenAccount<'a> {
         }
     }
 
-    /// Instantiate a new `AssociatedTokenAccount` and load the account inner data from on-chain.
+    /// Instantiate a new `AssociatedTokenAccount` and load the account inner
+    /// data from on-chain.
     pub fn load(
         account_info: Box<AccountInfo<'a>>,
         token_program: Box<AccountInfo<'a>>,
@@ -179,7 +183,8 @@ impl<'a> Mut<AssociatedTokenAccount<'a>> {
 }
 
 impl<'a> Create<'a, AssociatedTokenAccount<'a>> {
-    /// Create a new Associated Token Account using the Associated Token Program.
+    /// Create a new Associated Token Account using the Associated Token
+    /// Program.
     pub fn create(&mut self, mint: Mint<'a>, owner: impl NautilusAccountInfo<'a>) -> ProgramResult {
         let payer = Signer::new(Wallet {
             account_info: self.fee_payer.to_owned(),
@@ -202,7 +207,8 @@ impl<'a> Create<'a, AssociatedTokenAccount<'a>> {
         Ok(())
     }
 
-    /// This function is the same as `create(&mut self, ..)` but allows you to specify a rent payer.
+    /// This function is the same as `create(&mut self, ..)` but allows you to
+    /// specify a rent payer.
     pub fn create_with_payer(
         &mut self,
         mint: Mint<'a>,

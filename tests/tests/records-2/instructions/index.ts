@@ -1,7 +1,6 @@
 export * from './car'
 export * from './home'
 export * from './person'
-export * from './transfer'
 
 import { PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, TransactionInstruction } from '@solana/web3.js'
 import * as borsh from "borsh"
@@ -16,12 +15,6 @@ export enum MyInstructions {
     ReadHome,
     CreateCar,
     ReadCar,
-    FundPerson,
-    TransferFromPerson,
-    FundHome,
-    TransferFromHome,
-    FundCar,
-    TransferFromCar,
 }
 
 export class BaseInstructionData {

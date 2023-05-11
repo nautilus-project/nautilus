@@ -9,38 +9,46 @@ import {
 import { createBaseInstruction, fetchIndex, MyInstructions } from "."
 import assert from "assert"
 
-class CreatePersonInstructionData {
+class CreateCarInstructionData {
     instruction: MyInstructions
-    name: string
-    authority: Uint8Array
+    make: string
+    model: string
+    purchase_authority: Uint8Array
+    operating_authority: Uint8Array
     constructor(props: {
         instruction: MyInstructions,
-        name: string,
-        authority: PublicKey,
+        make: string,
+        model: string,
+        purchase_authority: PublicKey,
+        operating_authority: PublicKey,
     }) {
         this.instruction = props.instruction
-        this.name = props.name
-        this.authority = props.authority.toBuffer()
+        this.make = props.make
+        this.model = props.model
+        this.purchase_authority = props.purchase_authority.toBuffer()
+        this.operating_authority = props.operating_authority.toBuffer()
     }
     toBuffer() { 
-        return Buffer.from(borsh.serialize(CreatePersonInstructionDataSchema, this)) 
+        return Buffer.from(borsh.serialize(CreateCarInstructionDataSchema, this)) 
     }
 }
 
-const CreatePersonInstructionDataSchema = new Map([
-    [ CreatePersonInstructionData, { 
+const CreateCarInstructionDataSchema = new Map([
+    [ CreateCarInstructionData, { 
         kind: 'struct', 
         fields: [ 
             ['instruction', 'u8'],
-            ['name', 'string'],
-            ['authority', [32]],
+            ['make', 'string'],
+            ['model', 'string'],
+            ['purchase_authority', [32]],
+            ['operating_authority', [32]],
         ],
     }]
 ])
 
-export function derivePersonAddress(programId: PublicKey, id: number): PublicKey {
+function deriveCarAddress(programId: PublicKey, id: number): PublicKey {
     return PublicKey.findProgramAddressSync(
-        [Buffer.from("person"), Buffer.from(Uint8Array.of(id))],
+        [Buffer.from("car"), Buffer.from(Uint8Array.of(id))],
         programId
     )[0]
 }
@@ -50,14 +58,18 @@ function createInstruction(
     newRecord: PublicKey,
     payer: PublicKey,
     programId: PublicKey,
-    name: string,
-    authority: PublicKey,
+    make: string,
+    model: string,
+    purchase_authority: PublicKey,
+    operating_authority: PublicKey,
 ): TransactionInstruction {
 
-    const myInstructionObject = new CreatePersonInstructionData({
-        instruction: MyInstructions.CreatePerson, 
-        name,
-        authority,
+    const myInstructionObject = new CreateCarInstructionData({
+        instruction: MyInstructions.CreateCar, 
+        make,
+        model,
+        purchase_authority,
+        operating_authority,
     })
 
     const keys = [
@@ -75,29 +87,31 @@ function createInstruction(
     })
 }
 
-export async function createCreatePersonInstruction(
+export async function createCreateCarInstruction(
     payer: PublicKey,
     programId: PublicKey,
-    name: string,
-    authority: PublicKey,
+    make: string,
+    model: string,
+    purchase_authority: PublicKey,
+    operating_authority: PublicKey,
 ): Promise<TransactionInstruction> {
     const index = await fetchIndex(programId)
-    const currentId = index[1].get("person");
+    const currentId = index[1].get("car");
     assert(currentId != undefined)
-    const newRecord = derivePersonAddress(programId, currentId + 1)
-    return createInstruction(index[0], newRecord, payer, programId, name, authority)
+    const newRecord = deriveCarAddress(programId, currentId + 1)
+    return createInstruction(index[0], newRecord, payer, programId, make, model, purchase_authority, operating_authority)
 }
 
-export async function createReadPersonInstruction(
+export async function createReadCarInstruction(
     programId: PublicKey,
 ): Promise<TransactionInstruction> {
     const index = await fetchIndex(programId)
-    const currentId = index[1].get("person");
+    const currentId = index[1].get("car");
     assert(currentId != undefined)
-    const record = derivePersonAddress(programId, currentId + 1) // TODO
+    const record = deriveCarAddress(programId, currentId + 1) // TODO
     return createBaseInstruction(
         programId, 
-        MyInstructions.ReadPerson,
+        MyInstructions.ReadCar,
         [
             {pubkey: index[0], isSigner: false, isWritable: false},
             {pubkey: record, isSigner: false, isWritable: false},
