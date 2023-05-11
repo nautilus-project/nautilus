@@ -19,7 +19,13 @@ const sections = [
   },
   {
     title: "⚛️ Core Concepts",
-    subsections: [{ title: "► Tables", slug: "tables" }],
+    subsections: [
+      { title: "► Getting Started", slug: "getting-started" },
+      { title: "► Wallets", slug: "wallets" },
+      { title: "► Tokens", slug: "tokens" },
+      { title: "► Tables", slug: "tables" },
+      { title: "► State", slug: "state" },
+    ],
   },
   {
     title: "🧰 Tools",
