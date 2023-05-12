@@ -3,8 +3,8 @@ title: "Installation"
 description: "How to setup Nautilus"
 previous: "How it works"
 previousLink: "/docs/how-it-works"
-next: "Tables"
-nextLink: "/docs/tables"
+next: "Getting Started"
+nextLink: "/docs/getting-started"
 ---
 
 ---
