@@ -51,7 +51,7 @@ export default function DocumentationLayout({
         <div className="flex items-center flex-grow basis-0">
           <img
             className="h-10 w-auto mr-2"
-            src="https://i.imgur.com/BwfvrEt.png"
+            src="/favicon.ico"
             alt="Nautilus Logo"
           />
           <a

@@ -1,13 +1,15 @@
 ---
 title: "State"
 description: "Traditional Non-Record PDAs"
-next: "State"
-nextLink: "/docs/state"
+previous: "Tables"
+previousLink: "/docs/tables"
+next: "Javascript SDK"
+nextLink: "/docs/javascript-sdk"
 ---
 
 ---
 
-**State** is a Nautilus concept best suited for develoeprs who are familiar with Solana's Accounts Model and the associated concept of Program-Derived Addresses (PDAs). 
+**State** is a Nautilus concept best suited for develoeprs who are familiar with Solana's Accounts Model and the associated concept of Program-Derived Addresses (PDAs).
 
 Declaring a struct with `#[derive(State)]` simply tells Nautilus to treat this data type as a traditional Solana PDA, so you'll have to provide seeds.
 
@@ -27,6 +29,7 @@ struct Person {
 Since you are creating seeds for this type of data, Nautilus cannot offer the relational database goodies like it can with the `#[derive(Table)]` annotation, so you won't be able to declare a `primary key` or use `autoincrement`.
 
 However, you can still take advantage of row-level security! This attribute will tell Nautilus to perform the same checks as if it was being used on the `Table` type.
+
 ```rust
 #[derive(State)]
 #[seeds(
@@ -47,7 +50,9 @@ struct Person {
 ```
 
 Seeds can be provided in three ways:
-* Literal constants
+
+- Literal constants
+
 ```rust
 #[derive(State)]
 #[seeds(
@@ -59,7 +64,9 @@ struct Person {
     authority: Pubkey,
 }
 ```
-* Self-referencing fields of the struct itself
+
+- Self-referencing fields of the struct itself
+
 ```rust
 #[derive(State)]
 #[seeds(
@@ -72,7 +79,9 @@ struct Person {
     authority: Pubkey,
 }
 ```
-* Provided arguments to the program
+
+- Provided arguments to the program
+
 ```rust
 use nautilus::*;
 

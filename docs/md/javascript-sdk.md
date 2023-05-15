@@ -1,8 +1,8 @@
 ---
 title: "Javascript SDK"
 description: "An object-oriented, SQL based framework for writing Solana programs."
-previous: "Tables"
-previousLink: "/docs/tables"
+previous: "State"
+previousLink: "/docs/state"
 next: "Python SDK"
 nextLink: "/docs/python-sdk"
 ---

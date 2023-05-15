@@ -1,25 +1,29 @@
 ---
 title: "Tokens"
 description: "Solana SPL Tokens & NFTs"
-next: "Tokens"
-nextLink: "/docs/tokens"
+previous: "Wallets"
+previousLink: "/docs/wallets"
+next: "Tables"
+nextLink: "/docs/tables"
 ---
 
 ---
 
 Tokens in Nautilus programs can be represented in a variety of ways, including two useful aggregator objects:
-* `Token` will allow you to create SPL tokens and their metadata all in one command
-* `Nft` is similar to `Token` but with some added features and functionality specific to NFTs
+
+- `Token` will allow you to create SPL tokens and their metadata all in one command
+- `Nft` is similar to `Token` but with some added features and functionality specific to NFTs
 
 Let's start out by considering a `Mint`, which is simply an SPL token mint without any associated metadata.
 
 You can create a `Mint` the same way you'd create any other Nautilus object - like the `Wallet` example in the previous section:
+
 ```rust
 use nautilus::*;
 
 #[nautilus]
 mod program_nautilus {
-    
+
     fn create_mint<'a>(
         mut new_mint: Create<'a, Mint<'a>>,
         decimals: u8,
@@ -47,6 +51,7 @@ mod program_nautilus {
 ```
 
 The account state data for `Mint` objects uses the [SPL Token state for `Mint`](https://docs.rs/spl-token/latest/spl_token/state/struct.Mint.html). Here's an example of reading the data of a `Mint`:
+
 ```rust
 use nautilus::*;
 
@@ -72,6 +77,7 @@ fn print_mint_data(data: &MintState) {
 ```
 
 Once you've created a `Mint`, or if you have some other existing SPL token mint, you can create only the `Metadata` for a token like so:
+
 ```rust
 use nautilus::*;
 
@@ -123,6 +129,7 @@ mod program_nautilus {
 This will effectively create metadata for any SPL token so long as you are authorized to do so.
 
 The account state data for `Metadata` objects uses the [Metaplex state for `Metadata`](https://docs.rs/mpl-token-metadata/latest/mpl_token_metadata/state/struct.Metadata.html). Here's an example of reading the data of a `Metadata`:
+
 ```rust
 use nautilus::*;
 
@@ -153,6 +160,7 @@ fn print_metadata_data(data: &MetadataState) {
 ```
 
 Let's now explore the `Token` object, which combines these two types of accounts so you can create tokens with metadata using one object.
+
 ```rust
 use nautilus::*;
 
@@ -204,6 +212,7 @@ mod program_nautilus {
 ```
 
 `Token` combines a `Mint` account and a `Metadata` account, so you can access both accounts' state like you would in the examples above:
+
 ```rust
 use nautilus::*;
 
@@ -244,8 +253,10 @@ fn print_metadata_data(data: &MetadataState) {
 ```
 
 Lastly, `Nft` behaves very similar to `Token`, with a few important features:
-* Minting is disabled after 1
-* Metadata can be expanded to `MasterEdition`, etc.
+
+- Minting is disabled after 1
+- Metadata can be expanded to `MasterEdition`, etc.
+
 ```rust
 use nautilus::*;
 
@@ -293,6 +304,7 @@ mod program_nautilus {
 ```
 
 Just like `Token`, you can access the NFT's state data like so:
+
 ```rust
 use nautilus::*;
 
