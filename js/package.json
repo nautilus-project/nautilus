@@ -24,7 +24,7 @@
     "typescript": "^4.9.3"
   },
   "scripts": {
-    "test": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/main.test.ts",
+    "test": "ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/main.test.ts",
     "build": "tsc"
   }
 }
