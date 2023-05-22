@@ -6,25 +6,26 @@ import {
     Signer,
     TransactionInstruction,
 } from '@solana/web3.js';
+import { NautilusIdl, NautilusTableIdl } from '../idl';
 import { createCreateInstruction, createDeleteInstruction, createUpdateInstruction, evaluateWhereFilter, getProgramAccounts, sendTransactionWithSigner } from '../util';
 
 import { Nautilus } from '../';
-import { NautilusProgram } from '../types';
+import { NautilusTableFieldsName } from '../types';
 
 enum FetchFirst {
     Delete,
     Update,
 }
 
-export class NautilusTable<Program extends NautilusProgram = NautilusProgram> {
+export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table extends NautilusTableIdl = NautilusTableIdl> {
 
-    nautilus: Nautilus<Program>
+    nautilus: Nautilus<[Program]>
     programId: PublicKey | undefined
     tableName: string
 
     // Reads
     getProgramAccountsConfig: GetProgramAccountsConfig
-    returnFields: string[] | undefined
+    returnFields?: NautilusTableFieldsName<Table>
     orderByFunction: any | undefined
 
     // Writes
@@ -34,7 +35,7 @@ export class NautilusTable<Program extends NautilusProgram = NautilusProgram> {
     signersList: Signer[]
 
     constructor(
-        nautilus: Nautilus<Program>,
+        nautilus: Nautilus<[Program]>,
         tableName: string,
     ) {
         this.nautilus = nautilus
@@ -55,8 +56,8 @@ export class NautilusTable<Program extends NautilusProgram = NautilusProgram> {
 
     // Reads
 
-    fields(returnFields: string[]) { 
-        this.returnFields = returnFields 
+    fields(returnFields: NautilusTableFieldsName<Table>) { 
+        this.returnFields = returnFields
         return this
     }
 
