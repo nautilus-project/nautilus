@@ -1,9 +1,14 @@
+import { PublicKey } from "@solana/web3.js"
 import { IdlTypeLookup, NautilusAccountIdl, NautilusAccountIdlConfig, NautilusIdl, NautilusTableIdl } from "./idl"
 
 import { NautilusTable } from "./sql"
 
 export type NautilusProgram = {
   tables: { [tableName: string]: string }
+}
+
+export type InputPrograms<Programs extends NautilusIdl[] = NautilusIdl[]> = {
+  [Program in Programs[number]as Program["name"]]: [PublicKey | string, Program]
 }
 
 export type NautilusProgramTables = { [tableName: string]: NautilusTable }

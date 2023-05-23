@@ -1,9 +1,9 @@
 import { CONNECTION, PROGRAM_ID, PROGRAM_ID_STRING } from "./main.test"
+import { IDL, ProgramNautilusType } from "../idl/program-nautilus"
 import { describe, it } from "mocha"
 
 import { Nautilus } from "../src"
 import assert from "assert"
-import idl from "../idl/program-nautilus.json"
 
 export function tests() {
 
@@ -15,22 +15,12 @@ export function tests() {
 
         canInstantiate(
             "string        | no programs",
-            new Nautilus({ connection: CONNECTION, programId: PROGRAM_ID_STRING, idl }), 
+            new Nautilus<[ProgramNautilusType]>({ connection: CONNECTION, inputPrograms: { "program-nautilus": [PROGRAM_ID_STRING, IDL] } }),
         )
 
         canInstantiate(
             "pubkey        | no programs",
-            new Nautilus({ connection: CONNECTION, programId: PROGRAM_ID, idl }), 
-        )
-
-        canInstantiate(
-            "pubkey        | single-list",
-            new Nautilus({ connection: CONNECTION, programId: PROGRAM_ID, idl, programs: { ["person-program"]: PROGRAM_ID } }),
-        )
-
-        canInstantiate(
-            "pubkey        | multi-list",
-            new Nautilus({ connection: CONNECTION, programId: PROGRAM_ID, idl, programs: { ["person-program"]: PROGRAM_ID, ["person-program-2"]: PROGRAM_ID } }),
+            new Nautilus<[ProgramNautilusType]>({ connection: CONNECTION, inputPrograms: { "program-nautilus": [PROGRAM_ID, IDL] } }),
         )
     })
 }

@@ -20,7 +20,7 @@ enum FetchFirst {
 export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table extends NautilusTableIdl = NautilusTableIdl> {
 
     nautilus: Nautilus<[Program]>
-    programId: PublicKey | undefined
+    programId: PublicKey
     tableName: string
 
     // Reads
@@ -36,10 +36,11 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
 
     constructor (
         nautilus: Nautilus<[Program] | NautilusIdl[]>,
+        programId: PublicKey,
         tableName: string,
     ) {
         this.nautilus = nautilus
-        if (nautilus.programId) this.programId = nautilus.programId
+        this.programId = programId
         this.tableName = tableName
 
         this.getProgramAccountsConfig = {
