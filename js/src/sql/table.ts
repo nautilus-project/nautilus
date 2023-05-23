@@ -6,11 +6,11 @@ import {
     Signer,
     TransactionInstruction,
 } from '@solana/web3.js';
+import { AccountType, NautilusTableFieldsName } from '../types';
 import { NautilusIdl, NautilusTableIdl } from '../idl';
 import { createCreateInstruction, createDeleteInstruction, createUpdateInstruction, evaluateWhereFilter, getProgramAccounts, sendTransactionWithSigner } from '../util';
 
 import { Nautilus } from '../';
-import { NautilusTableFieldsName } from '../types';
 
 enum FetchFirst {
     Delete,
@@ -26,11 +26,11 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
     // Reads
     getProgramAccountsConfig: GetProgramAccountsConfig
     returnFields?: NautilusTableFieldsName<Table>
-    orderByFunction: any | undefined
+    orderByFunction?: (list: AccountType<Table>[]) => AccountType<Table>[]
 
     // Writes
-    fetchFirst: FetchFirst | undefined
-    updateData: any
+    fetchFirst?: FetchFirst
+    updateData?: AccountType<Table>
     instructions: TransactionInstruction[]
     signersList: Signer[]
 
@@ -61,11 +61,13 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
         return this
     }
 
-    orderBy(field: string, order: string | number) {
+    orderBy(field: keyof AccountType<Table>, order: "ASC" | "DESC" | 1 | -1) {
+        const a = (list: AccountType<Table>[]) => list.sort((a, b) => (a[field] > b[field]) ? 1 : -1)
+        a
         if (order === "ASC" || order === 1) {
-            this.orderByFunction = (list: any[]) => list.sort((a, b) => (a[field] > b[field]) ? 1 : -1)
+            this.orderByFunction = (list: AccountType<Table>[]) => list.sort((a, b) => (a[field] > b[field]) ? 1 : -1)
         } else if (order === "DESC" || order === -1) {
-            this.orderByFunction = (list: any[]) => list.sort((a, b) => (a[field] > b[field]) ? -1 : 1)
+            this.orderByFunction = (list: AccountType<Table>[]) => list.sort((a, b) => (a[field] > b[field]) ? -1 : 1)
         } else {
             throw Error("Not a valid ordering statement. Can only use \"ASC\" and \"DESC\", or 1 and -1")
         }
@@ -86,7 +88,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
 
     async get(): Promise<{
         pubkey: PublicKey,
-        account: AccountInfo<any>
+        account: AccountInfo<AccountType<Table>>
     }[]> {
         if (!this.programId) return noProgramIdError()
         return getProgramAccounts(
@@ -99,7 +101,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
 
     // Writes
 
-    create(data: any | any[]) {
+    create(data: AccountType<Table> | AccountType<Table>[]) {
         if (this.programId) {
             const programId = this.programId
             if (Array.isArray(data)) {
@@ -120,7 +122,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
         return this
     }
 
-    update(data: any) {
+    update(data: AccountType<Table>) {
         this.fetchFirst = FetchFirst.Update
         this.updateData = data
         return this

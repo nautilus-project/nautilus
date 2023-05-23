@@ -1,4 +1,4 @@
-import { NautilusAccountIdlConfig, NautilusIdl, NautilusTableIdl } from "./idl"
+import { IdlTypeLookup, NautilusAccountIdl, NautilusAccountIdlConfig, NautilusIdl, NautilusTableIdl } from "./idl"
 
 import { NautilusTable } from "./sql"
 
@@ -27,3 +27,7 @@ export type ProgramsTables<Programs extends NautilusIdl[] = NautilusIdl[]> = Pro
 export type NautilusTableFields<Table extends NautilusTableIdl = NautilusTableIdl> = Table["type"]["fields"]
 
 export type NautilusTableFieldsName<Table extends NautilusTableIdl = NautilusTableIdl> = Table["type"]["fields"][number]["name"][]
+
+export type AccountType<Account extends NautilusAccountIdl = NautilusAccountIdl> = {
+  [T in Account["type"]["fields"][number]as T["name"]]: IdlTypeLookup[T["type"]]
+}

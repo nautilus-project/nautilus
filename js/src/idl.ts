@@ -1,3 +1,5 @@
+import { PublicKey } from "@solana/web3.js"
+
 export type NautilusIdl = {
   version: string
   name: string
@@ -11,8 +13,8 @@ export type NautilusInstructionIdl = {
   accounts: NautilusInstructionAccountIdl[]
   args: NautilusIdlTypeField[]
   discriminant: {
-      type: string,
-      value: number
+    type: string,
+    value: number
   }
 }
 
@@ -24,9 +26,81 @@ export type NautilusInstructionAccountIdl = {
   desc: string
 }
 
+export type IdlType =
+  | "bool"
+  | "u8"
+  | "i8"
+  | "u16"
+  | "i16"
+  | "u32"
+  | "i32"
+  | "f32"
+  | "u64"
+  | "i64"
+  | "f64"
+  | "u128"
+  | "i128"
+  | "u256"
+  | "i256"
+  | "bytes"
+  | "string"
+  | "publicKey"
+// | IdlTypeDefined
+// | IdlTypeOption
+// | IdlTypeCOption
+// | IdlTypeVec
+// | IdlTypeArray;
+
+// User defined type.
+export type IdlTypeDefined = {
+  defined: string;
+};
+
+export type IdlTypeOption = {
+  option: IdlType;
+};
+
+export type IdlTypeCOption = {
+  coption: IdlType;
+};
+
+export type IdlTypeVec = {
+  vec: IdlType;
+};
+
+export type IdlTypeArray = {
+  array: [idlType: IdlType, size: number];
+};
+
+export type IdlTypeLookup = {
+  "bool": boolean
+  "u8": number
+  "i8": number
+  "u16": number
+  "i16": number
+  "u32": number
+  "i32": number
+  "f32": number
+  "u64": number
+  "i64": number
+  "f64": number
+  "u128": number
+  "i128": number
+  "u256": number
+  "i256": number
+  "bytes": Uint8Array
+  "string": string
+  "publicKey": PublicKey
+  // IdlTypeDefined: object
+  // IdlTypeOption: object | undefined
+  // IdlTypeCOption: object | undefined
+  // IdlTypeVec: object[]
+  // IdlTypeArray: object[]
+}
+
 export type NautilusIdlTypeField = {
   name: string
-  type: string
+  type: IdlType
 }
 
 export type NautilusAccountIdl = {
@@ -51,10 +125,10 @@ export type NautilusAccountIdlConfig = {
 
 export type NautilusAccountIdlConfigSeed = {
   lit?: {
-      value: string
+    value: string
   }
   field: {
-      key: string
+    key: string
   }
 }
 
