@@ -34,20 +34,20 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
     instructions: TransactionInstruction[]
     signersList: Signer[]
 
-    constructor(
-        nautilus: Nautilus<[Program]>,
+    constructor (
+        nautilus: Nautilus<[Program] | NautilusIdl[]>,
         tableName: string,
     ) {
         this.nautilus = nautilus
         if (nautilus.programId) this.programId = nautilus.programId
         this.tableName = tableName
-        
+
         this.getProgramAccountsConfig = {
             filters: [],
         }
         this.returnFields = undefined;
         this.orderByFunction = undefined;
-        
+
         this.fetchFirst = undefined;
         this.updateData = undefined;
         this.instructions = []
@@ -56,7 +56,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
 
     // Reads
 
-    fields(returnFields: NautilusTableFieldsName<Table>) { 
+    fields(returnFields: NautilusTableFieldsName<Table>) {
         this.returnFields = returnFields
         return this
     }
@@ -137,7 +137,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
             const programId = this.programId
             const instructions = this.instructions
             if (this.fetchFirst) {
-                (await this.get()).forEach((account) => this.fetchFirst == FetchFirst.Delete ? 
+                (await this.get()).forEach((account) => this.fetchFirst == FetchFirst.Delete ?
                     instructions.push(createDeleteInstruction(programId, this.tableName, account))
                     :
                     instructions.push(createUpdateInstruction(programId, this.tableName, this.updateData))
@@ -150,7 +150,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
                 this.signersList[0].publicKey,
                 sendOptions,
             )
-        } else { 
+        } else {
             return noProgramIdError()
         }
     }
