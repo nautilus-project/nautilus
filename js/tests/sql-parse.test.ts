@@ -2,14 +2,14 @@ import { CONNECTION, PROGRAM_ID } from "./main.test"
 import { IDL, ProgramNautilusType } from "../idl/program-nautilus"
 import { describe, it } from "mocha"
 
-import { Nautilus } from "../src"
+import { NautilusProgram } from "../src"
 import assert from "assert"
 
 export function tests() {
 
     describe("[Unit Tests]:   SQL Parsing", () => {
 
-        const nautilus = new Nautilus<[ProgramNautilusType]>({ connection: CONNECTION, inputPrograms: { "program-nautilus": [PROGRAM_ID, IDL] } });
+        const nautilus = new NautilusProgram<ProgramNautilusType>({ connection: CONNECTION, idl: IDL, programId: PROGRAM_ID });
 
         function testParseSql(input: string) {
             it(`   -- Can parse:    ${input}`, () => assert(input = nautilus.sql(input).dumpSql()))
@@ -76,7 +76,7 @@ export function tests() {
             "SELECT (id, name) FROM person WHERE id = 1 AND name = 'Joe' ORDER BY id DESC, name ASC"
         )
         testParseSql(
-            "SELECT id, name FROM person; SELECT id, name from heroes"
+            "SELECT id, name FROM person; SELECT id, model from car"
         )
         testParseSql(
             "INSERT INTO person VALUES ('Paul', 'none')"

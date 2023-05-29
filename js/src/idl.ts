@@ -121,6 +121,7 @@ export type NautilusAccountIdlConfig = {
   autoincrement?: boolean
   discriminatorStr?: string
   seeds?: NautilusAccountIdlConfigSeed[]
+  defaultInstructions?: NautilusTableIdlInstruction[]
 }
 
 export type NautilusAccountIdlConfigSeed = {
@@ -130,6 +131,14 @@ export type NautilusAccountIdlConfigSeed = {
   field: {
     key: string
   }
+}
+
+export type NautilusTableIdlInstruction = {
+  Create: string
+} | {
+  Update: string
+} | {
+  Delete: string
 }
 
 export type NautilusTableIdl = {
@@ -144,10 +153,4 @@ export type NautilusTableConfigIdl = {
   autoincrement: boolean
   authorities: string[]
   defaultInstructions?: NautilusTableIdlInstruction[]
-}
-
-export type NautilusTableIdlInstruction = {
-  Create?: string
-  Update?: string
-  Delete?: string
 }

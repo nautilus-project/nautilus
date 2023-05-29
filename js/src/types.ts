@@ -1,7 +1,7 @@
-import { PublicKey } from "@solana/web3.js"
 import { IdlTypeLookup, NautilusAccountIdl, NautilusAccountIdlConfig, NautilusIdl, NautilusTableIdl } from "./idl"
 
 import { NautilusTable } from "./sql"
+import { PublicKey } from "@solana/web3.js"
 
 export type NautilusProgram = {
   tables: { [tableName: string]: string }
@@ -27,7 +27,9 @@ export type ProgramTables<Program extends NautilusIdl = NautilusIdl> = {
   [Table in AllTableAccounts<Program>[number]as NonNullable<Table["config"]["tableName"]>]: NautilusTable<Program, Table>
 }
 
-export type ProgramsTables<Programs extends NautilusIdl[] = NautilusIdl[]> = Programs extends (infer P extends NautilusIdl)[] ? ProgramTables<P> : never;
+export type ProgramsTables<Programs extends NautilusIdl[] = NautilusIdl[]> = {
+  [Program in Programs[number]as Program["name"]]: ProgramTables<Program>
+}
 
 export type NautilusTableFields<Table extends NautilusTableIdl = NautilusTableIdl> = Table["type"]["fields"]
 

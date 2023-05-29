@@ -11,54 +11,48 @@ import {
   Keypair,
   PublicKey
 } from '@solana/web3.js';
-import { InputPrograms, ProgramsTables } from './types';
+import { NautilusIdl, NautilusTableIdl } from './idl';
 import {
   NautilusQuery,
   NautilusTable,
 } from './sql';
 
-import { NautilusIdl } from './idl';
+import { ProgramTables } from './types';
 import { decapitalizeFirstLetter } from './util';
 
-export class Nautilus<Programs extends NautilusIdl[] = NautilusIdl[]> {
+export class NautilusProgram<Program extends NautilusIdl = NautilusIdl> {
 
   connection: Connection;
-  // Lookups program key using its name
-  programs: { [Program in Programs[number]as Program["name"]]: PublicKey };
+  programId: PublicKey
   payer?: Keypair;
 
-  readonly tables: ProgramsTables<Programs>;
+  readonly tables: ProgramTables<Program>;
 
-  constructor ({ connection, inputPrograms, payer }: {
+  constructor ({ connection, idl, programId, payer }: {
     connection: Connection,
-    inputPrograms: InputPrograms<Programs>,
+    idl: NautilusIdl,
+    programId: PublicKey,
     payer?: Keypair,
   }) {
     this.connection = connection;
     this.payer = payer ?? undefined;
+    this.programId = programId
 
-    const programs: any = {}
     const tables: any = {}
 
-    for (const entry of Object.values<[PublicKey | string, NautilusIdl]>(inputPrograms)) {
-      const [publicKey, program] = entry
-      programs[program.name] = publicKey
-
-      for (const table of program.accounts) {
-        if (table.config && table.config.tableName) {
-          const formattedName = decapitalizeFirstLetter(table.name)
-          tables[formattedName] = new NautilusTable(this, new PublicKey(publicKey.toString()), table.name)
-        }
+    for (const table of (idl.accounts || [])) {
+      if (table.config && table.config.tableName) {
+        const formattedName = decapitalizeFirstLetter(table.name)
+        tables[formattedName] = new NautilusTable(this, table as NautilusTableIdl)
       }
     }
 
-    this.programs = programs
     this.tables = tables
   }
 
-  sql(query: string): NautilusQuery {
+  sql(query: string): NautilusQuery<[Program]> {
     return new NautilusQuery(
-      this,
+      [this],
       query,
     )
   }

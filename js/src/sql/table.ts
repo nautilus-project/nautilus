@@ -7,10 +7,10 @@ import {
     TransactionInstruction,
 } from '@solana/web3.js';
 import { AccountType, NautilusTableFieldsName } from '../types';
-import { NautilusIdl, NautilusTableIdl } from '../idl';
+import { NautilusIdl, NautilusTableConfigIdl, NautilusTableIdl } from '../idl';
 import { createCreateInstruction, createDeleteInstruction, createUpdateInstruction, evaluateWhereFilter, getProgramAccounts, sendTransactionWithSigner } from '../util';
 
-import { Nautilus } from '../';
+import { NautilusProgram } from '../';
 
 enum FetchFirst {
     Delete,
@@ -19,9 +19,9 @@ enum FetchFirst {
 
 export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table extends NautilusTableIdl = NautilusTableIdl> {
 
-    nautilus: Nautilus<[Program]>
-    programId: PublicKey
+    program: NautilusProgram<Program>
     tableName: string
+    idl: NautilusTableIdl
 
     // Reads
     getProgramAccountsConfig: GetProgramAccountsConfig
@@ -35,13 +35,12 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
     signersList: Signer[]
 
     constructor (
-        nautilus: Nautilus<[Program] | NautilusIdl[]>,
-        programId: PublicKey,
-        tableName: string,
+        program: NautilusProgram<Program>,
+        idl: NautilusTableIdl
     ) {
-        this.nautilus = nautilus
-        this.programId = programId
-        this.tableName = tableName
+        this.program = program
+        this.tableName = idl.name
+        this.idl = idl
 
         this.getProgramAccountsConfig = {
             filters: [],
@@ -56,7 +55,6 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
     }
 
     // Reads
-
     fields(returnFields: NautilusTableFieldsName<Table>) {
         this.returnFields = returnFields
         return this
@@ -91,10 +89,10 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
         pubkey: PublicKey,
         account: AccountInfo<AccountType<Table>>
     }[]> {
-        if (!this.programId) return noProgramIdError()
+        if (!this.program.programId) return noProgramIdError()
         return getProgramAccounts(
-            this.nautilus.connection,
-            this.programId,
+            this.program.connection,
+            this.program.programId,
             this.getProgramAccountsConfig,
             this.returnFields,
         )
@@ -103,8 +101,8 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
     // Writes
 
     create(data: AccountType<Table> | AccountType<Table>[]) {
-        if (this.programId) {
-            const programId = this.programId
+        if (this.program) {
+            const programId = this.program.programId
             if (Array.isArray(data)) {
                 data.forEach((d) => this.instructions.push(
                     createCreateInstruction(programId, this.tableName, d)
@@ -136,8 +134,8 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
 
     // TODO: Transaction size overflow
     async execute(sendOptions?: SendOptions): Promise<string> {
-        if (this.programId) {
-            const programId = this.programId
+        if (this.program.programId) {
+            const programId = this.program.programId
             const instructions = this.instructions
             if (this.fetchFirst) {
                 (await this.get()).forEach((account) => this.fetchFirst == FetchFirst.Delete ?
@@ -147,7 +145,7 @@ export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table exte
                 )
             }
             return sendTransactionWithSigner(
-                this.nautilus.connection,
+                this.program.connection,
                 instructions,
                 this.signersList,
                 this.signersList[0].publicKey,
