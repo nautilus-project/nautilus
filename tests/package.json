@@ -20,10 +20,10 @@
     "yaml": "^2.2.1"
   },
   "scripts": {
-    "test-wallets": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/wallets/test.ts",
-    "test-tokens": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/tokens/test.ts",
-    "test-records": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/records/test.ts",
-    "test-accounts": "yarn run ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/accounts/test.ts",
+    "test-wallets": "ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/wallets/test.ts",
+    "test-tokens": "ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/tokens/test.ts",
+    "test-records": "ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/records/test.ts",
+    "test-accounts": "ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/accounts/test.ts",
     "all": "sh ./tests/all-tests.sh"
   }
 }
