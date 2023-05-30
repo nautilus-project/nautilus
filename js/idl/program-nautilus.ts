@@ -1,5 +1,3 @@
-import { NautilusIdl } from "../src/idl"
-
 export type ProgramNautilusType = {
   "version": "0.1.0",
   "name": "program-nautilus",
@@ -397,8 +395,7 @@ export type ProgramNautilusType = {
     "origin": "nautilus"
   }
 }
-
-export const IDL: NautilusIdl = {
+export const IDL = {
   "version": "0.1.0",
   "name": "program-nautilus",
   "instructions": [

@@ -26,7 +26,7 @@ export type NautilusInstructionAccountIdl = {
   desc: string
 }
 
-export type IdlType =
+export type IdlType = string
   | "bool"
   | "u8"
   | "i8"
@@ -96,7 +96,7 @@ export type IdlTypeLookup = {
   // IdlTypeCOption: object | undefined
   // IdlTypeVec: object[]
   // IdlTypeArray: object[]
-}
+} & { [key: string]: unknown }
 
 export type NautilusIdlTypeField = {
   name: string
