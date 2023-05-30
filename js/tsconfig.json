@@ -1,11 +1,14 @@
 {
-    "compilerOptions": {
-      "target": "es2021",
-      "module": "commonjs",
-      "esModuleInterop": true,
-      "forceConsistentCasingInFileNames": true,
-      "strict": true,
-      "outDir": "./dist",
-    },
-    "exclude": ["./tests"]
-  }
+  "compilerOptions": {
+    "target": "es2021",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "outDir": "./dist",
+    "declaration": true,
+  },
+  "exclude": [
+    "./tests"
+  ]
+}

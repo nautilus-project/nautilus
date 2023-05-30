@@ -2,7 +2,7 @@
   "name": "nautilus-js",
   "version": "0.0.1",
   "description": "SQL server for Solana",
-  "main": "index.js",
+  "main": "dist/src/index.js",
   "repository": "https://github.com/realbuffalojoe/nautilus",
   "author": "Joe Caulfield",
   "license": "MIT",
@@ -25,6 +25,6 @@
   },
   "scripts": {
     "test": "ts-mocha -p ./tests/tsconfig.test.json -t 1000000 ./tests/main.test.ts",
-    "build": "tsc"
+    "build": "rm -rf ./dist && tsc"
   }
 }
