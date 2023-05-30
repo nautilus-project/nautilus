@@ -12,45 +12,85 @@ use crate::{
     Idl,
 };
 
-pub trait TypeScriptIdlWrite {
-    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()>;
+fn format_program_name(s: &String) -> String {
+    s.replace("_", "-")
+        .split('-')
+        .map(|part| capitalize_first_letter(&part.to_string()))
+        .collect::<Vec<_>>()
+        .join("")
+}
+fn capitalize_first_letter(s: &String) -> String {
+    let mut char_iter = s.chars();
+    match char_iter.next() {
+        None => String::new(),
+        Some(c) => c.to_uppercase().collect::<String>() + char_iter.as_str(),
+    }
+}
+fn decapitalize_first_letter(s: &String) -> String {
+    let mut char_iter = s.chars();
+    match char_iter.next() {
+        None => String::new(),
+        Some(c) => c.to_lowercase().collect::<String>() + char_iter.as_str(),
+    }
 }
 
+/// Trait to enable conversion of IDL components into TypeScript code.
 pub trait TypeScriptConverter {
     fn to_typescript_string(&self) -> String;
 }
 
-impl TypeScriptIdlWrite for Idl {
-    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()> {
-        if dir_path != "." {
-            fs::create_dir_all(dir_path)?;
-        }
-
-        let ts_idl_path = Path::join(Path::new(dir_path), &format!("{}.ts", &self.name));
-
-        let mut file = File::create(ts_idl_path)?;
-        let typescript_string = self.to_typescript_string();
-        file.write_all(typescript_string.as_bytes())?;
-
-        Ok(())
+impl TypeScriptConverter for Idl {
+    fn to_typescript_string(&self) -> String {
+        vec![
+            format!(
+                "export type {}Type = {}",
+                format_program_name(&self.name),
+                serde_json::to_string_pretty(&self).unwrap().to_string()
+            ),
+            format!(
+                "export const IDL = {}",
+                serde_json::to_string_pretty(&self).unwrap().to_string()
+            ),
+        ]
+        .join("\n")
     }
 }
 
-impl TypeScriptConverter for Idl {
-    fn to_typescript_string(&self) -> String {
-        // TODO: Lay down schema and add instructions/configs:
-        let mut all_types = self.accounts.clone();
-        all_types.extend(self.types.clone());
-        let all_types_strings: Vec<String> =
-            all_types.iter().map(|t| t.to_typescript_string()).collect();
-        let res = all_types_strings.join("\n");
-        res
+impl Idl {
+    pub fn to_typescript_program_idl(&self) -> String {
+        let formatted_name = self
+            .name
+            .split('-')
+            .map(|x| capitalize_first_letter(&x.to_string()))
+            .collect::<Vec<_>>()
+            .concat();
+
+        let tables = self
+            .accounts
+            .iter()
+            .map(|account| format!("    {}: string", decapitalize_first_letter(&account.name)))
+            .collect::<Vec<_>>()
+            .join(",\n");
+        let tables_string = if self.accounts.len() == 0 {
+            None
+        } else {
+            Some(format!("\n  tables: {{\n{}\n  }}\n", tables))
+        };
+
+        let strings = vec![tables_string]
+            .iter()
+            .filter(|&x| x.is_some())
+            .map(|x| x.as_deref().unwrap())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        format!("export type {}Program = {{{}}}", formatted_name, strings)
     }
 }
 
 impl TypeScriptConverter for IdlInstruction {
     fn to_typescript_string(&self) -> String {
-        todo!()
+        String::from("") // TODO
     }
 }
 
@@ -142,5 +182,24 @@ impl TypeScriptConverter for IdlType {
             IdlType::HashSet(idl_type) => format!("Set<{}>", idl_type.to_typescript_string()),
             IdlType::BTreeSet(idl_type) => format!("Set<{}>", idl_type.to_typescript_string()),
         }
+    }
+}
+
+/// The trait to enable writing an IDL to TypeScript.
+pub trait TypeScriptIdlWrite {
+    /// Writes an IDL to a TypeScript `.ts` file.
+    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()>;
+}
+
+impl TypeScriptIdlWrite for Idl {
+    fn write_to_ts(&self, dir_path: &str) -> std::io::Result<()> {
+        if dir_path != "." {
+            fs::create_dir_all(dir_path)?;
+        }
+        let ts_idl_path = Path::join(Path::new(dir_path), &format!("{}.ts", &self.name));
+        let mut file = File::create(ts_idl_path)?;
+        let typescript_string = self.to_typescript_string();
+        file.write_all(typescript_string.as_bytes())?;
+        Ok(())
     }
 }

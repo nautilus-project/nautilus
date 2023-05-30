@@ -1,4 +1,4 @@
-//! Testing system accounts.
+//! Wallet tests
 use nautilus::splogger::{info, Splog};
 use nautilus::*;
 

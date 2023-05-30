@@ -1,50 +1,53 @@
-import { 
+import {
     AccountInfo,
     GetProgramAccountsConfig,
-    PublicKey, 
-    SendOptions, 
-    Signer, 
+    PublicKey,
+    SendOptions,
+    Signer,
     TransactionInstruction,
 } from '@solana/web3.js';
-import { Nautilus } from '../';
-import { NautilusUtils } from '../util';
+import { AccountType, NautilusTableFieldsName } from '../types';
+import { NautilusIdl, NautilusTableConfigIdl, NautilusTableIdl } from '../idl';
+import { createCreateInstruction, createDeleteInstruction, createUpdateInstruction, evaluateWhereFilter, getProgramAccounts, sendTransactionWithSigner } from '../util';
+
+import { NautilusProgram } from '../';
 
 enum FetchFirst {
     Delete,
     Update,
 }
 
-export class NautilusTable {
+export class NautilusTable<Program extends NautilusIdl = NautilusIdl, Table extends NautilusTableIdl = NautilusTableIdl> {
 
-    nautilus: Nautilus
-    programId: PublicKey | undefined
+    program: NautilusProgram<Program>
     tableName: string
+    idl: NautilusTableIdl
 
     // Reads
     getProgramAccountsConfig: GetProgramAccountsConfig
-    returnFields: string[] | undefined
-    orderByFunction: any | undefined
+    returnFields?: NautilusTableFieldsName<Table>
+    orderByFunction?: (list: AccountType<Table>[]) => AccountType<Table>[]
 
     // Writes
-    fetchFirst: FetchFirst | undefined
-    updateData: any
+    fetchFirst?: FetchFirst
+    updateData?: AccountType<Table>
     instructions: TransactionInstruction[]
     signersList: Signer[]
 
-    constructor(
-        nautilus: Nautilus,
-        tableName: string,
+    constructor (
+        program: NautilusProgram<Program>,
+        idl: NautilusTableIdl
     ) {
-        this.nautilus = nautilus
-        if (nautilus.defaultProgram) this.programId = nautilus.defaultProgram
-        this.tableName = tableName
-        
+        this.program = program
+        this.tableName = idl.name
+        this.idl = idl
+
         this.getProgramAccountsConfig = {
             filters: [],
         }
         this.returnFields = undefined;
         this.orderByFunction = undefined;
-        
+
         this.fetchFirst = undefined;
         this.updateData = undefined;
         this.instructions = []
@@ -52,17 +55,18 @@ export class NautilusTable {
     }
 
     // Reads
-
-    fields(returnFields: string[]) { 
-        this.returnFields = returnFields 
+    fields(returnFields: NautilusTableFieldsName<Table>) {
+        this.returnFields = returnFields
         return this
     }
 
-    orderBy(field: string, order: string | number) {
+    orderBy(field: keyof AccountType<Table>, order: "ASC" | "DESC" | 1 | -1) {
+        const a = (list: AccountType<Table>[]) => list.sort((a, b) => (a[field] > b[field]) ? 1 : -1)
+        a
         if (order === "ASC" || order === 1) {
-            this.orderByFunction = (list: any[]) => list.sort((a, b) => (a[field] > b[field]) ? 1 : -1)
+            this.orderByFunction = (list: AccountType<Table>[]) => list.sort((a, b) => (a[field] > b[field]) ? 1 : -1)
         } else if (order === "DESC" || order === -1) {
-            this.orderByFunction = (list: any[]) => list.sort((a, b) => (a[field] > b[field]) ? -1 : 1)
+            this.orderByFunction = (list: AccountType<Table>[]) => list.sort((a, b) => (a[field] > b[field]) ? -1 : 1)
         } else {
             throw Error("Not a valid ordering statement. Can only use \"ASC\" and \"DESC\", or 1 and -1")
         }
@@ -76,19 +80,19 @@ export class NautilusTable {
         matches: string,
     ) {
         this.getProgramAccountsConfig.filters?.push(
-            NautilusUtils.evaluateWhereFilter(field, operator, matches)
+            evaluateWhereFilter(field, operator, matches)
         );
         return this
     }
 
     async get(): Promise<{
         pubkey: PublicKey,
-        account: AccountInfo<any>
+        account: AccountInfo<AccountType<Table>>
     }[]> {
-        if (!this.programId) return noProgramIdError()
-        return NautilusUtils.getProgramAccounts(
-            this.nautilus.connection,
-            this.programId,
+        if (!this.program.programId) return noProgramIdError()
+        return getProgramAccounts(
+            this.program.connection,
+            this.program.programId,
             this.getProgramAccountsConfig,
             this.returnFields,
         )
@@ -96,15 +100,15 @@ export class NautilusTable {
 
     // Writes
 
-    create(data: any | any[]) {
-        if (this.programId) {
-            const programId = this.programId
+    create(data: AccountType<Table> | AccountType<Table>[]) {
+        if (this.program) {
+            const programId = this.program.programId
             if (Array.isArray(data)) {
                 data.forEach((d) => this.instructions.push(
-                    NautilusUtils.createCreateInstruction(programId, this.tableName, d)
+                    createCreateInstruction(programId, this.tableName, d)
                 ))
             } else {
-                this.instructions.push(NautilusUtils.createCreateInstruction(programId, this.tableName, data))
+                this.instructions.push(createCreateInstruction(programId, this.tableName, data))
             }
         } else {
             return noProgramIdError()
@@ -117,7 +121,7 @@ export class NautilusTable {
         return this
     }
 
-    update(data: any) {
+    update(data: AccountType<Table>) {
         this.fetchFirst = FetchFirst.Update
         this.updateData = data
         return this
@@ -130,24 +134,24 @@ export class NautilusTable {
 
     // TODO: Transaction size overflow
     async execute(sendOptions?: SendOptions): Promise<string> {
-        if (this.programId) {
-            const programId = this.programId
+        if (this.program.programId) {
+            const programId = this.program.programId
             const instructions = this.instructions
             if (this.fetchFirst) {
-                (await this.get()).forEach((account) => this.fetchFirst == FetchFirst.Delete ? 
-                    instructions.push(NautilusUtils.createDeleteInstruction(programId, this.tableName, account))
+                (await this.get()).forEach((account) => this.fetchFirst == FetchFirst.Delete ?
+                    instructions.push(createDeleteInstruction(programId, this.tableName, account))
                     :
-                    instructions.push(NautilusUtils.createUpdateInstruction(programId, this.tableName, this.updateData))
+                    instructions.push(createUpdateInstruction(programId, this.tableName, this.updateData))
                 )
             }
-            return NautilusUtils.sendTransactionWithSigner(
-                this.nautilus.connection,
+            return sendTransactionWithSigner(
+                this.program.connection,
                 instructions,
                 this.signersList,
                 this.signersList[0].publicKey,
                 sendOptions,
             )
-        } else { 
+        } else {
             return noProgramIdError()
         }
     }

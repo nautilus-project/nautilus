@@ -19,7 +19,7 @@ pub enum IdlSeed {
 #[serde(rename_all = "camelCase")]
 pub struct IdlTypeDefNautilusConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub discrminator_str: Option<String>,
+    pub discriminator_str: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub table_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
