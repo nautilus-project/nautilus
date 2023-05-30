@@ -12,6 +12,13 @@ use crate::{
     Idl,
 };
 
+fn format_program_name(s: &String) -> String {
+    s.replace("_", "-")
+        .split('-')
+        .map(|part| capitalize_first_letter(&part.to_string()))
+        .collect::<Vec<_>>()
+        .join("")
+}
 fn capitalize_first_letter(s: &String) -> String {
     let mut char_iter = s.chars();
     match char_iter.next() {
@@ -34,33 +41,18 @@ pub trait TypeScriptConverter {
 
 impl TypeScriptConverter for Idl {
     fn to_typescript_string(&self) -> String {
-        let ts_body_globs = vec![
-            vec![
-                String::from("import { PublicKey } from \"@solana/web3.js\""),
-                String::from("import BN from \"bn.js\""),
-                String::from("\n"),
-                self.to_typescript_program_idl(),
-                String::from("\n"),
-            ],
-            // TODO: Configs
-            // TODO: Constants
-            // TODO: Errors
-            self.instructions
-                .iter()
-                .map(|i| i.to_typescript_string())
-                .collect::<Vec<String>>(),
-            self.accounts
-                .iter()
-                .map(|a| a.to_typescript_string())
-                .collect::<Vec<String>>(),
-            self.types
-                .iter()
-                .map(|t| t.to_typescript_string())
-                .collect::<Vec<String>>(),
-        ];
-        let ts_body = ts_body_globs.into_iter().flatten().collect::<Vec<String>>();
-        let res = ts_body.join("\n");
-        res
+        vec![
+            format!(
+                "export type {}Type = {}",
+                format_program_name(&self.name),
+                serde_json::to_string_pretty(&self).unwrap().to_string()
+            ),
+            format!(
+                "export const IDL = {}",
+                serde_json::to_string_pretty(&self).unwrap().to_string()
+            ),
+        ]
+        .join("\n")
     }
 }
 
