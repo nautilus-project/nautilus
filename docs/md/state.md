@@ -9,7 +9,7 @@ nextLink: "/docs/javascript-sdk"
 
 ---
 
-**State** is a Nautilus concept best suited for develoeprs who are familiar with Solana's Accounts Model and the associated concept of Program-Derived Addresses (PDAs).
+**State** is a Nautilus concept best suited for developers who are familiar with Solana's Accounts Model and the associated concept of Program-Derived Addresses (PDAs).
 
 Declaring a struct with `#[derive(State)]` simply tells Nautilus to treat this data type as a traditional Solana PDA, so you'll have to provide seeds.
 
