@@ -164,7 +164,7 @@ mod program_nautilus {
         new_car.create(make, model, purchase_authority, operating_authority)
     }
 
-    /// A simluated "complex" program instruction to test Nautilus.
+    /// A simulated "complex" program instruction to test Nautilus.
     /// The logic herein is just for example.
     fn complex<'a>(
         _authority1: Signer<Wallet<'a>>, // Marking this as `Signer` will ensure it's a signer on the tx.
